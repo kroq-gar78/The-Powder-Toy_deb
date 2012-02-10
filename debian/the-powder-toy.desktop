@@ -1,8 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Name=The Powder Toy
-Exec=/home/kroq-gar78/powdertoy/powder
-Icon=/home/kroq-gar78/powdertoy/powder-icon.png
+Exec=the-powder-toy
+Icon=/usr/lib/games/the-powder-toy/Icon-32.png
 Terminal=False
 Type=Application
 Categories=Game;
