@@ -1,0 +1,27 @@
+This work was packaged for Debian by:
+
+    Aditya Vaidya <kroq.gar78@gmail.com> on Thurs, 9 Feb 2012 14:38:46 -0600
+
+It was downloaded from:
+
+    http://powdertoy.co.uk/
+
+Upstream Authors:
+
+    HardWIRED and respective owners
+
+Copyright:
+
+    Copyright (C) 2010 HardWIRED and respective owners
+
+License:
+
+    Freeware
+
+The Debian packaging is:
+
+    Copyright (C) 2010 Christoph Korn <christoph.korn@getdeb.net>
+    Copyright (C) 2012 Aditya Vaidya <kroq.gar78@gmail.com>
+
+and is licensed under the GPL version 3,
+see "/usr/share/common-licenses/GPL-3".
