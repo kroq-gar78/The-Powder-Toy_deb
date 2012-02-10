@@ -1,8 +1,8 @@
-the-powder-toy (71.3-1~ubuntu1) oneiric; urgency=low
+the-powder-toy (71.3-0~ubuntu1ppa1) oneiric; urgency=low
 
   * New upstream version
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 09 Feb 2012 20:03:34 -0600
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 10 Feb 2012 14:17:50 -0600
 
 the-powder-toy (52.0-1~getdeb2) lucid; urgency=low
 
