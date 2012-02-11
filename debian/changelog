@@ -1,3 +1,9 @@
+the-powder-toy (71.3-0~ubuntu1ppa2) oneiric; urgency=low
+
+  * Fix to dependencies
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 10 Feb 2012 22:27:22 -0600
+
 the-powder-toy (71.3-0~ubuntu1ppa1) oneiric; urgency=low
 
   * New upstream version
