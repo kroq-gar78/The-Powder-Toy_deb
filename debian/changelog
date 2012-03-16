@@ -1,3 +1,9 @@
+the-powder-toy (71.3-0~ubuntu1ppa3) precise; urgency=low
+
+  * debian/copyright: fixed license of original program
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 16 Mar 2012 15:26:45 -0500
+
 the-powder-toy (71.3-0~ubuntu1ppa2) oneiric; urgency=low
 
   * Fix to dependencies
