@@ -1,3 +1,9 @@
+the-powder-toy (71.3-0~ubuntu2) precise; urgency=low
+
+  * debian/control: changed architecture from 'all' to 'any'
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 22 Mar 2012 20:41:11 -0500
+
 the-powder-toy (71.3-0~ubuntu1ppa3) precise; urgency=low
 
   * debian/copyright: fixed license of original program

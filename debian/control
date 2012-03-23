@@ -10,7 +10,7 @@ Standards-Version: 3.9.1
 Homepage: http://powdertoy.co.uk
 
 Package: the-powder-toy
-Architecture: all
+Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Physics sandbox game
  The Powder Toy is a desktop version of the classic
