@@ -8,9 +8,9 @@
 #endif
  
 //VersionInfoStart
-#define SAVE_VERSION 71
-#define MINOR_VERSION 3
-#define BUILD_NUM 137
+#define SAVE_VERSION 74
+#define MINOR_VERSION 0
+#define BUILD_NUM 149
 //VersionInfoEnd
 
 #define IDENT_VERSION "G" //Change this if you're not Simon! It should be a single letter
@@ -89,6 +89,7 @@ extern unsigned char ZSIZE;
 #define STAMP_MAX 240
 
 //#define SAVE_OPS
+//#define REALISTIC
 
 #define NGOL 25
 #define NGOLALT 24 //NGOL should be 24, but use this var until I find out why
@@ -165,6 +166,7 @@ extern int active_menu;
 extern int hud_enable;
 extern int pretty_powder;
 extern int drawgrav_enable;
+extern int ngrav_enable;
 int limitFPS;
 int water_equal_test;
 extern int quickoptions_tooltip_fade;

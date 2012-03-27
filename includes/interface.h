@@ -36,24 +36,27 @@ typedef struct menu_wall menu_wall;
 #define SC_WALL 0
 #define SC_ELEC 1
 #define SC_POWERED 2
-#define SC_EXPLOSIVE 3
-#define SC_GAS 4
-#define SC_LIQUID 5
-#define SC_POWDERS 6
-#define SC_SOLIDS 7
-#define SC_NUCLEAR 8
-#define SC_SPECIAL 9
-#define SC_LIFE 10
-#define SC_TOOL 11
+#define SC_FORCE 3
+#define SC_EXPLOSIVE 4
+#define SC_GAS 5
+#define SC_LIQUID 6
+#define SC_POWDERS 7
+#define SC_SOLIDS 8
+#define SC_NUCLEAR 9
+#define SC_SPECIAL 10
+#define SC_LIFE 11
+#define SC_TOOL 12
+
 #define SC_CRACKER 13
 #define SC_CRACKER2 14
-#define SC_TOTAL 12
+#define SC_TOTAL 13
 
 static menu_section msections[] = //doshow does not do anything currently.
 {
 	{"\xC1", "Walls", 0, 1},
 	{"\xC2", "Electronics", 0, 1},
 	{"\xD6", "Powered Materials", 0, 1},
+	{">",	 "Force", 0, 1},
 	{"\xC3", "Explosives", 0, 1},
 	{"\xC5", "Gasses", 0, 1},
 	{"\xC4", "Liquids", 0, 1},
@@ -74,6 +77,8 @@ static quick_option quickmenu[] =
 	{"P", "Sand effect", QM_TOGGLE, &pretty_powder},
 	{"G", "Draw gravity grid", QM_TOGGLE, &drawgrav_enable},
 	{"D", "Show decorations", QM_TOGGLE, &decorations_enable},
+	{"N", "Newtonian gravity", QM_TOGGLE, &ngrav_enable},
+	{"A", "Ambient heat", QM_TOGGLE, &aheat_enable},
 	{NULL}
 };
 
@@ -98,12 +103,14 @@ static menu_wall colorlist[] =
 #define DECO_DRAW 0
 #define DECO_LIGHTEN 1
 #define DECO_DARKEN 2
+#define DECO_SMUDGE 3
 
 static menu_wall toollist[] =
 {
 	{PIXPACK(0xFF0000), "Draw"},
 	{PIXPACK(0xDDDDDD), "Lighten"},
 	{PIXPACK(0x111111), "Darken"},
+	{PIXPACK(0x00FF00), "Smudge"},
 };
 
 struct ui_edit
@@ -286,7 +293,7 @@ int save_filename_ui(pixel *vid_buf);
 
 void menu_ui(pixel *vid_buf, int i, int *sl, int *sr);
 
-void menu_ui_v3(pixel *vid_buf, int i, int *sl, int *sr, int *dae, int b, int bq, int mx, int my);
+void menu_ui_v3(pixel *vid_buf, int i, int *sl, int *sr, int *su, int *dae, int b, int bq, int mx, int my);
 
 int color_menu_ui(pixel *vid_buf, int i, int *cr, int *cg, int *cb, int b, int bq, int mx, int my, int * tool);
 

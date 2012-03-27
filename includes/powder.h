@@ -214,7 +214,9 @@
 #define PT_WIRE 156
 #define PT_GBMB 157
 #define PT_FIGH 158
-#define PT_NUM  159
+#define PT_FRAY 159
+#define PT_REPL 160
+#define PT_NUM  161
 
 #define R_TEMP 22
 #define MAX_TEMP 9999
@@ -249,6 +251,7 @@
 #define PROP_SPARKSETTLE	0x20000	//2^17 Allow Sparks/Embers to settle
 
 #define FLAG_STAGNANT	1
+#define FLAG_SKIPMOVE	0x2 // skip movement for one frame, only implemented for PHOT
 
 #define GRAPHICS_FUNC_ARGS particle *cpart, int nx, int ny, int *pixel_mode, int* cola, int *colr, int *colg, int *colb, int *firea, int *firer, int *fireg, int *fireb
 #define GRAPHICS_FUNC_SUBCALL_ARGS cpart, nx, ny, pixel_mode, cola, colr, colg, colb, firea, firer, fireg, fireb
@@ -368,6 +371,7 @@ int update_ICEI(UPDATE_FUNC_ARGS);
 int update_ISZ(UPDATE_FUNC_ARGS);
 int update_LCRY(UPDATE_FUNC_ARGS);
 int update_MORT(UPDATE_FUNC_ARGS);
+int update_NBLE(UPDATE_FUNC_ARGS);
 int update_NEUT(UPDATE_FUNC_ARGS);
 int update_NPTCT(UPDATE_FUNC_ARGS);
 int update_PCLN(UPDATE_FUNC_ARGS);
@@ -431,6 +435,8 @@ int update_ACEL(UPDATE_FUNC_ARGS);
 int update_DCEL(UPDATE_FUNC_ARGS);
 int update_BANG(UPDATE_FUNC_ARGS);
 int update_IGNT(UPDATE_FUNC_ARGS);
+int update_FRAY(UPDATE_FUNC_ARGS);
+int update_REPL(UPDATE_FUNC_ARGS);
 
 int update_MISC(UPDATE_FUNC_ARGS);
 int update_legacy_PYRO(UPDATE_FUNC_ARGS);
@@ -787,7 +793,7 @@ void create_box(int x1, int y1, int x2, int y2, int c, int flags);
 
 int flood_parts(int x, int y, int c, int cm, int bm, int flags);
 
-int create_parts(int x, int y, int rx, int ry, int c, int flags);
+int create_parts(int x, int y, int rx, int ry, int c, int flags, int fill);
 
 void create_line(int x1, int y1, int x2, int y2, int rx, int ry, int c, int flags);
 

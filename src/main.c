@@ -155,7 +155,42 @@ static const char *it_msg =
     "\bgSimon Robertshaw, Skresanov Savely, cracker64, Catelite, Bryan Hoyle, Nathan Cousins, jacksonmj,\n"
 	"\bgLieuwe Mosch, Anthony Boot, Matthew \"me4502\", MaksProg\n"
     "\n"
-    "\bgTo use online features such as saving, you need to register at: \brhttp://powdertoy.co.uk/Register.html"
+    "\bgTo use online features such as saving, you need to register at: \brhttp://powdertoy.co.uk/Register.html\n"
+	"\n"
+	"\bt" MTOS(SAVE_VERSION) "." MTOS(MINOR_VERSION) "." MTOS(BUILD_NUM) " "
+#ifdef X86
+	"X86 "
+#endif
+#ifdef X86_SSE
+	"X86_SSE "
+#endif
+#ifdef X86_SSE2
+	"X86_SSE2 "
+#endif
+#ifdef X86_SSE3
+	"X86_SSE3 "
+#endif
+#ifdef LIN32
+	"LIN32 "
+#endif
+#ifdef LIN64
+	"LIN64 "
+#endif
+#ifdef WIN32
+	"WIN32 "
+#endif
+#ifdef MACOSX
+	"MACOSX "
+#endif
+#ifdef LUACONSOLE
+	"LUACONSOLE "
+#endif
+#ifdef GRAVFFT
+	"GRAVFFT "
+#endif
+#ifdef REALISTIC
+	"REALISTIC"
+#endif
     ;
 
 typedef struct
@@ -277,6 +312,7 @@ void clear_sim(void)
 	memset(bmap, 0, sizeof(bmap));
 	memset(emap, 0, sizeof(emap));
 	memset(signs, 0, sizeof(signs));
+	MSIGN = -1;
 	memset(parts, 0, sizeof(particle)*NPART);
 	for (i=0; i<NPART-1; i++)
 		parts[i].life = i+1;
@@ -353,6 +389,12 @@ void stamp_update(void)
 		if (stamps[i].dodelete!=1)
 		{
 			fwrite(stamps[i].name, 1, 10, f);
+		}
+		else
+		{
+			char name[30] = {0};
+			sprintf(name,"stamps%s%s.stm",PATH_SEP,stamps[i].name);
+			remove(name);
 		}
 	}
 	fclose(f);
@@ -1754,7 +1796,7 @@ int main(int argc, char *argv[])
 				active_menu = i;
 			}
 		}
-		menu_ui_v3(vid_buf, active_menu, &sl, &sr, &dae, b, bq, x, y); //draw the elements in the current menu
+		menu_ui_v3(vid_buf, active_menu, &sl, &sr, &su, &dae, b, bq, x, y); //draw the elements in the current menu
 		if (zoom_en && x>=sdl_scale*zoom_wx && y>=sdl_scale*zoom_wy //change mouse position while it is in a zoom window
 		        && x<sdl_scale*(zoom_wx+ZFACTOR*ZSIZE)
 		        && y<sdl_scale*(zoom_wy+ZFACTOR*ZSIZE))
@@ -1832,7 +1874,10 @@ int main(int argc, char *argv[])
 				sprintf(heattext, "Empty, Pressure: %3.2f", pv[(y/sdl_scale)/CELL][(x/sdl_scale)/CELL]);
 				if (DEBUG_MODE)
 				{
-					sprintf(coordtext, "X:%d Y:%d. GX: %.2f GY: %.2f", x/sdl_scale, y/sdl_scale, gravx[(((y/sdl_scale)/CELL)*(XRES/CELL))+((x/sdl_scale)/CELL)], gravy[(((y/sdl_scale)/CELL)*(XRES/CELL))+((x/sdl_scale)/CELL)]);
+					if (ngrav_enable)
+						sprintf(coordtext, "X:%d Y:%d. GX: %.2f GY: %.2f", x/sdl_scale, y/sdl_scale, gravx[(((y/sdl_scale)/CELL)*(XRES/CELL))+((x/sdl_scale)/CELL)], gravy[(((y/sdl_scale)/CELL)*(XRES/CELL))+((x/sdl_scale)/CELL)]);
+					else
+						sprintf(coordtext, "X:%d Y:%d", x/sdl_scale, y/sdl_scale);
 				}
 			}
 		}
@@ -2220,14 +2265,14 @@ int main(int argc, char *argv[])
 					}
 					if (x>=(XRES+BARSIZE-(510-476)) && x<=(XRES+BARSIZE-(510-491)) && !bq)
 					{
-						render_ui(vid_buf, XRES+BARSIZE-(510-491), YRES+(MENUSIZE-19), 3);
+						render_ui(vid_buf, XRES+BARSIZE-(510-491), YRES-2, 3);
 					}
 					if (x>=(XRES+BARSIZE-(510-494)) && x<=(XRES+BARSIZE-(510-509)) && !bq)
 						sys_pause = !sys_pause;
 					lb = 0;
 				}
 			}
-			else if (y<YRES)// mouse is in playing field
+			else if (y<YRES && x<XRES)// mouse is in playing field
 			{
 				int signi;
 
@@ -2364,7 +2409,7 @@ int main(int argc, char *argv[])
 						if (c!=WL_STREAM+100&&c!=SPC_AIR&&c!=SPC_HEAT&&c!=SPC_COOL&&c!=SPC_VACUUM&&!REPLACE_MODE&&c!=SPC_WIND&&c!=SPC_PGRV&&c!=SPC_NGRV)
 							flood_parts(x, y, c, -1, -1, get_brush_flags());
 						if (c==SPC_HEAT || c==SPC_COOL)
-							create_parts(x, y, bsx, bsy, c, get_brush_flags());
+							create_parts(x, y, bsx, bsy, c, get_brush_flags(), 1);
 						lx = x;
 						ly = y;
 						lb = 0;
@@ -2417,7 +2462,7 @@ int main(int argc, char *argv[])
 								cb_bmap[cby][cbx] = bmap[cby][cbx];
 								cb_emap[cby][cbx] = emap[cby][cbx];
 							}
-						create_parts(x, y, bsx, bsy, c, get_brush_flags());
+						create_parts(x, y, bsx, bsy, c, get_brush_flags(), 1);
 						lx = x;
 						ly = y;
 						lb = b;

@@ -2219,7 +2219,7 @@ void menu_ui(pixel *vid_buf, int i, int *sl, int *sr)
 }
 */
 //current menu function
-void menu_ui_v3(pixel *vid_buf, int i, int *sl, int *sr, int *dae, int b, int bq, int mx, int my)
+void menu_ui_v3(pixel *vid_buf, int i, int *sl, int *sr, int *su, int *dae, int b, int bq, int mx, int my)
 {
 	int h,x,y,n=0,height,width,sy,rows=0,xoff=0,fwidth;
 	SEC = SEC2;
@@ -2458,7 +2458,7 @@ void menu_ui_v3(pixel *vid_buf, int i, int *sl, int *sr, int *dae, int b, int bq
 			SEC2 = -1;
 		}
 		else {
-			*sl = h;
+			*sl = *su = h;
 			*dae = 51;
 		}
 	}
@@ -2478,7 +2478,7 @@ void menu_ui_v3(pixel *vid_buf, int i, int *sl, int *sr, int *dae, int b, int bq
 			SEC2 = -1;
 		}
 		else {
-			*sr = h;
+			*sr = *su = h;
 			*dae = 51;
 		}
 	}
@@ -2537,7 +2537,7 @@ int color_menu_ui(pixel *vid_buf, int i, int *cr, int *cg, int *cb, int b, int b
 			float overflow = fwidth-(XRES-BARSIZE), location = ((float)XRES-BARSIZE)/((float)(mx-(XRES-BARSIZE)));
 			xoff = (int)(overflow / location);
 		}
-		for (n = 0; n<3; n++)
+		for (n = 0; n<4; n++)
 		{
 				for (a=1; a<15; a++)
 				{
@@ -2547,6 +2547,8 @@ int color_menu_ui(pixel *vid_buf, int i, int *cr, int *cg, int *cb, int b, int b
 							vid_buf[(XRES+BARSIZE)*(y+a)+((x-xoff)+c)] = PIXRGB(PIXR(toollist[n].colour)-10*a, PIXG(toollist[n].colour)-10*a, PIXB(toollist[n].colour)-10*a);
 						else if (n == DECO_DARKEN)
 							vid_buf[(XRES+BARSIZE)*(y+a)+((x-xoff)+c)] = PIXRGB(PIXR(toollist[n].colour)+10*a, PIXG(toollist[n].colour)+10*a, PIXB(toollist[n].colour)+10*a);
+						else if (n == DECO_SMUDGE)
+							vid_buf[(XRES+BARSIZE)*(y+a)+((x-xoff)+c)] = PIXRGB(PIXR(toollist[n].colour), PIXG(toollist[n].colour)-5*c, PIXB(toollist[n].colour)+5*c);
 						else if (n == DECO_DRAW)
 							vid_buf[(XRES+BARSIZE)*(y+a)+((x-xoff)+c)] = PIXRGB(*cr,*cg,*cb);
 						else
@@ -2619,7 +2621,15 @@ void quickoptions_menu(pixel *vid_buf, int b, int bq, int x, int y)
 				quickoptions_tooltip_y = (i*16)+5;
 				if(b && !bq)
 				{
-					*(quickmenu[i].variable) = !(*(quickmenu[i].variable));
+					if (!strcmp(quickmenu[i].name,"Newtonian gravity"))
+					{
+						if(!ngrav_enable)
+							start_grav_async();
+						else
+							stop_grav_async();
+					}
+					else
+						*(quickmenu[i].variable) = !(*(quickmenu[i].variable));
 				}
 			}
 		}
@@ -2795,12 +2805,10 @@ void set_cmode(int cm) // sets to given view mode
 	
 	free(render_modes);
 	render_modes = calloc(2, sizeof(unsigned int));
-	render_mode = RENDER_BASC;
 	render_modes[0] = RENDER_BASC;
 	render_modes[1] = 0;
 	
 	free(display_modes);
-	display_mode = 0;
 	display_modes = calloc(1, sizeof(unsigned int));
 	display_modes[0] = 0;
 	
@@ -2809,13 +2817,11 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		free(render_modes);
 		render_modes = calloc(3, sizeof(unsigned int));
-		render_mode |= RENDER_EFFE | RENDER_BASC;
 		render_modes[0] = RENDER_EFFE;
 		render_modes[1] = RENDER_BASC;
 		render_modes[2] = 0;
 		free(display_modes);
 		display_modes = calloc(2, sizeof(unsigned int));
-		display_mode |= DISPLAY_AIRV;
 		display_modes[0] = DISPLAY_AIRV;
 		display_modes[1] = 0;
 		strcpy(itc_msg, "Velocity Display");
@@ -2824,13 +2830,11 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		free(render_modes);
 		render_modes = calloc(3, sizeof(unsigned int));
-		render_mode |= RENDER_EFFE | RENDER_BASC;
 		render_modes[0] = RENDER_EFFE;
 		render_modes[1] = RENDER_BASC;
 		render_modes[2] = 0;
 		free(display_modes);
 		display_modes = calloc(2, sizeof(unsigned int));
-		display_mode |= DISPLAY_AIRP;
 		display_modes[0] = DISPLAY_AIRP;
 		display_modes[1] = 0;
 		strcpy(itc_msg, "Pressure Display");
@@ -2839,13 +2843,11 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		free(render_modes);
 		render_modes = calloc(3, sizeof(unsigned int));
-		render_mode |= RENDER_EFFE | RENDER_BASC;
 		render_modes[0] = RENDER_EFFE;
 		render_modes[1] = RENDER_BASC;
 		render_modes[2] = 0;
 		free(display_modes);
 		display_modes = calloc(2, sizeof(unsigned int));
-		display_mode |= DISPLAY_PERS;
 		display_modes[0] = DISPLAY_PERS;
 		display_modes[1] = 0;
 		memset(pers_bg, 0, (XRES+BARSIZE)*YRES*PIXELSIZE);
@@ -2855,8 +2857,6 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		free(render_modes);
 		render_modes = calloc(3, sizeof(unsigned int));
-		render_mode |= RENDER_FIRE;
-		render_mode |= RENDER_EFFE;
 		render_modes[0] = RENDER_FIRE;
 		render_modes[1] = RENDER_EFFE;
 		render_modes[2] = 0;
@@ -2869,8 +2869,6 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		free(render_modes);
 		render_modes = calloc(4, sizeof(unsigned int));
-		render_mode |= RENDER_FIRE;
-		render_mode |= RENDER_BLOB;
 		render_modes[0] = RENDER_FIRE;
 		render_modes[1] = RENDER_BLOB;
 		render_modes[2] = RENDER_EFFE;
@@ -2884,15 +2882,15 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		colour_mode = COLOUR_HEAT;
 		strcpy(itc_msg, "Heat Display");
+		free(display_modes);
+		display_modes = calloc(2, sizeof(unsigned int));
+		display_modes[0] = DISPLAY_AIRH;
+		display_modes[1] = 0;
 	}
 	else if (cmode==CM_FANCY)
 	{
 		free(render_modes);
 		render_modes = calloc(5, sizeof(unsigned int));
-		render_mode |= RENDER_FIRE;
-		render_mode |= RENDER_GLOW;
-		render_mode |= RENDER_BLUR;
-		render_mode |= RENDER_EFFE;
 		render_modes[0] = RENDER_FIRE;
 		render_modes[1] = RENDER_GLOW;
 		render_modes[2] = RENDER_BLUR;
@@ -2900,7 +2898,6 @@ void set_cmode(int cm) // sets to given view mode
 		render_modes[4] = 0;
 		free(display_modes);
 		display_modes = calloc(2, sizeof(unsigned int));
-		display_mode |= DISPLAY_WARP;
 		display_modes[0] = DISPLAY_WARP;
 		display_modes[1] = 0;
 		memset(fire_r, 0, sizeof(fire_r));
@@ -2926,13 +2923,11 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		free(render_modes);
 		render_modes = calloc(3, sizeof(unsigned int));
-		render_mode |= RENDER_EFFE | RENDER_BASC;
 		render_modes[0] = RENDER_EFFE;
 		render_modes[1] = RENDER_BASC;
 		render_modes[2] = 0;
 		free(display_modes);
 		display_modes = calloc(2, sizeof(unsigned int));
-		display_mode |= DISPLAY_AIRC;
 		display_modes[0] = DISPLAY_AIRC;
 		display_modes[1] = 0;
 		strcpy(itc_msg, "Alternate Velocity Display");
@@ -2941,6 +2936,8 @@ void set_cmode(int cm) // sets to given view mode
 	{
 		strcpy(itc_msg, "Error: Incorrect Display Number");
 	}
+
+	update_display_modes();// Update render_mode and display_mode from the relevant arrays
 	save_presets(0);
 }
 
@@ -6080,6 +6077,13 @@ int save_filename_ui(pixel *vid_buf)
 						{
 							strncpy(svf_filename, savefname, 255);
 							svf_fileopen = 1;
+							
+							//Allow reloading
+							if(svf_last)
+								free(svf_last);
+							svf_last = malloc(save_size);
+							memcpy(svf_last, save_data, save_size);
+							svf_lsize = save_size;
 						}
 						break;
 					} else {
@@ -6419,10 +6423,10 @@ void render_ui(pixel * vid_buf, int xcoord, int ycoord, int orientation)
 	int display_optionicons[] = {0xD4, 0x99, 0x98, 0xBE, 0xDE, 0x9A, -1};
 	char * display_desc[] = {"Air: Cracker", "Air: Pressure", "Air: Velocity", "Air: Heat", "Warp effect", "Persistent", "Effects"};
 
-	int colour_optioncount = 3;
-	int colour_options[] = {COLOUR_LIFE, COLOUR_HEAT, COLOUR_GRAD};
-	int colour_optionicons[] = {0xE0, 0xBE, 0xD3};
-	char * colour_desc[] = {"Life", "Heat", "Heat Gradient"};
+	int colour_optioncount = 4;
+	int colour_options[] = {COLOUR_BASC, COLOUR_LIFE, COLOUR_HEAT, COLOUR_GRAD};
+	int colour_optionicons[] = {0xDB, 0xE0, 0xBE, 0xD3};
+	char * colour_desc[] = {"Basic", "Life", "Heat", "Heat Gradient"};
 
 	yoffset = 16;
 	xoffset = 0;
