@@ -1,4 +1,4 @@
 debian/scripts/the-powder-toy		usr/games
 debian/the-powder-toy.desktop		usr/share/applications
-build/powder					usr/lib/games/the-powder-toy
-src/Resources/Icon-32.png usr/lib/games/the-powder-toy
+build/powder				usr/lib/games/the-powder-toy
+src/Resources/icon/powder-48.png	usr/lib/games/the-powder-toy
