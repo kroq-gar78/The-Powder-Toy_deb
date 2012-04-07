@@ -1,8 +1,8 @@
-the-powder-toy (74.1.1-0ubuntu1) precise; urgency=low
+the-powder-toy (74.1.151-0ubuntu1) precise; urgency=low
 
   * New upstream release (strangely has same version number, hence the extra '.1')
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 05 Apr 2012 17:38:18 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 06 Apr 2012 23:34:39 -0500
 
 the-powder-toy (74.1-0ubuntu1) precise; urgency=low
 
