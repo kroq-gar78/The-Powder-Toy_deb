@@ -12,6 +12,8 @@ Homepage: http://powdertoy.co.uk
 Package: the-powder-toy
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: the-powder-toy-beta
+Replaces: the-powder-toy-beta (<< 74.1.152)
 Description: Physics sandbox game
  The Powder Toy is a desktop version of the classic
  'falling sand' physics sandbox game, it simulates
