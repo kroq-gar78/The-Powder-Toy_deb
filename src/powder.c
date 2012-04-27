@@ -91,7 +91,7 @@ void init_can_move()
 		for (rt=1;rt<PT_NUM;rt++)
 		{
 			// weight check, also prevents particles of same type displacing each other
-			if (ptypes[t].weight <= ptypes[rt].weight) can_move[t][rt] = 0;
+			if (ptypes[t].weight <= ptypes[rt].weight || rt==PT_GEL) can_move[t][rt] = 0;
 			if (t==PT_NEUT && ptypes[rt].properties&PROP_NEUTPASS)
 				can_move[t][rt] = 2;
 			if (t==PT_NEUT && ptypes[rt].properties&PROP_NEUTABSORB)
@@ -592,11 +592,20 @@ void kill_part(int i)//kills particle number i
 {
 	int x, y;
 
+	// Remove from pmap even if type==0, otherwise infinite recursion occurs when flood fill deleting
+	// a particle which sets type to 0 without calling kill_part (such as LIFE)
+	x = (int)(parts[i].x+0.5f);
+	y = (int)(parts[i].y+0.5f);
+	if (x>=0 && y>=0 && x<XRES && y<YRES) {
+		if ((pmap[y][x]>>8)==i)
+			pmap[y][x] = 0;
+		else if ((photons[y][x]>>8)==i)
+			photons[y][x] = 0;
+	}
+
 	if (parts[i].type == PT_NONE) //This shouldn't happen anymore, but it's here just in case
 		return;
 
-	x = (int)(parts[i].x+0.5f);
-	y = (int)(parts[i].y+0.5f);
 	if (parts[i].type == PT_STKM)
 	{
 		player.spwn = 0;
@@ -621,12 +630,6 @@ void kill_part(int i)//kills particle number i
 	if (parts[i].type == PT_SOAP)
 	{
 		detach(i);
-	}
-	if (x>=0 && y>=0 && x<XRES && y<YRES) {
-		if ((pmap[y][x]>>8)==i)
-			pmap[y][x] = 0;
-		else if ((photons[y][x]>>8)==i)
-			photons[y][x] = 0;
 	}
 
 	parts[i].type = PT_NONE;
@@ -925,6 +928,14 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 	{
 		parts[i].tmp = grule[v+1][9] - 1;
 		parts[i].ctype = v;
+	}
+	if (t==PT_TRON)
+	{
+		int randhue = rand()%360;
+		int randomdir = rand()%4;
+		parts[i].tmp = 1|(randomdir<<5)|(randhue<<7);//set as a head and a direction
+		parts[i].tmp2 = 4;//tail
+		parts[i].life = 5;
 	}
 	
 	if (t==PT_DEUT)
@@ -1805,8 +1816,11 @@ void update_particles_i(pixel *vid, int start, int inc)
 				pGravY += gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
 			}
 			//velocity updates for the particle
-			parts[i].vx *= ptypes[t].loss;
-			parts[i].vy *= ptypes[t].loss;
+			if (!(parts[i].flags&FLAG_MOVABLE))
+			{
+				parts[i].vx *= ptypes[t].loss;
+				parts[i].vy *= ptypes[t].loss;
+			}
 			//particle gets velocity from the vx and vy maps
 			parts[i].vx += ptypes[t].advection*vx[y/CELL][x/CELL] + pGravX;
 			parts[i].vy += ptypes[t].advection*vy[y/CELL][x/CELL] + pGravY;
@@ -1837,9 +1851,13 @@ void update_particles_i(pixel *vid, int start, int inc)
 					}
 				}
 
+			float gel_scale = 1.0f;
+			if (t==PT_GEL)
+				gel_scale = parts[i].tmp*2.55f;
+
 			if (!legacy_enable)
 			{
-				if (y-2 >= 0 && y-2 < YRES && (ptypes[t].properties&TYPE_LIQUID)) {//some heat convection for liquids
+				if (y-2 >= 0 && y-2 < YRES && (ptypes[t].properties&TYPE_LIQUID) && (t!=PT_GEL || gel_scale>(1+rand()%255))) {//some heat convection for liquids
 					r = pmap[y-2][x];
 					if (!(!r || parts[i].type != (r&0xFF))) {
 						if (parts[i].temp>parts[r>>8].temp) {
@@ -1853,20 +1871,20 @@ void update_particles_i(pixel *vid, int start, int inc)
 				//heat transfer code
 				h_count = 0;
 #ifdef REALISTIC
-				if (t&&(t!=PT_HSWC||parts[i].life==10)&&ptypes[t].hconduct)
+				if (t&&(t!=PT_HSWC||parts[i].life==10)&&(ptypes[t].hconduct*gel_scale))
 				{
 					float c_Cm = 0.0f;
 #else
-				if (t&&(t!=PT_HSWC||parts[i].life==10)&&ptypes[t].hconduct>(rand()%250))
+				if (t&&(t!=PT_HSWC||parts[i].life==10)&&(ptypes[t].hconduct*gel_scale)>(rand()%250))
 				{
 					float c_Cm = 0.0f;
 #endif
 					if (aheat_enable)
 					{
 #ifdef REALISTIC
-						c_heat = parts[i].temp*96.645/ptypes[t].hconduct*fabs(ptypes[t].weight)
+						c_heat = parts[i].temp*96.645/ptypes[t].hconduct*gel_scale*fabs(ptypes[t].weight)
 							+ hv[y/CELL][x/CELL]*100*(pv[y/CELL][x/CELL]+273.15f)/256;
-						c_Cm = 96.645/ptypes[t].hconduct*fabs(ptypes[t].weight) 
+						c_Cm = 96.645/ptypes[t].hconduct*gel_scale*fabs(ptypes[t].weight) 
 							+ 100*(pv[y/CELL][x/CELL]+273.15f)/256;
 						pt = c_heat/c_Cm;
 						pt = restrict_flt(pt, -MAX_TEMP+MIN_TEMP, MAX_TEMP-MIN_TEMP);
@@ -1889,14 +1907,19 @@ void update_particles_i(pixel *vid, int start, int inc)
 						if (!r)
 							continue;
 						rt = r&0xFF;
+
 						if (rt&&ptypes[rt].hconduct&&(rt!=PT_HSWC||parts[r>>8].life==10)
 						        &&(t!=PT_FILT||(rt!=PT_BRAY&&rt!=PT_BIZR&&rt!=PT_BIZRG))
 						        &&(rt!=PT_FILT||(t!=PT_BRAY&&t!=PT_PHOT&&t!=PT_BIZR&&t!=PT_BIZRG)))
 						{
 							surround_hconduct[j] = r>>8;
 #ifdef REALISTIC 
-							c_heat += parts[r>>8].temp*96.645/ptypes[rt].hconduct*fabs(ptypes[rt].weight);
-							c_Cm += 96.645/ptypes[rt].hconduct*fabs(ptypes[rt].weight);
+							if (rt==PT_GEL)
+								gel_scale = parts[r>>8].tmp*2.55f;
+							else gel_scale = 1.0f;
+
+							c_heat += parts[r>>8].temp*96.645/ptypes[rt].hconduct*gel_scale*fabs(ptypes[rt].weight);
+							c_Cm += 96.645/ptypes[rt].hconduct*gel_scale*fabs(ptypes[rt].weight);
 #else
 							c_heat += parts[r>>8].temp;
 #endif
@@ -1904,13 +1927,17 @@ void update_particles_i(pixel *vid, int start, int inc)
 						}
 					}
 #ifdef REALISTIC
+					if (t==PT_GEL)
+						gel_scale = parts[i].tmp*2.55f;
+					else gel_scale = 1.0f;
+
 					if (t == PT_PHOT)
 						pt = (c_heat+parts[i].temp*96.645)/(c_Cm+96.645);
 					else
-						pt = (c_heat+parts[i].temp*96.645/ptypes[t].hconduct*fabs(ptypes[t].weight))/(c_Cm+96.645/ptypes[t].hconduct*fabs(ptypes[t].weight));
+						pt = (c_heat+parts[i].temp*96.645/ptypes[t].hconduct*gel_scale*fabs(ptypes[t].weight))/(c_Cm+96.645/ptypes[t].hconduct*gel_scale*fabs(ptypes[t].weight));
 
-					c_heat += parts[i].temp*96.645/ptypes[t].hconduct*fabs(ptypes[t].weight);
-					c_Cm += 96.645/ptypes[t].hconduct*fabs(ptypes[t].weight);
+					c_heat += parts[i].temp*96.645/ptypes[t].hconduct*gel_scale*fabs(ptypes[t].weight);
+					c_Cm += 96.645/ptypes[t].hconduct*gel_scale*fabs(ptypes[t].weight);
 					parts[i].temp = restrict_flt(pt, MIN_TEMP, MAX_TEMP);
 #else
 					pt = (c_heat+parts[i].temp)/(h_count+1);
@@ -2099,6 +2126,7 @@ void update_particles_i(pixel *vid, int start, int inc)
 						}
 					}
 				}
+				else parts[i].temp = restrict_flt(parts[i].temp, MIN_TEMP, MAX_TEMP);
 			}
 
 			if (t==PT_LIFE)
@@ -2499,6 +2527,10 @@ killed:
 								rt = 30;//slight less water lag, although it changes how it moves a lot
 							else
 								rt = 10;
+
+							if (t==PT_GEL)
+								rt = parts[i].tmp*0.20f+5.0f;
+
 							for (j=clear_x+r; j>=0 && j>=clear_x-rt && j<clear_x+rt && j<XRES; j+=r)
 							{
 								if (((pmap[fin_y][j]&0xFF)!=t || bmap[fin_y/CELL][j/CELL])
@@ -2776,7 +2808,7 @@ void create_box(int x1, int y1, int x2, int y2, int c, int flags)
 {
 	int i, j;
 	if (c==SPC_PROP)
-		return 0;
+		return;
 	if (x1>x2)
 	{
 		i = x2;

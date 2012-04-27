@@ -21,7 +21,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef MACOSX
+#ifndef WIN32
+#include <sys/param.h>
+#endif
+#if !defined(MACOSX) && !defined(BSD)
 #include <malloc.h>
 #endif
 #include <string.h>
@@ -35,7 +38,6 @@
 #ifdef MACOSX
 #include <mach-o/dyld.h>
 #include <errno.h>
-#include <sys/param.h>
 #endif
 
 #include <update.h>

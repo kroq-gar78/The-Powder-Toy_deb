@@ -107,7 +107,7 @@ int graphics_DUST(GRAPHICS_FUNC_ARGS)
 	if(cpart->life >= 1)
 	{
 		*firea = 120;
-		*firer = *colr = cpart->flags;
+		*firer = *colr = cpart->tmp2;
 		*fireg = *colg = cpart->tmp;
 		*fireb = *colb = cpart->ctype;
 		if (decorations_enable && cpart->dcolour)
@@ -166,6 +166,14 @@ int graphics_WIFI(GRAPHICS_FUNC_ARGS)
 	*colg = sin(frequency*q + 2) * 127 + 128;
 	*colb = sin(frequency*q + 4) * 127 + 128;
 	*pixel_mode |= EFFECT_LINES;
+	return 0;
+}
+int graphics_GEL(GRAPHICS_FUNC_ARGS)
+{
+	int q = cpart->tmp;
+	*colr = q*(32-255)/120+255;
+	*colg = q*(48-186)/120+186;
+	*colb = q*208/120;
 	return 0;
 }
 int graphics_PRTI(GRAPHICS_FUNC_ARGS)

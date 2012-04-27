@@ -201,6 +201,8 @@
 #define PT_BANG	139
 #define PT_IGNT 140
 #define PT_BOYL 141
+#define PT_GEL 142
+#define PT_TRON 143
 
 #define OLD_PT_WIND 147
 #define PT_H2   148
@@ -252,6 +254,7 @@
 
 #define FLAG_STAGNANT	1
 #define FLAG_SKIPMOVE	0x2 // skip movement for one frame, only implemented for PHOT
+#define FLAG_MOVABLE	0x4 // if can move
 
 #define GRAPHICS_FUNC_ARGS particle *cpart, int nx, int ny, int *pixel_mode, int* cola, int *colr, int *colg, int *colb, int *firea, int *firer, int *fireg, int *fireb
 #define GRAPHICS_FUNC_SUBCALL_ARGS cpart, nx, ny, pixel_mode, cola, colr, colg, colb, firea, firer, fireg, fireb
@@ -271,6 +274,7 @@ struct particle
 };
 typedef struct particle particle;
 
+int graphics_DEFAULT(GRAPHICS_FUNC_ARGS);
 int graphics_FIRE(GRAPHICS_FUNC_ARGS);
 int graphics_SMKE(GRAPHICS_FUNC_ARGS);
 int graphics_PLSM(GRAPHICS_FUNC_ARGS);
@@ -322,6 +326,10 @@ int graphics_ELEC(GRAPHICS_FUNC_ARGS);
 int graphics_WIRE(GRAPHICS_FUNC_ARGS);
 int graphics_ACEL(GRAPHICS_FUNC_ARGS);
 int graphics_DCEL(GRAPHICS_FUNC_ARGS);
+int graphics_GEL(GRAPHICS_FUNC_ARGS);
+int graphics_TRON(GRAPHICS_FUNC_ARGS);
+
+void TRON_init_graphics();
 
 #define UPDATE_FUNC_ARGS int i, int x, int y, int surround_space, int nt
 // to call another update function with same arguments:
@@ -362,6 +370,7 @@ int update_FSEP(UPDATE_FUNC_ARGS);
 int update_FUSE(UPDATE_FUNC_ARGS);
 int update_FIRW(UPDATE_FUNC_ARGS);
 int update_FWRK(UPDATE_FUNC_ARGS);
+int update_GEL(UPDATE_FUNC_ARGS);
 int update_GLAS(UPDATE_FUNC_ARGS);
 int update_GLOW(UPDATE_FUNC_ARGS);
 int update_GOO(UPDATE_FUNC_ARGS);
@@ -437,6 +446,7 @@ int update_BANG(UPDATE_FUNC_ARGS);
 int update_IGNT(UPDATE_FUNC_ARGS);
 int update_FRAY(UPDATE_FUNC_ARGS);
 int update_REPL(UPDATE_FUNC_ARGS);
+int update_TRON(UPDATE_FUNC_ARGS);
 
 int update_MISC(UPDATE_FUNC_ARGS);
 int update_legacy_PYRO(UPDATE_FUNC_ARGS);
