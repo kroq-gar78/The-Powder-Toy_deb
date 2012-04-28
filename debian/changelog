@@ -1,8 +1,10 @@
 the-powder-toy (77.0-0~ppa1) precise; urgency=low
 
   * New upstream release
+  * debian/patches/makefile_remove_powder: remove build/powder* in
+    target 'clean'
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 27 Apr 2012 17:23:20 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 28 Apr 2012 12:41:48 -0500
 
 the-powder-toy (74.2-0ubuntu1) precise; urgency=low
 

@@ -1,0 +1,10 @@
+--- a/Makefile
++++ b/Makefile
+@@ -152,6 +152,7 @@
+ clean:
+ 	rm -f build/obj/*.o
+ 	rm -f build/obj/elements/*.o
++	rm -f build/powder*
+ 
+ 
+ 
