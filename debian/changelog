@@ -2,8 +2,9 @@ the-powder-toy (77.0-0~ppa2) precise; urgency=low
 
   * debian/copyright: made it machine-readable
   * debian/control: bumped up Standards-Version to 3.9.3
+  * debian/rules: build separate target for amd64 processors
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 04 May 2012 20:44:26 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 04 May 2012 23:22:18 -0500
 
 the-powder-toy (77.0-0~ppa1) precise; urgency=low
 
