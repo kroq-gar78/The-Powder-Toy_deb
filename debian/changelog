@@ -1,3 +1,9 @@
+the-powder-toy (77.0-0~ppa2) precise; urgency=low
+
+  * debian/copyright: made it machine-readable
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 04 May 2012 20:43:05 -0500
+
 the-powder-toy (77.0-0~ppa1) precise; urgency=low
 
   * New upstream release

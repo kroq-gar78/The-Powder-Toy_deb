@@ -1,27 +1,14 @@
-This work was packaged for Debian by:
+Format: http://dep.debian.net/deps/dep5/
+Upstream-Name: The Powder Toy
+Source: http://powdertoy.co.uk/
 
-    Christoph Korn <christoph.korn@getdeb.net> on Sun, 19 Dec 2010 14:38:46 +0100
+Files: *
+Copyright: 2011, HardWIRED and respective owners
+License: GPL-2
 
-It was downloaded from:
-
-    http://powdertoy.co.uk/
-
-Upstream Authors:
-
-    HardWIRED and respective owners
-
-Copyright:
-
-    Copyright (C) 2011 HardWIRED and respective owners
-
-License:
-
-    GNU General Public License version 2
-
-The Debian packaging is:
-
-    Copyright (C) 2010 Christoph Korn <christoph.korn@getdeb.net>
-    Copyright (C) 2012 Aditya Vaidya <kroq.gar78@gmail.com>
-
-and is licensed under the GPL version 3,
-see "/usr/share/common-licenses/GPL-3".
+Files: debian/*
+Copyright: 2012, Aditya Vaidya <kroq.gar78@gmail.com>
+           2010, Christoph Korn <christoph.korn@getdeb.net>
+License: GPL-3+
+ On Debian/Ubuntu systems, the complete text of the GNU General
+ Public License can be found in '/usr/share/common-licenses/GPL-3'.
