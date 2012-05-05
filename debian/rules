@@ -4,12 +4,10 @@
 
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
-target = 
+target = powder-sse3
 
 ifeq ($(DEB_HOST_ARCH),amd64)
 	target = powder-64-sse3
-else
-	target = powder-sse3
 endif
 
 dh_auto_build:
