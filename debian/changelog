@@ -1,3 +1,12 @@
+the-powder-toy (77.0-0~ppa3) precise; urgency=low
+
+  * debian/control:
+    - added i386- and amd64-specific Build-Depends packages
+    - made it replace all 'the-powder-toy-beta' versions
+    - typo fix in the description
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 05 May 2012 14:29:06 -0500
+
 the-powder-toy (77.0-0~ppa2) precise; urgency=low
 
   * debian/copyright: made it machine-readable
