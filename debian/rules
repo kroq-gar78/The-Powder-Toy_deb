@@ -14,3 +14,4 @@ endif
 
 dh_auto_build:
 	make $(target)
+	mv build/$(target) build/powder
