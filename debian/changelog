@@ -1,3 +1,9 @@
+the-powder-toy (77.0-0~ppa4) quantal; urgency=low
+
+  * Added manpage for binary 'the-powder-toy'
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 06 May 2012 16:25:33 -0500
+
 the-powder-toy (77.0-0~ppa3) precise; urgency=low
 
   * debian/control:
@@ -9,9 +15,8 @@ the-powder-toy (77.0-0~ppa3) precise; urgency=low
   * debian/copyright: 
     - changed from 'GPL-2' to 'GPL-3+'
     - added all authors from src/main.c header
-  * Added manpage for binary 'the-powder-toy'
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 06 May 2012 15:32:19 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 06 May 2012 16:25:24 -0500
 
 the-powder-toy (77.0-0~ppa2) precise; urgency=low
 
