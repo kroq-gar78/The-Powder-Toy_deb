@@ -3,9 +3,28 @@ Upstream-Name: The Powder Toy
 Source: http://powdertoy.co.uk/
 
 Files: *
-Copyright: 2011, HardWIRED and respective owners
-License: GPL-2
-
+Copyright: 2008 - 2011, Stanislaw Skowronek
+           2010 - 2011, Simon Robertshaw
+           2010 - 2011, Skresanov Savely
+           2010 - 2011, Bryan Hoyle
+           2010 - 2011, Nathan Cousins
+           2010 - 2011, cracker64
+           2011, jacksonmj
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License with
+ the Debian GNU/Linux distribution in file /usr/share/common-licenses/GPL-3.
+ If not, see <http://www.gnu.org/licenses/>.
+ 
 Files: debian/*
 Copyright: 2012, Aditya Vaidya <kroq.gar78@gmail.com>
            2010, Christoph Korn <christoph.korn@getdeb.net>

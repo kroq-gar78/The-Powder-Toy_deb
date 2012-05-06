@@ -3,10 +3,12 @@ Section: games
 Priority: optional
 Maintainer: Aditya Vaidya <kroq.gar78@gmail.com>
 XSBC-Original-Maintainer: Christoph Korn <christoph.korn@getdeb.net>
-Build-Depends: debhelper (>= 7.0.50), libsdl1.2-dev (>=1.2.14),
- liblua5.1-0-dev (>= 5.1), libfftw3-dev (>= 3.2.2), libarchive-dev (>= 2.8),
- libbz2-dev (>= 1.0.5), lib64bz2-dev [amd64] (>= 1.0.5),
- lib32bz2-dev (>= 1.0.5) [i386], gcc (>= 4.4)
+Build-Depends: debhelper (>= 7.0.50),
+               libsdl1.2-dev (>=1.2.14),
+               liblua5.1-0-dev (>= 5.1),
+               libfftw3-dev (>= 3.2.2),
+               libbz2-dev (>= 1.0.5),
+               gcc (>= 4.4)
 Standards-Version: 3.9.3
 Homepage: http://powdertoy.co.uk
 
