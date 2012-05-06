@@ -10,6 +10,6 @@ ifeq ($(DEB_HOST_ARCH),amd64)
 	target = powder-64-sse3
 endif
 
-dh_auto_build:
+override_dh_auto_build:
 	make $(target)
 	mv build/$(target) build/powder
