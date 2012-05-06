@@ -6,8 +6,9 @@ the-powder-toy (77.0-0~ppa3) precise; urgency=low
     - typo fix in the description
   * debian/the-powder-toy.install: install README to /usr/share/doc/the-
     powder-toy
+  * debian/copyright: changed from 'GPL-2' to 'GPL-2+'
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 05 May 2012 15:03:06 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 05 May 2012 19:36:27 -0500
 
 the-powder-toy (77.0-0~ppa2) precise; urgency=low
 

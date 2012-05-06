@@ -4,7 +4,7 @@ Source: http://powdertoy.co.uk/
 
 Files: *
 Copyright: 2011, HardWIRED and respective owners
-License: GPL-2
+License: GPL-2+
 
 Files: debian/*
 Copyright: 2012, Aditya Vaidya <kroq.gar78@gmail.com>
