@@ -1,11 +1,13 @@
 the-powder-toy (77.0-0~ppa4) precise; urgency=low
 
-  * debian/the-powder-toy.install: moved destination of powder-48.png to
-    /usr/share/pixmaps
+  * debian/the-powder-toy.install:
+    - rename powder-48.png to powdertoy-48.png
+    - moved destination of powdertoy-48.png to /usr/share/pixmaps
+    - install icon-document-32.png to /usr/share/pixmaps
   * debian/the-powder-toy.postinst and debian/the-powder-toy.postrm:
     added 'update-mime'
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 06 May 2012 16:33:49 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Mon, 07 May 2012 22:04:10 -0500
 
 the-powder-toy (77.0-0~ppa3) precise; urgency=low
 

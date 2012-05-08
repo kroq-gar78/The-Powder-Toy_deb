@@ -2,7 +2,7 @@
 Version=1.0
 Name=The Powder Toy
 Exec=the-powder-toy
-Icon=/usr/share/pixmaps/powder-48.png
+Icon=/usr/share/pixmaps/powdertoy-48.png
 Terminal=False
 Type=Application
 MimeType=application/vnd.powdertoy.save

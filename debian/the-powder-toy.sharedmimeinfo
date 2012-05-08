@@ -4,5 +4,6 @@
 		<comment>The Powder Toy save</comment>
 		<glob pattern="*.cps"/>
 		<glob pattern="*.stm"/>
+		<icon name="/usr/share/pixmaps/the-powder-toy/icon-document-32.png"/>
 	</mime-type>
 </mime-info>
