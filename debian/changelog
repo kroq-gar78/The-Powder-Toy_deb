@@ -1,3 +1,21 @@
+the-powder-toy (78.1-0~ppa1) quantal; urgency=low
+
+  * New upstream release
+    - Fix bug that created "weaponised explosive GEL"
+    - Changes to License (GPLv2 to GPLv3)
+    - Fix bug that caused thumbnail caching to not work
+    - Remove unused debug output of thumbnail cache
+    - New save format: OPS, allows saving of almost all data within the simulation
+    - Plasma can now travel through portals and PIPE
+    - Changes to GEL, will no longer absorb water when saturated
+    - Fix bugs when moving signs
+    - Fix file opening on Mac OS X
+    - Line snapping in the decoration editor
+    - Changes to SING to prevent it from exploding through walls
+    - Code cleanup for mouse scaling
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 09 May 2012 18:38:33 -0500
+
 the-powder-toy (77.0-0~ppa4) quantal; urgency=low
 
   * Added manpage for binary 'the-powder-toy'
