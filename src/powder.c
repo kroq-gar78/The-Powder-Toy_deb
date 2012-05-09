@@ -1,3 +1,20 @@
+/**
+ * Powder Toy - particle simulation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdint.h>
 #include <math.h>
 #include <defines.h>
@@ -1879,7 +1896,7 @@ void update_particles_i(pixel *vid, int start, int inc)
 				{
 					float c_Cm = 0.0f;
 #endif
-					if (aheat_enable)
+					if (aheat_enable && !(ptypes[t].properties&PROP_NOAMBHEAT))
 					{
 #ifdef REALISTIC
 						c_heat = parts[i].temp*96.645/ptypes[t].hconduct*gel_scale*fabs(ptypes[t].weight)
@@ -2794,12 +2811,20 @@ void clear_area(int area_x, int area_y, int area_w, int area_h)
 {
 	int cx = 0;
 	int cy = 0;
+	int i;
 	for (cy=0; cy<area_h; cy++)
 	{
 		for (cx=0; cx<area_w; cx++)
 		{
 			bmap[(cy+area_y)/CELL][(cx+area_x)/CELL] = 0;
 			delete_part(cx+area_x, cy+area_y, 0);
+		}
+	}
+	for (i=0; i<MAXSIGNS; i++)
+	{
+		if (signs[i].x>=area_x && signs[i].x<area_x+area_w && signs[i].y>=area_y && signs[i].y<area_y+area_h)
+		{
+			signs[i].text[0] = 0;
 		}
 	}
 }
