@@ -1,3 +1,9 @@
+the-powder-toy (77.0-0~ppa4) quantal; urgency=low
+
+  * debian/scripts/the-powder-toy: simplified the script
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 08 May 2012 22:48:23 -0500
+
 the-powder-toy (77.0-0~ppa3) precise; urgency=low
 
   * debian/control:
