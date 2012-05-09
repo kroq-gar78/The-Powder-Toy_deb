@@ -1,4 +1,4 @@
-the-powder-toy (77.0-0~ppa4) precise; urgency=low
+the-powder-toy (78.1-0~ppa1) precise; urgency=low
 
   * debian/the-powder-toy.install:
     - rename powder-48.png to powdertoy-48.png
@@ -7,7 +7,7 @@ the-powder-toy (77.0-0~ppa4) precise; urgency=low
   * debian/the-powder-toy.postinst and debian/the-powder-toy.postrm:
     added 'update-mime'
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Mon, 07 May 2012 22:04:10 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 09 May 2012 18:36:46 -0500
 
 the-powder-toy (77.0-0~ppa3) precise; urgency=low
 
