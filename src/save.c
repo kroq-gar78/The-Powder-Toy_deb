@@ -1,3 +1,20 @@
+/**
+ * Powder Toy - saving and loading functions
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <bzlib.h>
 #include <math.h>
 #include "defines.h"
@@ -440,9 +457,11 @@ fin:
 void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h, unsigned char bmap[YRES/CELL][XRES/CELL], float vx[YRES/CELL][XRES/CELL], float vy[YRES/CELL][XRES/CELL], float pv[YRES/CELL][XRES/CELL], float fvx[YRES/CELL][XRES/CELL], float fvy[YRES/CELL][XRES/CELL], sign signs[MAXSIGNS], void* o_partsptr)
 {
 	particle *partsptr = o_partsptr;
-	unsigned char *partsData = NULL, *partsPosData = NULL, *fanData = NULL, *wallData = NULL, *finalData = NULL, *outputData = NULL;
+	unsigned char *partsData = NULL, *partsPosData = NULL, *fanData = NULL, *wallData = NULL, *finalData = NULL, *outputData = NULL, *soapLinkData = NULL;
 	unsigned *partsPosLink = NULL, *partsPosFirstMap = NULL, *partsPosCount = NULL, *partsPosLastMap = NULL;
-	int partsDataLen, partsPosDataLen, fanDataLen, wallDataLen, finalDataLen, outputDataLen;
+	unsigned partsCount = 0, *partsSaveIndex = NULL;
+	unsigned *elementCount = calloc(PT_NUM, sizeof(unsigned));
+	int partsDataLen, partsPosDataLen, fanDataLen, wallDataLen, finalDataLen, outputDataLen, soapLinkDataLen;
 	int blockX, blockY, blockW, blockH, fullX, fullY, fullW, fullH;
 	int x, y, i, wallDataFound = 0;
 	int posCount, signsCount;
@@ -557,6 +576,8 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 	*/
 	partsData = malloc(NPART * (sizeof(particle)+1));
 	partsDataLen = 0;
+	partsSaveIndex = calloc(NPART, sizeof(unsigned));
+	partsCount = 0;
 	for (y=0;y<fullH;y++)
 	{
 		for (x=0;x<fullW;x++)
@@ -573,8 +594,12 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 				//Turn pmap entry into a partsptr index
 				i = i>>8;
 
+				//Store saved particle index+1 for this partsptr index (0 means not saved)
+				partsSaveIndex[i] = (partsCount++) + 1;
+
 				//Type (required)
 				partsData[partsDataLen++] = partsptr[i].type;
+				elementCount[partsptr[i].type]++;
 				
 				//Location of the field descriptor
 				fieldDescLoc = partsDataLen++;
@@ -679,6 +704,47 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 			}
 		}
 	}
+
+	soapLinkData = malloc(3*elementCount[PT_SOAP]);
+	soapLinkDataLen = 0;
+	//Iterate through particles in the same order that they were saved
+	for (y=0;y<fullH;y++)
+	{
+		for (x=0;x<fullW;x++)
+		{
+			//Find the first particle in this position
+			i = partsPosFirstMap[y*fullW + x];
+
+			//Loop while there is a pmap entry
+			while (i)
+			{
+				//Turn pmap entry into a partsptr index
+				i = i>>8;
+
+				if (partsptr[i].type==PT_SOAP)
+				{
+					//Only save forward link for each particle, back links can be deduced from other forward links
+					//linkedIndex is index within saved particles + 1, 0 means not saved or no link
+					unsigned linkedIndex = 0;
+					if ((partsptr[i].ctype&2) && partsptr[i].tmp>=0 && partsptr[i].tmp<NPART)
+					{
+						linkedIndex = partsSaveIndex[partsptr[i].tmp];
+					}
+					soapLinkData[soapLinkDataLen++] = (linkedIndex&0xFF0000)>>16;
+					soapLinkData[soapLinkDataLen++] = (linkedIndex&0x00FF00)>>8;
+					soapLinkData[soapLinkDataLen++] = (linkedIndex&0x0000FF);
+				}
+
+				//Get the pmap entry for the next particle in the same position
+				i = partsPosLink[i];
+			}
+		}
+	}
+	if(!soapLinkDataLen)
+	{
+		free(soapLinkData);
+		soapLinkData = NULL;
+	}
 	if(!partsDataLen)
 	{
 		free(partsData);
@@ -704,10 +770,12 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 		bson_append_binary(&b, "wallMap", BSON_BIN_USER, wallData, wallDataLen);
 	if(fanData)
 		bson_append_binary(&b, "fanMap", BSON_BIN_USER, fanData, fanDataLen);
+	if(soapLinkData)
+		bson_append_binary(&b, "soapLinks", BSON_BIN_USER, soapLinkData, soapLinkDataLen);
 	signsCount = 0;
 	for(i = 0; i < MAXSIGNS; i++)
 	{
-		if(signs[i].text[0] && signs[i].x>=fullX && signs[i].x<=fullX+fullW && signs[i].y>=fullY && signs[i].y<=fullY+fullH)
+		if(signs[i].text[0] && signs[i].x>=orig_x0 && signs[i].x<=orig_x0+orig_w && signs[i].y>=orig_y0 && signs[i].y<=orig_y0+orig_h)
 		{
 			signsCount++;
 		}
@@ -717,7 +785,7 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 		bson_append_start_array(&b, "signs");
 		for(i = 0; i < MAXSIGNS; i++)
 		{
-			if(signs[i].text[0] && signs[i].x>=fullX && signs[i].x<=fullX+fullW && signs[i].y>=fullY && signs[i].y<=fullY+fullH)
+			if(signs[i].text[0] && signs[i].x>=orig_x0 && signs[i].x<=orig_x0+orig_w && signs[i].y>=orig_y0 && signs[i].y<=orig_y0+orig_h)
 			{
 				bson_append_start_object(&b, "sign");
 				bson_append_string(&b, "text", signs[i].text);
@@ -770,6 +838,12 @@ fin:
 		free(wallData);
 	if(fanData)
 		free(fanData);
+	if (elementCount)
+		free(elementCount);
+	if (partsSaveIndex)
+		free(partsSaveIndex);
+	if (soapLinkData)
+		free(soapLinkData);
 	
 	return outputData;
 }
@@ -777,8 +851,9 @@ fin:
 int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned char bmap[YRES/CELL][XRES/CELL], float vx[YRES/CELL][XRES/CELL], float vy[YRES/CELL][XRES/CELL], float pv[YRES/CELL][XRES/CELL], float fvx[YRES/CELL][XRES/CELL], float fvy[YRES/CELL][XRES/CELL], sign signs[MAXSIGNS], void* o_partsptr, unsigned pmap[YRES][XRES])
 {
 	particle *partsptr = o_partsptr;
-	unsigned char * inputData = save, *bsonData = NULL, *partsData = NULL, *partsPosData = NULL, *fanData = NULL, *wallData = NULL;
-	int inputDataLen = size, bsonDataLen = 0, partsDataLen, partsPosDataLen, fanDataLen, wallDataLen;
+	unsigned char * inputData = save, *bsonData = NULL, *partsData = NULL, *partsPosData = NULL, *fanData = NULL, *wallData = NULL, *soapLinkData = NULL;
+	int inputDataLen = size, bsonDataLen = 0, partsDataLen, partsPosDataLen, fanDataLen, wallDataLen, soapLinkDataLen;
+	unsigned partsCount = 0, *partsSimIndex = NULL;
 	int i, freeIndicesCount, x, y, returnCode = 0, j;
 	int *freeIndices = NULL;
 	int blockX, blockY, blockW, blockH, fullX, fullY, fullW, fullH;
@@ -874,7 +949,7 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 							{
 								if(strcmp(bson_iterator_key(&signiter), "text")==0 && bson_iterator_type(&signiter)==BSON_STRING)
 								{
-									strcpy(signs[i].text, bson_iterator_string(&signiter));
+									strncpy(signs[i].text, bson_iterator_string(&signiter), 255);
 									clean_text(signs[i].text, 158-14);
 								}
 								else if(strcmp(bson_iterator_key(&signiter), "justification")==0 && bson_iterator_type(&signiter)==BSON_INT)
@@ -949,6 +1024,17 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 			else
 			{
 				fprintf(stderr, "Invalid datatype of fan data: %d[%d] %d[%d] %d[%d]\n", bson_iterator_type(&iter), bson_iterator_type(&iter)==BSON_BINDATA, (unsigned char)bson_iterator_bin_type(&iter), ((unsigned char)bson_iterator_bin_type(&iter))==BSON_BIN_USER, bson_iterator_bin_len(&iter), bson_iterator_bin_len(&iter)>0);
+			}
+		}
+		else if(strcmp(bson_iterator_key(&iter), "soapLinks")==0)
+		{
+			if(bson_iterator_type(&iter)==BSON_BINDATA && ((unsigned char)bson_iterator_bin_type(&iter))==BSON_BIN_USER && (soapLinkDataLen = bson_iterator_bin_len(&iter)) > 0)
+			{
+				soapLinkData = bson_iterator_bin_data(&iter);
+			}
+			else
+			{
+				fprintf(stderr, "Invalid datatype of soap data: %d[%d] %d[%d] %d[%d]\n", bson_iterator_type(&iter), bson_iterator_type(&iter)==BSON_BINDATA, (unsigned char)bson_iterator_bin_type(&iter), ((unsigned char)bson_iterator_bin_type(&iter))==BSON_BIN_USER, bson_iterator_bin_len(&iter), bson_iterator_bin_len(&iter)>0);
 			}
 		}
 		else if(strcmp(bson_iterator_key(&iter), "legacyEnable")==0 && replace)
@@ -1102,6 +1188,8 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 		parts_lastActiveIndex = NPART-1;
 		freeIndicesCount = 0;
 		freeIndices = calloc(sizeof(int), NPART);
+		partsSimIndex = calloc(NPART, sizeof(unsigned));
+		partsCount = 0;
 		for (i = 0; i<NPART; i++)
 		{
 			//Ensure ALL parts (even photons) are in the pmap so we can overwrite, keep a track of indices we can use
@@ -1141,7 +1229,7 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 					}
 					if(partsData[i] >= PT_NUM)
 						partsData[i] = PT_DMND;	//Replace all invalid elements with diamond
-					if(pmap[y][x])
+					if(pmap[y][x] && posCount==0) // Check posCount to make sure an existing particle is not replaced twice if two particles are saved in that position
 					{
 						//Replace existing particle or allocated block
 						newIndex = pmap[y][x]>>8;
@@ -1158,7 +1246,10 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 					}
 					if(newIndex < 0 || newIndex >= NPART)
 						goto fail;
-						
+
+					//Store partsptr index+1 for this saved particle index (0 means not loaded)
+					partsSimIndex[partsCount++] = newIndex+1;
+
 					//Clear the particle, ready for our new properties
 					memset(&(partsptr[newIndex]), 0, sizeof(particle));
 					
@@ -1284,8 +1375,40 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 							STKM_init_legs(&(fighters[fcount]), newIndex);
 						}
 					}
+					else if (partsptr[newIndex].type == PT_SOAP)
+					{
+						//Clear soap links, links will be added back in if soapLinkData is present
+						partsptr[newIndex].ctype &= ~6;
+					}
 					if (!ptypes[partsptr[newIndex].type].enabled)
 						partsptr[newIndex].type = PT_NONE;
+				}
+			}
+		}
+		if (soapLinkData)
+		{
+			int soapLinkDataPos = 0;
+			for (i=0; i<partsCount; i++)
+			{
+				if (partsSimIndex[i] && partsptr[partsSimIndex[i]-1].type == PT_SOAP)
+				{
+					// Get the index of the particle forward linked from this one, if present in the save data
+					int linkedIndex = 0;
+					if (soapLinkDataPos+3 > soapLinkDataLen) break;
+					linkedIndex |= soapLinkData[soapLinkDataPos++]<<16;
+					linkedIndex |= soapLinkData[soapLinkDataPos++]<<8;
+					linkedIndex |= soapLinkData[soapLinkDataPos++];
+					// All indexes in soapLinkData and partsSimIndex have 1 added to them (0 means not saved/loaded)
+					if (!linkedIndex || linkedIndex-1>=partsCount || !partsSimIndex[linkedIndex-1])
+						continue;
+					linkedIndex = partsSimIndex[linkedIndex-1]-1;
+					newIndex = partsSimIndex[i]-1;
+
+					//Attach the two particles
+					partsptr[newIndex].ctype |= 2;
+					partsptr[newIndex].tmp = linkedIndex;
+					partsptr[linkedIndex].ctype |= 4;
+					partsptr[linkedIndex].tmp2 = newIndex;
 				}
 			}
 		}
@@ -1298,6 +1421,8 @@ fin:
 	bson_destroy(&b);
 	if(freeIndices)
 		free(freeIndices);
+	if(partsSimIndex)
+		free(partsSimIndex);
 	return returnCode;
 }
 
@@ -1638,14 +1763,14 @@ void *build_save_PSv(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 	j = 0;
 	for (i=0; i<MAXSIGNS; i++)
 		if (signs[i].text[0] &&
-		        signs[i].x>=x0 && signs[i].x<x0+w &&
-		        signs[i].y>=y0 && signs[i].y<y0+h)
+		        signs[i].x>=orig_x0 && signs[i].x<orig_x0+orig_w &&
+		        signs[i].y>=orig_y0 && signs[i].y<orig_y0+orig_h)
 			j++;
 	d[p++] = j;
 	for (i=0; i<MAXSIGNS; i++)
 		if (signs[i].text[0] &&
-		        signs[i].x>=x0 && signs[i].x<x0+w &&
-		        signs[i].y>=y0 && signs[i].y<y0+h)
+		        signs[i].x>=orig_x0 && signs[i].x<orig_x0+orig_w &&
+		        signs[i].y>=orig_y0 && signs[i].y<orig_y0+orig_h)
 		{
 			d[p++] = (signs[i].x-x0);
 			d[p++] = (signs[i].x-x0)>>8;

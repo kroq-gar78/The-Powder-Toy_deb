@@ -2,8 +2,6 @@
 
 if [ ! -d $HOME/.config/the-powder-toy ] ; then
 	mkdir -p $HOME/.config/the-powder-toy
-	cd $HOME/.config/the-powder-toy
-	ln -s /usr/lib/games/the-powder-toy/powder
 fi
 
 cd $HOME/.config/the-powder-toy

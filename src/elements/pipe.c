@@ -1,3 +1,18 @@
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <element.h>
 
 #define PFLAG_NORMALSPEED 0x00010000
@@ -147,7 +162,7 @@ int update_PIPE(UPDATE_FUNC_ARGS) {
 						}
 					}
 					//try eating particle at entrance
-					else if ((parts[i].tmp&0xFF) == 0 && (ptypes[r&0xFF].falldown!= 0 || ptypes[r&0xFF].state == ST_GAS))
+					else if ((parts[i].tmp&0xFF) == 0 && (ptypes[r&0xFF].properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
 					{
 						if ((r&0xFF)==PT_SOAP)
 							detach(r>>8);
@@ -158,7 +173,7 @@ int update_PIPE(UPDATE_FUNC_ARGS) {
 						parts[i].pavg[1] = parts[r>>8].ctype;
 						kill_part(r>>8);
 					}
-					else if ((parts[i].tmp&0xFF) == 0 && (r&0xFF)==PT_STOR && parts[r>>8].tmp && (ptypes[parts[r>>8].tmp].falldown!= 0 || ptypes[parts[r>>8].tmp].state == ST_GAS))
+					else if ((parts[i].tmp&0xFF) == 0 && (r&0xFF)==PT_STOR && parts[r>>8].tmp && (ptypes[parts[r>>8].tmp].properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
 					{
 						parts[i].tmp =  parts[r>>8].tmp;
 						parts[i].temp = parts[r>>8].temp;

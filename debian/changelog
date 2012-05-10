@@ -1,5 +1,18 @@
-the-powder-toy (78.1-0~ppa1) precise; urgency=low
+the-powder-toy (78.1-0~ppa1) quantal; urgency=low
 
+  * New upstream release
+    - Fix bug that created "weaponised explosive GEL"
+    - Changes to License (GPLv2 to GPLv3)
+    - Fix bug that caused thumbnail caching to not work
+    - Remove unused debug output of thumbnail cache
+    - New save format: OPS, allows saving of almost all data within the simulation
+    - Plasma can now travel through portals and PIPE
+    - Changes to GEL, will no longer absorb water when saturated
+    - Fix bugs when moving signs
+    - Fix file opening on Mac OS X
+    - Line snapping in the decoration editor
+    - Changes to SING to prevent it from exploding through walls
+    - Code cleanup for mouse scaling
   * debian/the-powder-toy.install:
     - rename powder-48.png to powdertoy-48.png
     - moved destination of powdertoy-48.png to /usr/share/pixmaps
@@ -7,7 +20,14 @@ the-powder-toy (78.1-0~ppa1) precise; urgency=low
   * debian/the-powder-toy.postinst and debian/the-powder-toy.postrm:
     added 'update-mime'
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 09 May 2012 18:36:46 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 09 May 2012 18:38:33 -0500
+
+the-powder-toy (77.0-0~ppa4) quantal; urgency=low
+
+  * Added manpage for binary 'the-powder-toy'
+  * debian/scripts/the-powder-toy: simplified the script
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 08 May 2012 22:48:23 -0500
 
 the-powder-toy (77.0-0~ppa3) precise; urgency=low
 
@@ -21,7 +41,7 @@ the-powder-toy (77.0-0~ppa3) precise; urgency=low
   * debian/docs: install 'README' to /usr/share/docs/the-powder-toy
   * debian/rules: fixed amd64-specific building
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 06 May 2012 16:20:55 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 06 May 2012 16:25:24 -0500
 
 the-powder-toy (77.0-0~ppa2) precise; urgency=low
 

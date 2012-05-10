@@ -1,3 +1,19 @@
+/**
+ * Powder Toy - particle simulation (header)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef POWDER_H
 #define POWDER_H
 
@@ -249,8 +265,9 @@
 #define PROP_RADIOACTIVE	0x02000 //8192 Radioactive
 #define PROP_LIFE_DEC		0x04000 //2^14 Life decreases by one every frame if > zero
 #define PROP_LIFE_KILL		0x08000 //2^15 Kill when life value is <= zero
-#define PROP_LIFE_KILL_DEC	0x10000 //2^16 Kill when life value is decremented to <= zero
+#define PROP_LIFE_KILL_DEC	0x10000 //2^16 Kill when life value is decremented to<= zero
 #define PROP_SPARKSETTLE	0x20000	//2^17 Allow Sparks/Embers to settle
+#define PROP_NOAMBHEAT      0x40000 //2^18 Don't transfer or receive heat from ambient heat.
 
 #define FLAG_STAGNANT	1
 #define FLAG_SKIPMOVE	0x2 // skip movement for one frame, only implemented for PHOT
