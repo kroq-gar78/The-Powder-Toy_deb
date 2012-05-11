@@ -152,7 +152,6 @@ build/obj/gravity.powder-sse.exe.o: src/gravity.c $(HEADERS)
 clean:
 	rm -f build/obj/*.o
 	rm -f build/obj/elements/*.o
-	rm -f build/powder*
 
 
 

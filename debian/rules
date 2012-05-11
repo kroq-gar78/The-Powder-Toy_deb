@@ -18,3 +18,4 @@ override_dh_auto_build:
 override_dh_auto_clean:
 	make clean
 	rm -f src/Resources/icon/powdertoy-48.png
+	rm build/powder*
