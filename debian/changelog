@@ -14,14 +14,15 @@ the-powder-toy (78.1-0~ppa1) quantal; urgency=low
     - Changes to SING to prevent it from exploding through walls
     - Code cleanup for mouse scaling
   * debian/the-powder-toy.install:
-    - rename powder-48.png to powdertoy-48.png
+    - rename powder-48.png to powdertoy-48.png so it's not confused
+      with unrelated package 'powder'
     - moved destination of powdertoy-48.png to /usr/share/pixmaps
     - install icon-document-32.png to /usr/share/pixmaps
   * debian/the-powder-toy.postinst and debian/the-powder-toy.postrm:
     added 'update-mime'
   * Added mimetype support
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 11 May 2012 16:08:45 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 11 May 2012 16:11:47 -0500
 
 the-powder-toy (77.0-0~ppa4) quantal; urgency=low
 
