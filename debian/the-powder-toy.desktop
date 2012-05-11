@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Name=The Powder Toy
-Exec=the-powder-toy open %F
+Exec=the-powder-toy open %f
 Icon=/usr/share/pixmaps/powdertoy-48.png
 Terminal=False
 Type=Application
