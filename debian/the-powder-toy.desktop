@@ -1,8 +1,9 @@
 [Desktop Entry]
 Version=1.0
 Name=The Powder Toy
-Exec=the-powder-toy
-Icon=/usr/lib/games/the-powder-toy/powder-48.png
+Exec=the-powder-toy open %f
+Icon=/usr/share/pixmaps/powdertoy-48.png
 Terminal=False
 Type=Application
+MimeType=application/vnd.powdertoy.save;
 Categories=Game;
