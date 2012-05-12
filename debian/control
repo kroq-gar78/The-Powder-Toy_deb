@@ -16,7 +16,7 @@ Homepage: http://powdertoy.co.uk
 
 Package: the-powder-toy
 Architecture: any
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}, libx11-6
 Conflicts: the-powder-toy-beta
 Replaces: the-powder-toy-beta
 Description: Physics sandbox game
