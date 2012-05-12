@@ -10,6 +10,8 @@ Build-Depends: debhelper (>= 7.0.50),
                libbz2-dev (>= 1.0.5),
                gcc (>= 4.4)
 Standards-Version: 3.9.3
+Vcs-Git: git://github.com/kroq-gar78/The-Powder-Toy_deb.git
+Vcs-Browser: https://github.com/kroq-gar78/The-Powder-Toy_deb
 Homepage: http://powdertoy.co.uk
 
 Package: the-powder-toy

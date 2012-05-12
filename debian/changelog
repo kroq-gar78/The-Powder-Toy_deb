@@ -1,3 +1,9 @@
+the-powder-toy (78.1-0~ppa2) quantal; urgency=low
+
+  * debian/control: added Vcs-Git and Vcs-Browser URL's
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 11 May 2012 19:55:54 -0500
+
 the-powder-toy (78.1-0~ppa1) quantal; urgency=low
 
   * New upstream release
