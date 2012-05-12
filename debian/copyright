@@ -25,7 +25,7 @@ License: GPL-3+
  the Debian GNU/Linux distribution in file /usr/share/common-licenses/GPL-3.
  If not, see <http://www.gnu.org/licenses/>.
  
-Files: includes/BSON.h, src/BSON.c
+Files: includes/BSON.h src/BSON.c
 Copyright: 2009 - 2010, 10gen, Inc.
 License: Apache-2.0
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ License: Apache-2.0
  On Debian/Ubuntu systems, the complete text of the Apache License can
  be found in '/usr/share/common-licenses/Apache-2.0'.
  
-Files: includes/cJSON.h, src/cJSON.c
+Files: includes/cJSON.h src/cJSON.c
 Copyright: 2009, David Gamble
 License: Expat
  Permission is hereby granted, free of charge, to any person obtaining
