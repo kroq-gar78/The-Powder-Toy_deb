@@ -1,12 +1,15 @@
 the-powder-toy (78.1-0~ppa2) quantal; urgency=low
 
   * debian/control: added Vcs-Git and Vcs-Browser URL's
-  * debian/copyright: added licenses for the files who don't
-    use GPL (includes/BSON.h, includes/cJSON.h, src/BSON.c,
-    src/cJSON.c, src/md5.c)
+  * debian/copyright:
+    - added licenses for the files who don't use GPL
+    (includes/BSON.h, includes/cJSON.h, src/BSON.c, src/cJSON.c,
+    src/md5.c)
+    - add upstream contact Simon Robertshaw
   * Added 'debian/the-powder-toy.menu' menu file
+  * debian/rules: use powder-sse2 instead of powder-sse3
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 12 May 2012 11:10:43 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 12 May 2012 14:55:16 -0500
 
 the-powder-toy (78.1-0~ppa1) quantal; urgency=low
 
