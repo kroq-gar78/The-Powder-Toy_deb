@@ -24,8 +24,7 @@
 
 #if defined(OGLR)
 #ifdef MACOSX
-#include <GL/glew.h>
-#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
 #include <OpenGL/glu.h>
 #elif defined(WIN32)
 #include <GL/glew.h>
@@ -48,6 +47,9 @@
 #include <font.h>
 #include <misc.h>
 #include "hmap.h"
+#ifdef LUACONSOLE
+#include <luaconsole.h>
+#endif
 
 #if defined(LIN32) || defined(LIN64)
 #include "icon.h"
@@ -458,6 +460,7 @@ void clearScreenNP(float alpha)
 void ogl_blit(int x, int y, int w, int h, pixel *src, int pitch, int scale)
 {
 
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glDrawPixels(w,h,GL_BGRA,GL_UNSIGNED_BYTE,src); //Why does this still think it's ABGR?
     glEnable( GL_TEXTURE_2D );
     glBindTexture(GL_TEXTURE_2D, vidBuf);
@@ -475,6 +478,7 @@ void ogl_blit(int x, int y, int w, int h, pixel *src, int pitch, int scale)
     glEnd();
 
     glDisable( GL_TEXTURE_2D );
+	glBlendFunc(GL_ONE, GL_ONE);
     glFlush();
     SDL_GL_SwapBuffers ();
 }
@@ -1692,7 +1696,7 @@ void draw_other(pixel *vid) // EMP effect
 	if (emp_decor>0 && !sys_pause) emp_decor-=emp_decor/25+2;
 	if (emp_decor>40) emp_decor=40;
 	if (emp_decor<0) emp_decor = 0;
-	if (!(display_mode & DISPLAY_EFFE)) // no in nothing mode
+	if (!(render_mode & EFFECT)) // not in nothing mode
 		return;
 	if (emp_decor>0)
 	{
@@ -1750,12 +1754,16 @@ GLuint addV[(YRES*XRES)*2];
 GLfloat addC[(YRES*XRES)*4];
 GLfloat lineV[(((YRES*XRES)*2)*6)];
 GLfloat lineC[(((YRES*XRES)*2)*6)];
+GLfloat blurLineV[(((YRES*XRES)*2))];
+GLfloat blurLineC[(((YRES*XRES)*2)*4)];
+GLfloat ablurLineV[(((YRES*XRES)*2))];
+GLfloat ablurLineC[(((YRES*XRES)*2)*4)];
 #endif
 void render_parts(pixel *vid)
 {
 	int deca, decr, decg, decb, cola, colr, colg, colb, firea, firer, fireg, fireb, pixel_mode, q, i, t, nx, ny, x, y, caddress;
 	int orbd[4] = {0, 0, 0, 0}, orbl[4] = {0, 0, 0, 0};
-	float gradv, flicker, fnx, fny;
+	float gradv, flicker, fnx, fny, flx, fly;
 #ifdef OGLR
 	int cfireV = 0, cfireC = 0, cfire = 0;
 	int csmokeV = 0, csmokeC = 0, csmoke = 0;
@@ -1765,6 +1773,8 @@ void render_parts(pixel *vid)
 	int cflatV = 0, cflatC = 0, cflat = 0;
 	int caddV = 0, caddC = 0, cadd = 0;
 	int clineV = 0, clineC = 0, cline = 0;
+	int cblurLineV = 0, cblurLineC = 0, cblurLine = 0;
+	int cablurLineV = 0, cablurLineC = 0, cablurLine = 0;
 	GLuint origBlendSrc, origBlendDst;
 	
 	glGetIntegerv(GL_BLEND_SRC, &origBlendSrc);
@@ -1792,8 +1802,13 @@ void render_parts(pixel *vid)
 			ny = (int)(parts[i].y+0.5f);
 			fnx = parts[i].x;
 			fny = parts[i].y;
+#ifdef OGLR
+			flx = parts[i].lastX;
+			fly = parts[i].lastY;
+#endif
 
-			if(photons[ny][nx]&0xFF && !(ptypes[t].properties & TYPE_ENERGY))
+
+			if(photons[ny][nx]&0xFF && !(ptypes[t].properties & TYPE_ENERGY) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH)
 				continue;
 				
 			//Defaults
@@ -1845,8 +1860,29 @@ void render_parts(pixel *vid)
 				}
 				else if(!(colour_mode & COLOUR_BASC))	//Don't get special effects for BASIC colour mode
 				{
+#ifdef LUACONSOLE
+					if (lua_gr_func[t])
+					{
+						if (luacon_graphics_update(t,i, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb))
+						{
+							graphicscache[t].isready = 1;
+							graphicscache[t].pixel_mode = pixel_mode;
+							graphicscache[t].cola = cola;
+							graphicscache[t].colr = colr;
+							graphicscache[t].colg = colg;
+							graphicscache[t].colb = colb;
+							graphicscache[t].firea = firea;
+							graphicscache[t].firer = firer;
+							graphicscache[t].fireg = fireg;
+							graphicscache[t].fireb = fireb;
+						}
+					}
+					else if (ptypes[t].graphics_func)
+					{
+#else
 					if (ptypes[t].graphics_func)
 					{
+#endif
 						if ((*(ptypes[t].graphics_func))(&(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb)) //That's a lot of args, a struct might be better
 						{
 							graphicscache[t].isready = 1;
@@ -2099,6 +2135,65 @@ void render_parts(pixel *vid)
 					draw_line(vid , cplayer->legs[8], cplayer->legs[9], cplayer->legs[12], cplayer->legs[13], legr, legg, legb, s);
 #endif
 				}
+#ifdef OGLR
+				if((display_mode & DISPLAY_EFFE) && (fabs(fnx-flx)>1.5f || fabs(fny-fly)>1.5f))
+				{
+					if(pixel_mode & PMODE_FLAT)
+					{
+						blurLineV[cblurLineV++] = nx;
+						blurLineV[cblurLineV++] = ny;
+						blurLineC[cblurLineC++] = ((float)colr)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colg)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colb)/255.0f;
+						blurLineC[cblurLineC++] = 1.0f;
+						cblurLine++;
+						
+						blurLineV[cblurLineV++] = flx;
+						blurLineV[cblurLineV++] = fly;
+						blurLineC[cblurLineC++] = ((float)colr)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colg)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colb)/255.0f;
+						blurLineC[cblurLineC++] = 0.0f;
+						cblurLine++;
+					}
+					else if(pixel_mode & PMODE_BLEND)
+					{
+						blurLineV[cblurLineV++] = nx;
+						blurLineV[cblurLineV++] = ny;
+						blurLineC[cblurLineC++] = ((float)colr)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colg)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colb)/255.0f;
+						blurLineC[cblurLineC++] = ((float)cola)/255.0f;
+						cblurLine++;
+						
+						blurLineV[cblurLineV++] = flx;
+						blurLineV[cblurLineV++] = fly;
+						blurLineC[cblurLineC++] = ((float)colr)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colg)/255.0f;
+						blurLineC[cblurLineC++] = ((float)colb)/255.0f;
+						blurLineC[cblurLineC++] = 0.0f;
+						cblurLine++;
+					}
+					else if(pixel_mode & PMODE_ADD)
+					{
+						ablurLineV[cablurLineV++] = nx;
+						ablurLineV[cablurLineV++] = ny;
+						ablurLineC[cablurLineC++] = ((float)colr)/255.0f;
+						ablurLineC[cablurLineC++] = ((float)colg)/255.0f;
+						ablurLineC[cablurLineC++] = ((float)colb)/255.0f;
+						ablurLineC[cablurLineC++] = ((float)cola)/255.0f;
+						cablurLine++;
+						
+						ablurLineV[cablurLineV++] = flx;
+						ablurLineV[cablurLineV++] = fly;
+						ablurLineC[cablurLineC++] = ((float)colr)/255.0f;
+						ablurLineC[cablurLineC++] = ((float)colg)/255.0f;
+						ablurLineC[cablurLineC++] = ((float)colb)/255.0f;
+						ablurLineC[cablurLineC++] = 0.0f;
+						cablurLine++;
+					}
+				}
+#endif
 				if(pixel_mode & PMODE_FLAT)
 				{
 #ifdef OGLR
@@ -2546,6 +2641,36 @@ void render_parts(pixel *vid)
         
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       
+
+		if(cablurLine)
+		{
+			// -- BEGIN LINES -- //
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			glEnable( GL_LINE_SMOOTH );
+			glColorPointer(4, GL_FLOAT, 0, &ablurLineC[0]);
+			glVertexPointer(2, GL_FLOAT, 0, &ablurLineV[0]);
+			
+			glDrawArrays(GL_LINES, 0, cablurLine);
+			
+			//Clear some stuff we set
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glDisable(GL_LINE_SMOOTH);
+			// -- END LINES -- //
+		}
+		if(cblurLine)
+		{
+			// -- BEGIN LINES -- //
+			glEnable( GL_LINE_SMOOTH );
+			glColorPointer(4, GL_FLOAT, 0, &blurLineC[0]);
+			glVertexPointer(2, GL_FLOAT, 0, &blurLineV[0]);
+			
+			glDrawArrays(GL_LINES, 0, cblurLine);
+			
+			//Clear some stuff we set
+			glDisable(GL_LINE_SMOOTH);
+			// -- END LINES -- //
+		}
+	
  		if(cflat)
 		{
 			// -- BEGIN FLAT -- //
@@ -2771,10 +2896,82 @@ void draw_parts_fbo()
 }
 #endif
 
+// draw the graphics that appear before update_particles is called
+void render_before(pixel *part_vbuf)
+{
+#ifdef OGLR
+		if (display_mode & DISPLAY_PERS)//save background for persistent, then clear
+		{
+			clearScreen(0.01f);
+			memset(part_vbuf, 0, (XRES+BARSIZE)*YRES*PIXELSIZE);
+		}
+		else //clear screen every frame
+		{
+			clearScreen(1.0f);
+			memset(part_vbuf, 0, (XRES+BARSIZE)*YRES*PIXELSIZE);
+			if (display_mode & DISPLAY_AIR)//air only gets drawn in these modes
+			{
+				draw_air(part_vbuf);
+			}
+		}
+#else
+		if (display_mode & DISPLAY_AIR)//air only gets drawn in these modes
+		{
+			draw_air(part_vbuf);
+		}
+		else if (display_mode & DISPLAY_PERS)//save background for persistent, then clear
+		{
+			memcpy(part_vbuf, pers_bg, (XRES+BARSIZE)*YRES*PIXELSIZE);
+			memset(part_vbuf+((XRES+BARSIZE)*YRES), 0, ((XRES+BARSIZE)*YRES*PIXELSIZE)-((XRES+BARSIZE)*YRES*PIXELSIZE));
+		}
+		else //clear screen every frame
+		{
+			memset(part_vbuf, 0, (XRES+BARSIZE)*YRES*PIXELSIZE);
+		}
+#endif
+		if(ngrav_enable && drawgrav_enable)
+			draw_grav(part_vbuf);
+		draw_walls(part_vbuf);
+}
+
+int persist_counter = 0;
+// draw the graphics that appear after update_particles is called
+void render_after(pixel *part_vbuf, pixel *vid_buf)
+{
+	render_parts(part_vbuf); //draw particles
+	draw_other(part_vbuf);
+	//if(su == WL_GRAV+100)
+	//	draw_grav_zones(part_vbuf);
+	if (vid_buf && (display_mode & DISPLAY_PERS))
+	{
+		if (!persist_counter)
+		{
+			dim_copy_pers(pers_bg, vid_buf);
+		}
+		else
+		{
+			memcpy(pers_bg, vid_buf, (XRES+BARSIZE)*YRES*PIXELSIZE);
+		}
+		persist_counter = (persist_counter+1) % 3;
+	}
+#ifndef OGLR
+	if (render_mode & FIREMODE)
+		render_fire(part_vbuf);
+#endif
+
+	render_signs(part_vbuf);
+
+#ifndef OGLR
+	if(vid_buf && ngrav_enable && (display_mode & DISPLAY_WARP))
+		render_gravlensing(part_vbuf, vid_buf);
+#endif
+}
+
 void draw_walls(pixel *vid)
 {
-	int x, y, i, j, cr, cg, cb;
+	int x, y, i, j, cr, cg, cb, nx, ny, t;
 	unsigned char wt;
+	float lx, ly;
 	pixel pc;
 	pixel gc;
 	for (y=0; y<YRES/CELL; y++)
@@ -2959,6 +3156,30 @@ void draw_walls(pixel *vid)
 					fire_b[y][x] = cb;
 					
 				}
+			}
+
+	// draw streamlines
+	for (y=0; y<YRES/CELL; y++)
+		for (x=0; x<XRES/CELL; x++)
+			if (bmap[y][x]==WL_STREAM)
+			{
+				lx = x*CELL + CELL*0.5f;
+				ly = y*CELL + CELL*0.5f;
+				for (t=0; t<1024; t++)
+				{
+					nx = (int)(lx+0.5f);
+					ny = (int)(ly+0.5f);
+					if (nx<0 || nx>=XRES || ny<0 || ny>=YRES)
+						break;
+					addpixel(vid, nx, ny, 255, 255, 255, 64);
+					i = nx/CELL;
+					j = ny/CELL;
+					lx += vx[j][i]*0.125f;
+					ly += vy[j][i]*0.125f;
+					if (bmap[j][i]==WL_STREAM && i!=x && j!=y)
+						break;
+				}
+				drawtext(vid, x*CELL, y*CELL-2, "\x8D", 255, 255, 255, 128);
 			}
 }
 
@@ -3310,7 +3531,7 @@ void prepare_alpha(int size, float intensity)
 	for (x=0; x<CELL*3; x++)
 		for (y=0; y<CELL*3; y++)
 		{
-			fire_alphaf[y][x] = intensity*temp[y][x]/((float)(CELL*CELL));
+			fire_alphaf[y][x] = (intensity*temp[y][x]/((float)(CELL*CELL)))/2.0f;
 		}
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, fireAlpha);
@@ -3322,6 +3543,7 @@ void prepare_alpha(int size, float intensity)
 	
 	c = 5;
 	
+	glow_alphaf[c][c] = 0.8f;
 	glow_alphaf[c][c-1] = 0.4f;
 	glow_alphaf[c][c+1] = 0.4f;
 	glow_alphaf[c-1][c] = 0.4f;
@@ -3779,9 +4001,11 @@ void render_cursor(pixel *vid, int x, int y, int t, int rx, int ry)
 #endif
 }
 
+SDL_VideoInfo info;
 int sdl_opened = 0;
 int sdl_open(void)
 {
+	char screen_err = 0;
 #ifdef WIN32
 	SDL_SysWMinfo SysInfo;
 	HWND WindowHandle;
@@ -3815,6 +4039,16 @@ int sdl_open(void)
 	SDL_WM_SetCaption("The Powder Toy", "Powder Toy");
 	
 	atexit(SDL_Quit);
+
+	if(!sdl_opened)
+		info = *SDL_GetVideoInfo(); 
+
+	if (info.current_w<((XRES+BARSIZE)*sdl_scale) || info.current_h<((YRES+MENUSIZE)*sdl_scale))
+	{
+		sdl_scale = 1;
+		screen_err = 1;
+		fprintf(stderr, "Can't change scale factor, because screen resolution is too small");
+	}
 #if defined(OGLR)
 	sdl_scrn=SDL_SetVideoMode(XRES*sdl_scale + BARSIZE*sdl_scale,YRES*sdl_scale + MENUSIZE*sdl_scale,32,SDL_OPENGL);
 	SDL_GL_SetAttribute (SDL_GL_DOUBLEBUFFER, 1);
@@ -3910,18 +4144,18 @@ int sdl_open(void)
 		glEnable(GL_TEXTURE_2D);
 		glGenTextures(1, &partsTFX);
 		glBindTexture(GL_TEXTURE_2D, partsTFX);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, XRES, YRES, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, XRES/CELL, YRES/CELL, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
 
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glGenTextures(1, &partsTFY);
 		glBindTexture(GL_TEXTURE_2D, partsTFY);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, XRES, YRES, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, XRES/CELL, YRES/CELL, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
 
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDisable(GL_TEXTURE_2D);
@@ -4023,6 +4257,9 @@ int sdl_open(void)
 	XA_TARGETS = XInternAtom(sdl_wminfo.info.x11.display, "TARGETS", 1);
 	sdl_wminfo.info.x11.unlock_func();
 #endif
+
+	if (screen_err)
+		error_ui(vid_buf, 0, "Can't change scale factor, because screen resolution is too small");
 	sdl_opened = 1;
 	return 1;
 }

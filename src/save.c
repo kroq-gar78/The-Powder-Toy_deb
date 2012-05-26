@@ -1171,6 +1171,7 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 				}
 			}
 		}
+		gravity_mask();
 	}
 	
 	//Read particle data
@@ -1345,6 +1346,11 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 						if(i >= partsDataLen) goto fail;
 						partsptr[newIndex].tmp2 = partsData[i++];
 					}
+					
+#ifdef OGLR
+					partsptr[newIndex].lastX = partsptr[newIndex].x - partsptr[newIndex].vx;
+					partsptr[newIndex].lastY = partsptr[newIndex].y - partsptr[newIndex].vy;
+#endif
 
 					if ((player.spwn == 1 && partsptr[newIndex].type==PT_STKM) || (player2.spwn == 1 && partsptr[newIndex].type==PT_STKM2))
 					{
@@ -2023,6 +2029,10 @@ int parse_save_PSv(void *save, int size, int replace, int x0, int y0, unsigned c
 			{
 				parts[i].vx = (d[p++]-127.0f)/16.0f;
 				parts[i].vy = (d[p++]-127.0f)/16.0f;
+#ifdef OGLR
+				parts[i].lastX = parts[i].x - parts[i].vx;
+				parts[i].lastY = parts[i].y - parts[i].vy;
+#endif
 			}
 			else
 				p += 2;
@@ -2261,7 +2271,7 @@ int parse_save_PSv(void *save, int size, int replace, int x0, int y0, unsigned c
 					STKM_init_legs(&(fighters[fcount]), i-1);
 				}
 			}
-			else if (parts[i-1].type == PT_SPNG)
+			else if (ver<79 && parts[i-1].type == PT_SPNG)
 			{
 				if (fabs(parts[i-1].vx)>0.0f || fabs(parts[i-1].vy)>0.0f)
 					parts[i-1].flags |= FLAG_MOVABLE;

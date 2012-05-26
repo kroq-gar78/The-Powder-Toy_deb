@@ -17,6 +17,8 @@
 
 int update_GEL(UPDATE_FUNC_ARGS) {
 	int r, rx, ry;
+	float dx, dy;
+	char gel;
 	if (parts[i].tmp>100) parts[i].tmp = 100;
 	if (parts[i].tmp<0) parts[i].tmp = 0;
 	for (rx=-2; rx<3; rx++)
@@ -35,7 +37,13 @@ int update_GEL(UPDATE_FUNC_ARGS) {
 					kill_part(r>>8);
 				}
 
-				char gel = 0;
+				if ((r&0xFF)==PT_SPNG && parts[i].tmp<100 && ((parts[r>>8].life+1)>parts[i].tmp))
+				{
+					parts[r>>8].life--;
+					parts[i].tmp++;
+				}
+
+				gel = 0;
 				if ((r&0xFF)==PT_GEL)
 					gel = 1;
 
@@ -52,7 +60,6 @@ int update_GEL(UPDATE_FUNC_ARGS) {
 					parts[i].tmp--;
 				}
 
-				float dx, dy;
 				dx = parts[i].x - parts[r>>8].x;
 				dy = parts[i].y - parts[r>>8].y;
 

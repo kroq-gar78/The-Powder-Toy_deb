@@ -298,8 +298,8 @@ void *http_async_req_start(void *ctx, char *uri, char *data, int dlen, int keep)
 void http_async_add_header(void *ctx, char *name, char *data)
 {
 	struct http_ctx *cx = ctx;
-	cx->thdr = realloc(cx->thdr, cx->thlen + strlen(name) + strlen(data) + 4);
-	cx->thlen += sprintf(cx->thdr+cx->thlen, "%s: %s\n", name, data);
+	cx->thdr = realloc(cx->thdr, cx->thlen + strlen(name) + strlen(data) + 5);
+	cx->thlen += sprintf(cx->thdr+cx->thlen, "%s: %s\r\n", name, data);
 }
 
 static void process_header(struct http_ctx *cx, char *str)
@@ -467,13 +467,13 @@ int http_async_req_status(void *ctx)
 		if (cx->txdl)
 		{
 			// generate POST
-			cx->tbuf = malloc(strlen(cx->host) + strlen(cx->path) + 121 + cx->txdl + cx->thlen);
+			cx->tbuf = malloc(strlen(cx->host) + strlen(cx->path) + 126 + cx->txdl + cx->thlen);
 			cx->tptr = 0;
 			cx->tlen = 0;
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "POST %s HTTP/1.1\n", cx->path);
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "Host: %s\n", cx->host);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "POST %s HTTP/1.1\r\n", cx->path);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "Host: %s\r\n", cx->host);
 			if (!cx->keep)
-				cx->tlen += sprintf(cx->tbuf+cx->tlen, "Connection: close\n");
+				cx->tlen += sprintf(cx->tbuf+cx->tlen, "Connection: close\r\n");
 			if (cx->thdr)
 			{
 				memcpy(cx->tbuf+cx->tlen, cx->thdr, cx->thlen);
@@ -482,13 +482,13 @@ int http_async_req_status(void *ctx)
 				cx->thdr = NULL;
 				cx->thlen = 0;
 			}
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "Content-Length: %d\n", cx->txdl);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "Content-Length: %d\r\n", cx->txdl);
 #ifdef BETA
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dB%d\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dB%d\r\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
 #else
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dS%d\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dS%d\r\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
 #endif
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "\n");
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "\r\n");
 			memcpy(cx->tbuf+cx->tlen, cx->txd, cx->txdl);
 			cx->tlen += cx->txdl;
 			free(cx->txd);
@@ -498,11 +498,11 @@ int http_async_req_status(void *ctx)
 		else
 		{
 			// generate GET
-			cx->tbuf = malloc(strlen(cx->host) + strlen(cx->path) + 89 + cx->thlen);
+			cx->tbuf = malloc(strlen(cx->host) + strlen(cx->path) +93 + cx->thlen);
 			cx->tptr = 0;
 			cx->tlen = 0;
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "GET %s HTTP/1.1\n", cx->path);
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "Host: %s\n", cx->host);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "GET %s HTTP/1.1\r\n", cx->path);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "Host: %s\r\n", cx->host);
 			if (cx->thdr)
 			{
 				memcpy(cx->tbuf+cx->tlen, cx->thdr, cx->thlen);
@@ -512,13 +512,13 @@ int http_async_req_status(void *ctx)
 				cx->thlen = 0;
 			}
 			if (!cx->keep)
-				cx->tlen += sprintf(cx->tbuf+cx->tlen, "Connection: close\n");
+				cx->tlen += sprintf(cx->tbuf+cx->tlen, "Connection: close\r\n");
 #ifdef BETA
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dB%d\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dB%d\r\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
 #else
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dS%d\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "X-Powder-Version: %s%dS%d\r\n", IDENT_VERSION, SAVE_VERSION, MINOR_VERSION);
 #endif
-			cx->tlen += sprintf(cx->tbuf+cx->tlen, "\n");
+			cx->tlen += sprintf(cx->tbuf+cx->tlen, "\r\n");
 		}
 		cx->state = HTS_XMIT;
 		cx->last = now;
