@@ -1,3 +1,13 @@
+the-powder-toy (79.3-0~ppa1) quantal; urgency=low
+
+  * New upstream release (beta)
+    - Fix minor spelling errors
+    - Fix crash when using flood-fill or a lot of INST
+    - Fix an issue that made it impossible to change the Windows
+      size from the options screen
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 26 May 2012 01:06:01 -0500
+
 the-powder-toy (78.1-0~ppa2) quantal; urgency=low
 
   * debian/control:
@@ -109,7 +119,7 @@ the-powder-toy (74.1-0ubuntu1) precise; urgency=low
 
   * New upstream release
     - Icon for Force Elements
-	- Allow DEST to be used with clone elements.
+	- Allow DEST to be used with clone elements
   * debian/the-powder-toy.desktop: updated icon path to use larger icon
   * debian/the-powder-toy.install: change icon from 32x32 to 48x48
 
