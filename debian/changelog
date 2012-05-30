@@ -1,3 +1,16 @@
+the-powder-toy (79.4-0~ppa1) quantal; urgency=low
+
+  * New upstream relase (beta)
+    - No rounding errors with triangle brush
+    - Fix SLTW boiling temperature typo
+    - Don't show disabled elements in element search
+    - Soap bubbles are easily formed now. Also they inherit soap's
+      decoration color
+    - Download progress bar for save opening
+    - Fix bug that causes ptsave URL parsing to fail if there is no '#'
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 29 May 2012 18:34:42 -0500
+
 the-powder-toy (79.3-0~ppa1) quantal; urgency=low
 
   * New upstream release (beta)
