@@ -8,16 +8,37 @@ the-powder-toy (79.4-0~ppa1) quantal; urgency=low
       decoration color
     - Download progress bar for save opening
     - Fix bug that causes ptsave URL parsing to fail if there is no '#'
+  * debian/changelog: corrected changelog for 79.3
+  * debian/patches/upstream-readme.patch: update README file
 
  -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 29 May 2012 18:34:42 -0500
 
 the-powder-toy (79.3-0~ppa1) quantal; urgency=low
 
   * New upstream release (beta)
-    - Fix minor spelling errors
-    - Fix crash when using flood-fill or a lot of INST
-    - Fix an issue that made it impossible to change the Windows
-      size from the options screen
+    - Add DISPLAY_EFFE back
+    - Element search interface by pressing 'e'
+    - VOID & PVOD can be set to only eat/not eat certain things
+    - Energy type particles automatically go into photons, not pmap
+    - Finish custom lua graphics functions
+    - Disable another way to create invalid elements
+    - Fix crash, spark reset set type without checking if it was a valid number.
+    - Fix lua console compiling with visual studio
+    - Fix lua console freeze/bugs
+    - Fix alt select being off by one every time
+    - Turn on deco before entering the deco editor (not after)
+    - Limit amount of ELEC produced to prevent infinite reactions
+    - Console doesn't enable hud
+    - OXYG fusion
+    - Fix small bugs
+    - Prevent accidental infinite loops in lua
+    - Fusion changes
+    - Register ptsave protocol in Windows installation
+    - Fix the bug with stickman standing on the screen edge
+    - Fix the bug where gel didn't transfer water from sponge
+    - Update gravity mask when loading OPS saves
+    - Fix infinite loop when trying to detach soap with extra ctype bits set
+    - Change order of bomb loops
 
  -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 26 May 2012 01:06:01 -0500
 

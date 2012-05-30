@@ -1,0 +1,44 @@
+diff --git a/README b/README
+index 3b6aeed..7dce94e 100644
+--- a/README
++++ b/README
+@@ -103,6 +103,39 @@ History:
+ 
+ ---------------------------------------------------------------------------
+ 
++* Version 79.4 Beta Build 169
++      o No rounding errors with triangle brush
++      o Fix SLTW boiling temperature typo
++      o Don't show disabled elements in element search
++      o Soap bubbles are easily formed now. Also they inherit soap's decoration color.
++      o Download progress bar for save opening
++      o Fix bug that causes ptsave URL parsing to fail if there is no '#'
++
++* Version 79.3 Beta Build 168
++      o Add DISPLAY_EFFE back
++      o Element search interface by pressing 'e'
++      o VOID & PVOD can be set to only eat/not eat certain things
++      o Energy type particles automatically go into photons, not pmap
++      o Finish custom lua graphics functions
++      o Disable another way to create invalid elements
++      o Fix crash, spark reset set type without checking if it was a valid number.
++      o Fix lua console compiling with visual studio
++      o Fix lua console freeze/bugs
++      o Fix alt select being off by one every time
++      o Turn on deco before entering the deco editor (not after)
++      o Limit amount of ELEC produced to prevent infinite reactions
++      o Console doesn't enable hud
++      o OXYG fusion
++      o Fix small bugs
++      o Prevent accidental infinite loops in lua
++      o Fusion changes
++      o Register ptsave protocol in Windows installation
++      o Fix the bug with stickman standing on the screen edge
++      o Fix the bug where gel didn't transfer water from sponge
++      o Update gravity mask when loading OPS saves
++      o Fix infinite loop when trying to detach soap with extra ctype bits set
++      o Change order of bomb loops
++
+ * Version 79.2 Beta Build 167
+       o Fix minor spelling errors
+       o Fix crash when using flood-fill or a lot of INST
