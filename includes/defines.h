@@ -25,9 +25,9 @@
  
 //VersionInfoStart
 #define SAVE_VERSION 79
-#define MINOR_VERSION 4
+#define MINOR_VERSION 6
 #define BETA
-#define BUILD_NUM 169
+#define BUILD_NUM 171
 //VersionInfoEnd
 
 #define IDENT_VERSION "G" //Change this if you're not Simon! It should be a single letter
@@ -162,6 +162,8 @@ typedef unsigned int pixel;
 typedef unsigned char uint8;
 
 extern int saveURIOpen;
+extern char * saveDataOpen;
+extern int saveDataOpenSize;
 
 extern int amd;
 
@@ -186,6 +188,7 @@ extern int hud_enable;
 extern int pretty_powder;
 extern int drawgrav_enable;
 extern int ngrav_enable;
+extern char bframe;
 int limitFPS;
 int water_equal_test;
 extern int quickoptions_tooltip_fade;
