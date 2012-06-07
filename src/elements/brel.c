@@ -15,25 +15,16 @@
 
 #include <element.h>
 
-int update_TTAN(UPDATE_FUNC_ARGS) {
-	int nx, ny, ttan = 0;
-	if(nt<=2)
-		ttan = 2;
-	else if(parts[i].tmp)
-		ttan = 2;
-	else if(nt<=6)
-		for (nx=-1; nx<2; nx++) {
-			for (ny=-1; ny<2; ny++) {
-				if ((!nx != !ny) && x+nx>=0 && y+ny>=0 && x+nx<XRES && y+ny<YRES) {
-					if((pmap[y+ny][x+nx]&0xFF)==PT_TTAN)
-						ttan++;
-				}
-			}
-		}
-		
-	if(ttan>=2) {
-		bmap_blockair[y/CELL][x/CELL] = 1;
-		bmap_blockairh[y/CELL][x/CELL] = 1;
+int update_BREL(UPDATE_FUNC_ARGS) {
+	int np;
+	if (1>rand()%200 && (pv[y/CELL][x/CELL] > 30.0f) && parts[i].temp>9000 && parts[i].life>0)
+	{
+		part_change_type(i, x ,y ,PT_EXOT);
+		parts[i].life = 1000;
+	}
+	if ((pv[y/CELL][x/CELL] > 10.0f) && (parts[i].life>0)) {
+		parts[i].temp = parts[i].temp + (pv[y/CELL][x/CELL])/8;
 	}
 	return 0;
 }
+
