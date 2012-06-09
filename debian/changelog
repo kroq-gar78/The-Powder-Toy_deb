@@ -1,3 +1,9 @@
+the-powder-toy (80.3.178-0~ppa1) quantal; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 08 Jun 2012 21:37:38 -0500
+
 the-powder-toy (80.3-0~ppa1) quantal; urgency=low
 
   * New upstream release (stable)
