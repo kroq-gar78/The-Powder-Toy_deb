@@ -29,6 +29,7 @@
 int wire_placed = 0;
 
 int lighting_recreate = 0;
+int force_stacking_check = 0;//whether to force a check for excessively stacked particles
 
 playerst player;
 playerst player2;
@@ -51,6 +52,7 @@ unsigned char cb_emap[YRES/CELL][XRES/CELL];
 int pfree;
 
 unsigned pmap[YRES][XRES];
+int pmap_count[YRES][XRES];
 unsigned cb_pmap[YRES][XRES];
 unsigned photons[YRES][XRES];
 
@@ -164,6 +166,7 @@ void init_can_move()
 	}
 	can_move[PT_ELEC][PT_LCRY] = 2;
 	can_move[PT_ELEC][PT_EXOT] = 2;
+	can_move[PT_NEUT][PT_EXOT] = 2;
 	can_move[PT_PHOT][PT_LCRY] = 3;//varies according to LCRY life
 	
 	can_move[PT_PHOT][PT_BIZR] = 2;
@@ -231,7 +234,7 @@ int eval_move(int pt, int nx, int ny, unsigned *rr)
 			return 0;
 		if (bmap[ny/CELL][nx/CELL]==WL_EWALL && !emap[ny/CELL][nx/CELL])
 			return 0;
-		if (bmap[ny/CELL][nx/CELL]==WL_EHOLE && !emap[ny/CELL][nx/CELL])
+		if (bmap[ny/CELL][nx/CELL]==WL_EHOLE && !emap[ny/CELL][nx/CELL] && !(ptypes[pt].properties&TYPE_SOLID) && !(ptypes[r&0xFF].properties&TYPE_SOLID))
 			return 2;
 	}
 	return result;
@@ -1491,6 +1494,7 @@ void update_particles_i(pixel *vid, int start, int inc)
 	int lighting_ok=1;
 	unsigned int elem_properties;
 	float pGravX, pGravY, pGravD;
+	int excessive_stacking_found = 0;
 
 	if (sys_pause&&lighting_recreate>0)
     {
@@ -1516,6 +1520,68 @@ void update_particles_i(pixel *vid, int start, int inc)
 	if (sys_pause&&!framerender)//do nothing if paused
 		return;
 		
+	if (force_stacking_check || (rand()%10)==0)
+	{
+		force_stacking_check = 0;
+		excessive_stacking_found = 0;
+		for (y=0; y<YRES; y++)
+		{
+			for (x=0; x<XRES; x++)
+			{
+				// Use a threshold, since some particle stacking can be normal (e.g. BIZR + FILT)
+				// Setting pmap_count[y][x] > NPART means BHOL will form in that spot
+				if (pmap_count[y][x]>5)
+				{
+					if (bmap[y/CELL][x/CELL]==WL_EHOLE)
+					{
+						// Allow more stacking in E-hole
+						if (pmap_count[y][x]>1500)
+						{
+							pmap_count[y][x] = pmap_count[y][x] + NPART;
+							excessive_stacking_found = 1;
+						}
+					}
+					// Random chance to turn into BHOL that increases with the amount of stacking, up to a threshold where it is certain to turn into BHOL
+					else if (pmap_count[y][x]>1500 || (rand()%1600)<=(pmap_count[y][x]+100))
+					{
+						pmap_count[y][x] = pmap_count[y][x] + NPART;
+						excessive_stacking_found = 1;
+					}
+				}
+			}
+		}
+		if (excessive_stacking_found)
+		{
+			for (i=0; i<=parts_lastActiveIndex; i++)
+			{
+				if (parts[i].type)
+				{
+					t = parts[i].type;
+					x = (int)(parts[i].x+0.5f);
+					y = (int)(parts[i].y+0.5f);
+					if (x>=0 && y>=0 && x<XRES && y<YRES && !(ptypes[t].properties&TYPE_ENERGY))
+					{
+						if (pmap_count[y][x]>=NPART)
+						{
+							if (pmap_count[y][x]>NPART)
+							{
+								create_part(i, x, y, PT_NBHL);
+								parts[i].temp = MAX_TEMP;
+								parts[i].tmp = pmap_count[y][x]-NPART;//strength of grav field
+								if (parts[i].tmp>51200) parts[i].tmp = 51200;
+								pmap_count[y][x] = NPART;
+							}
+							else
+							{
+								kill_part(i);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	if (ISGRAV==1)//crappy grav color handling, i will change this someday
 	{
 		ISGRAV = 0;
@@ -2779,6 +2845,7 @@ void update_particles(pixel *vid)//doesn't update the particles themselves, but 
 #endif
 
 	memset(pmap, 0, sizeof(pmap));
+	memset(pmap_count, 0, sizeof(pmap_count));
 	memset(photons, 0, sizeof(photons));
 	NUM_PARTS = 0;
 	for (i=0; i<=parts_lastActiveIndex; i++)//the particle loop that resets the pmap/photon maps every frame, to update them.
@@ -2793,7 +2860,16 @@ void update_particles(pixel *vid)//doesn't update the particles themselves, but 
 				if (ptypes[t].properties & TYPE_ENERGY)
 					photons[y][x] = t|(i<<8);
 				else
-					pmap[y][x] = t|(i<<8);
+				{
+					// Particles are sometimes allowed to go inside INVS and FILT
+					// To make particles collide correctly when inside these elements, these elements must not overwrite an existing pmap entry from particles inside them
+					if (!pmap[y][x] || (t!=PT_INVIS && t!= PT_FILT))
+						pmap[y][x] = t|(i<<8);
+					// Count number of particles at each location, for excess stacking check
+					// (does not include energy particles or THDR - currently no limit on stacking those)
+					if (t!=PT_THDR)
+						pmap_count[y][x]++;
+				}
 			}
 			lastPartUsed = i;
 			NUM_PARTS ++;
