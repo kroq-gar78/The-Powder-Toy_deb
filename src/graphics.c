@@ -1082,6 +1082,8 @@ int drawtextwrap(pixel *vid, int x, int y, int w, const char *s, int r, int g, i
 					rw = 0;
 					y+=FONT_H+2;
 					rh+=FONT_H+2;
+					if (*s==' ')
+						continue;
 				}
 				x = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
 			}
@@ -1194,6 +1196,8 @@ void textnpos(char *s, int n, int w, int *cx, int *cy)
 			{
 				x = 0;
 				y += FONT_H+2;
+				if (*(s+1)==' ')
+					x -= font_data[font_ptrs[(int)(' ')]];
 			}
 			n--;
 		}
@@ -1236,6 +1240,8 @@ int textposxy(char *s, int width, int w, int h)
 			if (x>=width) {
 				x = 0;
 				y += FONT_H+2;
+				if (*(s+1)==' ')
+					x -= font_data[font_ptrs[(int)(' ')]];
 			}
 			n++;
 		}
@@ -1274,6 +1280,8 @@ int textwrapheight(char *s, int width)
 				{
 					x = 0;
 					height += FONT_H+2;
+					if (*s==' ')
+						continue;
 				}
 				x += cw;
 			}
@@ -1883,7 +1891,7 @@ void render_parts(pixel *vid)
 					if (ptypes[t].graphics_func)
 					{
 #endif
-						if ((*(ptypes[t].graphics_func))(&(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb, vid)) //That's a lot of args, a struct might be better
+						if ((*(ptypes[t].graphics_func))(&(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb)) //That's a lot of args, a struct might be better
 						{
 							graphicscache[t].isready = 1;
 							graphicscache[t].pixel_mode = pixel_mode;
@@ -1899,7 +1907,7 @@ void render_parts(pixel *vid)
 					}
 					else
 					{
-						if(graphics_DEFAULT(&(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb, vid))
+						if(graphics_DEFAULT(&(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb))
 						{
 							graphicscache[t].isready = 1;
 							graphicscache[t].pixel_mode = pixel_mode;
@@ -2016,6 +2024,134 @@ void render_parts(pixel *vid)
 	#endif
 					
 				//Pixel rendering
+				if (t==PT_SOAP)
+				{
+					if ((parts[i].ctype&7) == 7)
+						draw_line(vid, nx, ny, (int)(parts[parts[i].tmp].x+0.5f), (int)(parts[parts[i].tmp].y+0.5f), colr, colg, colb, XRES+BARSIZE);
+				}
+				if(pixel_mode & PSPEC_STICKMAN)
+				{
+					char buff[20];  //Buffer for HP
+					int s;
+					int legr, legg, legb;
+					playerst *cplayer;
+					if(t==PT_STKM)
+						cplayer = &player;
+					else if(t==PT_STKM2)
+						cplayer = &player2;
+					else if(t==PT_FIGH)
+						cplayer = &fighters[(unsigned char)parts[i].tmp];
+					else
+						continue;
+
+					if (mousex>(nx-3) && mousex<(nx+3) && mousey<(ny+3) && mousey>(ny-3)) //If mous is in the head
+					{
+						sprintf(buff, "%3d", parts[i].life);  //Show HP
+						drawtext(vid, mousex-8-2*(parts[i].life<100)-2*(parts[i].life<10), mousey-12, buff, 255, 255, 255, 255);
+					}
+
+					if (colour_mode!=COLOUR_HEAT)
+					{
+						if (cplayer->elem<PT_NUM)
+						{
+							colr = PIXR(ptypes[cplayer->elem].pcolors);
+							colg = PIXG(ptypes[cplayer->elem].pcolors);
+							colb = PIXB(ptypes[cplayer->elem].pcolors);
+						}
+						else
+						{
+							colr = 0x80;
+							colg = 0x80;
+							colb = 0xFF;
+						}
+					}
+#ifdef OGLR
+					glColor4f(((float)colr)/255.0f, ((float)colg)/255.0f, ((float)colb)/255.0f, 1.0f);
+					glBegin(GL_LINE_STRIP);
+					if(t==PT_FIGH)
+					{
+						glVertex2f(fnx, fny+2);
+						glVertex2f(fnx+2, fny);
+						glVertex2f(fnx, fny-2);
+						glVertex2f(fnx-2, fny);
+						glVertex2f(fnx, fny+2);
+					}
+					else
+					{
+						glVertex2f(fnx-2, fny-2);
+						glVertex2f(fnx+2, fny-2);
+						glVertex2f(fnx+2, fny+2);
+						glVertex2f(fnx-2, fny+2);
+						glVertex2f(fnx-2, fny-2);
+					}
+					glEnd();
+					glBegin(GL_LINES);
+
+					if (colour_mode!=COLOUR_HEAT)
+					{
+						if (t==PT_STKM2)
+							glColor4f(100.0f/255.0f, 100.0f/255.0f, 1.0f, 1.0f);
+						else
+							glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+					}
+
+					glVertex2f(nx, ny+3);
+					glVertex2f(cplayer->legs[0], cplayer->legs[1]);
+					
+					glVertex2f(cplayer->legs[0], cplayer->legs[1]);
+					glVertex2f(cplayer->legs[4], cplayer->legs[5]);
+					
+					glVertex2f(nx, ny+3);
+					glVertex2f(cplayer->legs[8], cplayer->legs[9]);
+					
+					glVertex2f(cplayer->legs[8], cplayer->legs[9]);
+					glVertex2f(cplayer->legs[12], cplayer->legs[13]);
+					glEnd();
+#else
+					s = XRES+BARSIZE;
+
+					if (t==PT_STKM2)
+					{
+						legr = 100;
+						legg = 100;
+						legb = 255;
+					}
+					else
+					{
+						legr = 255;
+						legg = 255;
+						legb = 255;
+					}
+
+					if (colour_mode==COLOUR_HEAT)
+					{
+						legr = colr;
+						legg = colg;
+						legb = colb;
+					}
+
+					//head
+					if(t==PT_FIGH)
+					{
+						draw_line(vid , nx, ny+2, nx+2, ny, colr, colg, colb, s);
+						draw_line(vid , nx+2, ny, nx, ny-2, colr, colg, colb, s);
+						draw_line(vid , nx, ny-2, nx-2, ny, colr, colg, colb, s);
+						draw_line(vid , nx-2, ny, nx, ny+2, colr, colg, colb, s);
+					}
+					else
+					{
+						draw_line(vid , nx-2, ny+2, nx+2, ny+2, colr, colg, colb, s);
+						draw_line(vid , nx-2, ny-2, nx+2, ny-2, colr, colg, colb, s);
+						draw_line(vid , nx-2, ny-2, nx-2, ny+2, colr, colg, colb, s);
+						draw_line(vid , nx+2, ny-2, nx+2, ny+2, colr, colg, colb, s);
+					}
+					//legs
+					draw_line(vid , nx, ny+3, cplayer->legs[0], cplayer->legs[1], legr, legg, legb, s);
+					draw_line(vid , cplayer->legs[0], cplayer->legs[1], cplayer->legs[4], cplayer->legs[5], legr, legg, legb, s);
+					draw_line(vid , nx, ny+3, cplayer->legs[8], cplayer->legs[9], legr, legg, legb, s);
+					draw_line(vid , cplayer->legs[8], cplayer->legs[9], cplayer->legs[12], cplayer->legs[13], legr, legg, legb, s);
+#endif
+				}
 #ifdef OGLR
 				if((display_mode & DISPLAY_EFFE) && (fabs(fnx-flx)>1.5f || fabs(fny-fly)>1.5f))
 				{

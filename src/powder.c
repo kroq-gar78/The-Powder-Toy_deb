@@ -56,6 +56,28 @@ int pmap_count[YRES][XRES];
 unsigned cb_pmap[YRES][XRES];
 unsigned photons[YRES][XRES];
 
+void get_gravity_field(int x, int y, float particleGrav, float newtonGrav, float *pGravX, float *pGravY)
+{
+	*pGravX = newtonGrav*gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
+	*pGravY = newtonGrav*gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
+	switch (gravityMode)
+	{
+		default:
+		case 0: //normal, vertical gravity
+			*pGravY += particleGrav;
+			break;
+		case 1: //no gravity
+			break;
+		case 2: //radial gravity
+			if (x-XCNTR != 0 || y-YCNTR != 0)
+			{
+				float pGravMult = particleGrav/sqrtf((x-XCNTR)*(x-XCNTR) + (y-YCNTR)*(y-YCNTR));
+				*pGravX -= pGravMult * (float)(x - XCNTR);
+				*pGravY -= pGravMult * (float)(y - YCNTR);
+			}
+	}
+}
+
 static int pn_junction_sprk(int x, int y, int pt)
 {
 	unsigned r = pmap[y][x];
@@ -95,7 +117,7 @@ void init_can_move()
 	//  1 = Swap
 	//  2 = Both particles occupy the same space.
 	//  3 = Varies, go run some extra checks
-	int t, rt;
+	int t, rt, stkm_move;
 	for (rt=0;rt<PT_NUM;rt++)
 		can_move[0][rt] = 0; // particles that don't exist shouldn't move...
 	for (t=1;t<PT_NUM;t++)
@@ -134,10 +156,14 @@ void init_can_move()
 	{
 		//spark shouldn't move
 		can_move[PT_SPRK][t] = 0;
-		//all stickman collisions are done in stickman update function
-		can_move[PT_STKM][t] = 2;
-		can_move[PT_STKM2][t] = 2;
-		can_move[PT_FIGH][t] = 2;
+		stkm_move = 0;
+		if (ptypes[t].properties & (TYPE_LIQUID | TYPE_GAS))
+			stkm_move = 2;
+		if (!t || t==PT_PRTO || t==PT_SPAWN || t==PT_SPAWN2)
+			stkm_move = 2;
+		can_move[PT_STKM][t] = stkm_move;
+		can_move[PT_STKM2][t] = stkm_move;
+		can_move[PT_FIGH][t] = stkm_move;
 	}
 	for (t=0;t<PT_NUM;t++)
 	{
@@ -145,10 +171,9 @@ void init_can_move()
 		can_move[t][PT_VOID] = 1;
 		can_move[t][PT_BHOL] = 1;
 		can_move[t][PT_NBHL] = 1;
-		//all stickman collisions are done in stickman update function
-		can_move[t][PT_STKM] = 2;
-		can_move[t][PT_STKM2] = 2;
-		can_move[PT_FIGH][t] = 2;
+		can_move[t][PT_STKM] = 0;
+		can_move[t][PT_STKM2] = 0;
+		can_move[t][PT_FIGH] = 0;
 		//INVIS behaviour varies with pressure
 		can_move[t][PT_INVIS] = 3;
 		//stop CNCT being displaced by other particles
@@ -181,6 +206,7 @@ void init_can_move()
 	can_move[PT_ANAR][PT_WHOL] = 1;
 	can_move[PT_ANAR][PT_NWHL] = 1;
 	can_move[PT_THDR][PT_THDR] = 2;
+	can_move[PT_EMBR][PT_EMBR] = 2;
 }
 
 /*
@@ -250,9 +276,6 @@ int try_move(int i, int x, int y, int nx, int ny)
 		return 1;
 
 	e = eval_move(parts[i].type, nx, ny, &r);
-
-	if ((r&0xFF)==PT_BOMB && parts[i].type==PT_BOMB && parts[i].tmp == 1)
-		e = 2;
 
 	/* half-silvered mirror */
 	if (!e && parts[i].type==PT_PHOT &&
@@ -879,6 +902,7 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 	if (i>parts_lastActiveIndex) parts_lastActiveIndex = i;
 
 	parts[i].dcolour = 0;
+	parts[i].flags = 0;
 	if (t==PT_GLAS)
 	{
 		parts[i].pavg[1] = pv[y/CELL][x/CELL];
@@ -1030,6 +1054,9 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 			parts[i].life = 1000;
 			parts[i].tmp = 244;
 			break;
+		case PT_EMBR:
+			parts[i].life = 50;
+			break;
 		case PT_STKM:
 			if (player.spwn==0)
 			{
@@ -1052,7 +1079,7 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 			{
 				return -1;
 			}
-			create_part(-1,x,y,PT_SPAWN);
+			create_part(-3,x,y,PT_SPAWN);
 			ISSPAWN1 = 1;
 			break;
 		case PT_STKM2:
@@ -1077,7 +1104,7 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 			{
 				return -1;
 			}
-			create_part(-1,x,y,PT_SPAWN2);
+			create_part(-3,x,y,PT_SPAWN2);
 			ISSPAWN2 = 1;
 			break;
 		case PT_BIZR: case PT_BIZRG: case PT_BIZRS:
@@ -2455,7 +2482,31 @@ killed:
 			stagnant = parts[i].flags & FLAG_STAGNANT;
 			parts[i].flags &= ~FLAG_STAGNANT;
 
-			if (ptypes[t].properties & TYPE_ENERGY) {
+			if (t==PT_STKM || t==PT_STKM2 || t==PT_FIGH)
+			{
+				int nx, ny;
+				//head movement, let head pass through anything
+				parts[i].x += parts[i].vx;
+				parts[i].y += parts[i].vy;
+				nx = (int)((float)parts[i].x+0.5f);
+				ny = (int)((float)parts[i].y+0.5f);
+				if (ny!=y || nx!=x)
+				{
+					if ((pmap[y][x]>>8)==i) pmap[y][x] = 0;
+					else if ((photons[y][x]>>8)==i) photons[y][x] = 0;
+					if (nx<CELL || nx>=XRES-CELL || ny<CELL || ny>=YRES-CELL)
+					{
+						kill_part(i);
+						continue;
+					}
+					if (ptypes[t].properties & TYPE_ENERGY)
+						photons[ny][nx] = t|(i<<8);
+					else if (t)
+						pmap[ny][nx] = t|(i<<8);
+				}
+			}
+			else if (ptypes[t].properties & TYPE_ENERGY)
+			{
 				if (t == PT_PHOT) {
 					if (parts[i].flags&FLAG_SKIPMOVE)
 					{
@@ -2866,8 +2917,8 @@ void update_particles(pixel *vid)//doesn't update the particles themselves, but 
 					if (!pmap[y][x] || (t!=PT_INVIS && t!= PT_FILT))
 						pmap[y][x] = t|(i<<8);
 					// Count number of particles at each location, for excess stacking check
-					// (does not include energy particles or THDR - currently no limit on stacking those)
-					if (t!=PT_THDR)
+					// (there are a few exceptions, including energy particles - currently no limit on stacking those)
+					if (t!=PT_THDR && t!=PT_EMBR && t!=PT_FIGH && t!=PT_PLSM)
 						pmap_count[y][x]++;
 				}
 			}
@@ -3010,6 +3061,143 @@ int flood_prop(int x, int y, size_t propoffset, void * propvalue, int proptype)
 
 #define PMAP_CMP_CONDUCTIVE(pmap, t) (((pmap)&0xFF)==(t) || (((pmap)&0xFF)==PT_SPRK && parts[(pmap)>>8].ctype==(t)))
 
+int flood_INST(int x, int y, int fullc, int cm)
+{
+	int c = fullc&0xFF;
+	int x1, x2, dy = (c<PT_NUM)?1:CELL;
+	int co = c;
+	int coord_stack_limit = XRES*YRES;
+	unsigned short (*coord_stack)[2] = malloc(sizeof(unsigned short)*2*coord_stack_limit);
+	int coord_stack_size = 0;
+	int created_something = 0;
+
+	if (c>=PT_NUM)
+		return 0;
+
+	if (cm==-1)
+	{
+		if (c==0)
+		{
+			cm = pmap[y][x]&0xFF;
+			if (!cm)
+				return 0;
+		}
+		else
+			cm = 0;
+	}
+
+	if ((pmap[y][x]&0xFF)!=cm)
+		return 1;
+
+	coord_stack[coord_stack_size][0] = x;
+	coord_stack[coord_stack_size][1] = y;
+	coord_stack_size++;
+
+	do
+	{
+		coord_stack_size--;
+		x = coord_stack[coord_stack_size][0];
+		y = coord_stack[coord_stack_size][1];
+		x1 = x2 = x;
+		// go left as far as possible
+		while (x1>=CELL)
+		{
+			if ((pmap[y][x1-1]&0xFF)!=cm)
+			{
+				break;
+			}
+			x1--;
+		}
+		// go right as far as possible
+		while (x2<XRES-CELL)
+		{
+			if ((pmap[y][x2+1]&0xFF)!=cm)
+			{
+				break;
+			}
+			x2++;
+		}
+		// fill span
+		for (x=x1; x<=x2; x++)
+		{
+			if (create_part(-1, x, y, fullc)>=0)
+				created_something = 1;
+		}
+
+		// add vertically adjacent pixels to stack
+		// (wire crossing for INST)
+		if (y>=CELL+1 && x1==x2 &&
+				PMAP_CMP_CONDUCTIVE(pmap[y-1][x1-1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y-1][x1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y-1][x1+1], cm) &&
+				!PMAP_CMP_CONDUCTIVE(pmap[y-2][x1-1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y-2][x1], cm) && !PMAP_CMP_CONDUCTIVE(pmap[y-2][x1+1], cm))
+		{
+			// travelling vertically up, skipping a horizontal line
+			if ((pmap[y-2][x1]&0xFF)==cm)
+			{
+				coord_stack[coord_stack_size][0] = x1;
+				coord_stack[coord_stack_size][1] = y-2;
+				coord_stack_size++;
+				if (coord_stack_size>=coord_stack_limit)
+					return -1;
+			}
+		}
+		else if (y>=CELL+1)
+		{
+			for (x=x1; x<=x2; x++)
+			{
+				if ((pmap[y-1][x]&0xFF)==cm)
+				{
+					if (x==x1 || x==x2 || y>=YRES-CELL-1 || !PMAP_CMP_CONDUCTIVE(pmap[y+1][x], cm))
+					{
+						// if at the end of a horizontal section, or if it's a T junction
+						coord_stack[coord_stack_size][0] = x;
+						coord_stack[coord_stack_size][1] = y-1;
+						coord_stack_size++;
+						if (coord_stack_size>=coord_stack_limit)
+							return -1;
+					}
+				}
+			}
+		}
+
+		if (y<YRES-CELL-1 && x1==x2 &&
+				PMAP_CMP_CONDUCTIVE(pmap[y+1][x1-1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y+1][x1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y+1][x1+1], cm) &&
+				!PMAP_CMP_CONDUCTIVE(pmap[y+2][x1-1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y+2][x1], cm) && !PMAP_CMP_CONDUCTIVE(pmap[y+2][x1+1], cm))
+		{
+			// travelling vertically down, skipping a horizontal line
+			if ((pmap[y+2][x1]&0xFF)==cm)
+			{
+				coord_stack[coord_stack_size][0] = x1;
+				coord_stack[coord_stack_size][1] = y+2;
+				coord_stack_size++;
+				if (coord_stack_size>=coord_stack_limit)
+					return -1;
+			}
+		}
+		else if (y<YRES-CELL-1)
+		{
+			for (x=x1; x<=x2; x++)
+			{
+				if ((pmap[y+1][x]&0xFF)==cm)
+				{
+					if (x==x1 || x==x2 || y<0 || !PMAP_CMP_CONDUCTIVE(pmap[y-1][x], cm))
+					{
+						// if at the end of a horizontal section, or if it's a T junction
+						coord_stack[coord_stack_size][0] = x;
+						coord_stack[coord_stack_size][1] = y+1;
+						coord_stack_size++;
+						if (coord_stack_size>=coord_stack_limit)
+							return -1;
+					}
+
+				}
+			}
+		}
+	} while (coord_stack_size>0);
+	free(coord_stack);
+	return created_something;
+}
+
+
 int flood_parts(int x, int y, int fullc, int cm, int bm, int flags)
 {
 	int c = fullc&0xFF;
@@ -3022,9 +3210,6 @@ int flood_parts(int x, int y, int fullc, int cm, int bm, int flags)
 
 	if (c==SPC_PROP)
 		return 0;
-	if (cm==PT_INST&&co==PT_SPRK)
-		if ((pmap[y][x]&0xFF)==PT_SPRK)
-			return 0;
 	if (cm==-1)
 	{
 		if (c==0)
@@ -3086,112 +3271,31 @@ int flood_parts(int x, int y, int fullc, int cm, int bm, int flags)
 		// fill span
 		for (x=x1; x<=x2; x++)
 		{
-			if (cm==PT_INST&&co==PT_SPRK)
-			{
-				if (create_part(-1, x, y, fullc)>=0)
-					created_something = 1;
-			}
-			else
-			{
-				if (create_parts(x, y, 0, 0, fullc, flags, 1))
-					created_something = 1;
-			}
+			if (create_parts(x, y, 0, 0, fullc, flags, 1))
+				created_something = 1;
 		}
 
 		// add vertically adjacent pixels to stack
-		if (cm==PT_INST&&co==PT_SPRK)
-		{
-			//wire crossing for INST
-			if (y>=CELL+1 && x1==x2 &&
-					PMAP_CMP_CONDUCTIVE(pmap[y-1][x1-1], PT_INST) && PMAP_CMP_CONDUCTIVE(pmap[y-1][x1], PT_INST) && PMAP_CMP_CONDUCTIVE(pmap[y-1][x1+1], PT_INST) &&
-					!PMAP_CMP_CONDUCTIVE(pmap[y-2][x1-1], PT_INST) && PMAP_CMP_CONDUCTIVE(pmap[y-2][x1], PT_INST) && !PMAP_CMP_CONDUCTIVE(pmap[y-2][x1+1], PT_INST))
-			{
-				// travelling vertically up, skipping a horizontal line
-				if ((pmap[y-2][x1]&0xFF)==PT_INST)
+		if (y>=CELL+dy)
+			for (x=x1; x<=x2; x++)
+				if ((pmap[y-dy][x]&0xFF)==cm && bmap[(y-dy)/CELL][x/CELL]==bm)
 				{
-					coord_stack[coord_stack_size][0] = x1;
-					coord_stack[coord_stack_size][1] = y-2;
+					coord_stack[coord_stack_size][0] = x;
+					coord_stack[coord_stack_size][1] = y-dy;
 					coord_stack_size++;
 					if (coord_stack_size>=coord_stack_limit)
 						return -1;
 				}
-			}
-			else if (y>=CELL+1)
-			{
-				for (x=x1; x<=x2; x++)
+		if (y<YRES-CELL-dy)
+			for (x=x1; x<=x2; x++)
+				if ((pmap[y+dy][x]&0xFF)==cm && bmap[(y+dy)/CELL][x/CELL]==bm)
 				{
-					if ((pmap[y-1][x]&0xFF)==PT_INST)
-					{
-						if (x==x1 || x==x2 || y>=YRES-CELL-1 || !PMAP_CMP_CONDUCTIVE(pmap[y+1][x], PT_INST))
-						{
-							// if at the end of a horizontal section, or if it's a T junction
-							coord_stack[coord_stack_size][0] = x;
-							coord_stack[coord_stack_size][1] = y-1;
-							coord_stack_size++;
-							if (coord_stack_size>=coord_stack_limit)
-								return -1;
-						}
-					}
-				}
-			}
-
-			if (y<YRES-CELL-1 && x1==x2 &&
-					PMAP_CMP_CONDUCTIVE(pmap[y+1][x1-1], PT_INST) && PMAP_CMP_CONDUCTIVE(pmap[y+1][x1], PT_INST) && PMAP_CMP_CONDUCTIVE(pmap[y+1][x1+1], PT_INST) &&
-					!PMAP_CMP_CONDUCTIVE(pmap[y+2][x1-1], PT_INST) && PMAP_CMP_CONDUCTIVE(pmap[y+2][x1], PT_INST) && !PMAP_CMP_CONDUCTIVE(pmap[y+2][x1+1], PT_INST))
-			{
-				// travelling vertically down, skipping a horizontal line
-				if ((pmap[y+2][x1]&0xFF)==PT_INST)
-				{
-					coord_stack[coord_stack_size][0] = x1;
-					coord_stack[coord_stack_size][1] = y+2;
+					coord_stack[coord_stack_size][0] = x;
+					coord_stack[coord_stack_size][1] = y+dy;
 					coord_stack_size++;
 					if (coord_stack_size>=coord_stack_limit)
 						return -1;
 				}
-			}
-			else if (y<YRES-CELL-1)
-			{
-				for (x=x1; x<=x2; x++)
-				{
-					if ((pmap[y+1][x]&0xFF)==PT_INST)
-					{
-						if (x==x1 || x==x2 || y<0 || !PMAP_CMP_CONDUCTIVE(pmap[y-1][x], PT_INST))
-						{
-							// if at the end of a horizontal section, or if it's a T junction
-							coord_stack[coord_stack_size][0] = x;
-							coord_stack[coord_stack_size][1] = y+1;
-							coord_stack_size++;
-							if (coord_stack_size>=coord_stack_limit)
-								return -1;
-						}
-
-					}
-				}
-			}
-		}
-		else
-		{
-			if (y>=CELL+dy)
-				for (x=x1; x<=x2; x++)
-					if ((pmap[y-dy][x]&0xFF)==cm && bmap[(y-dy)/CELL][x/CELL]==bm)
-					{
-						coord_stack[coord_stack_size][0] = x;
-						coord_stack[coord_stack_size][1] = y-dy;
-						coord_stack_size++;
-						if (coord_stack_size>=coord_stack_limit)
-							return -1;
-					}
-			if (y<YRES-CELL-dy)
-				for (x=x1; x<=x2; x++)
-					if ((pmap[y+dy][x]&0xFF)==cm && bmap[(y+dy)/CELL][x/CELL]==bm)
-					{
-						coord_stack[coord_stack_size][0] = x;
-						coord_stack[coord_stack_size][1] = y+dy;
-						coord_stack_size++;
-						if (coord_stack_size>=coord_stack_limit)
-							return -1;
-					}
-		}
 	} while (coord_stack_size>0);
 	free(coord_stack);
 	return created_something;
