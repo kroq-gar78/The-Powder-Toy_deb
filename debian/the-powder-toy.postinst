@@ -1,7 +1,0 @@
-#!/bin/bash -e
-
-if [ -x /usr/sbin/update-mime ]; then
-  update-mime
-fi
-
-##DEBHELPER##
