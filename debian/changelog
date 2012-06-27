@@ -1,3 +1,10 @@
+the-powder-toy (81.0-0~ppa2) quantal; urgency=low
+
+  * debian/control: removed Vcs-* as per suggestion in RFS for Debian,
+    as it refers to the Ubuntu package and not Debian
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 27 Jun 2012 18:45:29 -0500
+
 the-powder-toy (81.0-0~ppa1) quantal; urgency=low
 
   * New upstream release
