@@ -69,7 +69,9 @@ License: Expat
 Files: src/md5.c
 Copyright: none
 License: public-domain
- 
+ This code was written by Colin Plumb in 1993, no copyright is claimed.
+ This code is in the public domain; do with it what you wish.
+  
 Files: debian/*
 Copyright: 2012, Aditya Vaidya <kroq.gar78@gmail.com>
            2010, Christoph Korn <christoph.korn@getdeb.net>
