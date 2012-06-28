@@ -13,9 +13,7 @@ endif
 override_dh_auto_build:
 	make $(target)
 	mv build/$(target) build/powder
-	cp src/Resources/icon/powder-48.png src/Resources/icon/powdertoy-48.png
 
 override_dh_auto_clean:
 	make clean
-	rm -f src/Resources/icon/powdertoy-48.png
 	rm -f build/powder*
