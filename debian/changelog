@@ -4,12 +4,13 @@ the-powder-toy (81.0-0~ppa2) quantal; urgency=low
     as it refers to the Ubuntu package and not Debian
   * debian/the-powder-toy.post*: removed maintainer scripts for
     simplicity
-  * debian/patches/upstream-readme.patch: added description
+  * debian/patches/upstream-readme.patch: added description,
+    updated for new releases
   * debian/copyright: added info about src/md5.c
   * Added debian/the-powder-toy.xpm in place of
     src/Resources/icon/powder-48.png
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 28 Jun 2012 02:11:15 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 28 Jun 2012 15:02:48 -0500
 
 the-powder-toy (81.0-0~ppa1) quantal; urgency=low
 

@@ -1,14 +1,70 @@
 Description: Update upstream's changelog in README
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
 Forwarded: no
-diff --git a/README b/README
-index 3b6aeed..7dce94e 100644
 --- a/README
 +++ b/README
-@@ -103,6 +103,39 @@ History:
+@@ -103,6 +103,97 @@
  
  ---------------------------------------------------------------------------
  
++* Version 81.0 Build 182
++      o Minor improvement to text wrapping
++      o Fix STKM causing stacking and falling through some powders
++      o Prevent stacking from ELEC+NEUT, ELEC+water, and CO2 from BUBW
++      o Make ELEC+water form H2 and O2 in the correct proportions
++      o New element: EMBR - replaces all explosion sparks
++      o Fix minor bug with deco sample tool
++      o Gravity modes and Newtonian gravity for fireworks
++      o Prevent STKM floating in gases
++      o Allow STKM head to go through everything
++      o Fix compression during fusion
++      o Only create one NBLE particle for each fusing H2 particle
++      o Completely remove SING formation from fusion
++      o Less advection for FIRW, and don't go faster when multiple fire particles are touching it
++      o Some under-the-hood changes
++
++* Version 80.4 Build 179
++      o Prevent solid particles from stacking in E-Hole
++      o Create BHOL when particles stacked excessively
++      o Avoid stacking in INVS and FILT; collisions now work there so stacking doesn't happen
++      o Fix pressurised INVS graphics
++      o STOR doesn't conduct heat
++      o Ambient heat convection works a little better
++      o EXOT is permeable by NEUT and ELEC
++      o FRZZ behaves more like SNOW
++      o Some under-the-hood changes
++
++* Version 80.3 Build 178
++      o Fix session check on startup
++
++* Version 80.3 Build 177
++      o TTAN only blocks air when it is connected
++      o Some optimization
++
++* Version 80.2 Build 176
++      o Fix under-the-hood return problem
++
++* Version 80.1 Build 175
++      o EXOT mimics Heat View's color scale, and colors appear to cycle
++
++* Version 80.1 Build 174
++      o Nothing new?
++
++* Version 80.0 Beta Build 173
++      o Added EXOT element
++      o WARP is invisible except in Blob mode
++
++* Version 79.7 Build 172
++      o Fix bug with TRON not dying
++
++* Version 79.6 Beta Build 171
++      o Fix the bug with not-spawning fighter
++
++* Version 79.5 Beta Build 170
++      o Deferred loading of save files
++      o Moved soap and stick men graphics things to special functions.
++      o Minor under-the-hood changes
++
 +* Version 79.4 Beta Build 169
 +      o No rounding errors with triangle brush
 +      o Fix SLTW boiling temperature typo
