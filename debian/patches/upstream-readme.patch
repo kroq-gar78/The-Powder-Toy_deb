@@ -1,3 +1,6 @@
+Description: Update upstream's changelog in README
+Author: Aditya Vaidya <kroq.gar78@gmail.com>
+Forwarded: no
 diff --git a/README b/README
 index 3b6aeed..7dce94e 100644
 --- a/README
