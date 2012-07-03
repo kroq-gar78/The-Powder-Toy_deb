@@ -1,3 +1,9 @@
+the-powder-toy (81.1-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 03 Jul 2012 15:29:01 -0500
+
 the-powder-toy (81.0-0~ppa2) quantal; urgency=low
 
   * debian/control: removed Vcs-* as per suggestion in RFS for Debian,
