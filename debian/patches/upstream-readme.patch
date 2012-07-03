@@ -1,12 +1,23 @@
-Description: Update upstream's changelog in README
-Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Forwarded: no
+diff --git a/README b/README
+index 3b6aeed..40619c9 100644
 --- a/README
 +++ b/README
-@@ -103,6 +103,97 @@
+@@ -103,6 +103,109 @@ History:
  
  ---------------------------------------------------------------------------
  
++* Version 81.1 Build 183
++      o Allow INST to be sparked directly with the brush
++      o Lightning direction affected by Newtonian gravity
++      o Reduce rate of lightning creation by clone
++      o Make VOID and BHOL eat STKM again
++      o Prevent STKM falling through activated PVOD with a ctype that isn't STKM
++      o Prevent ACID from eating BGLA
++      o Stop STKM being able to jump on the bottom of the screen
++      o Ensure any clicks on stacked save link sigs only open the first found sign
++      o C5 doesn't explode when touching cold INSL
++      o Some under-the-hood changes
++
 +* Version 81.0 Build 182
 +      o Minor improvement to text wrapping
 +      o Fix STKM causing stacking and falling through some powders
