@@ -168,7 +168,6 @@ void init_can_move()
 	for (t=0;t<PT_NUM;t++)
 	{
 		// make them eat things
-		can_move[t][PT_VOID] = 1;
 		can_move[t][PT_BHOL] = 1;
 		can_move[t][PT_NBHL] = 1;
 		can_move[t][PT_STKM] = 0;
@@ -178,8 +177,9 @@ void init_can_move()
 		can_move[t][PT_INVIS] = 3;
 		//stop CNCT being displaced by other particles
 		can_move[t][PT_CNCT] = 0;
-		//Powered void behaviour varies on powered state
+		//void behaviour varies with powered state and ctype
 		can_move[t][PT_PVOD] = 3;
+		can_move[t][PT_VOID] = 3;
 	}
 	for (t=0;t<PT_NUM;t++)
 	{
@@ -242,8 +242,21 @@ int eval_move(int pt, int nx, int ny, unsigned *rr)
 		}
 		if ((r&0xFF)==PT_PVOD)
 		{
-			if (parts[r>>8].life == 10) result = 1;
+			if (parts[r>>8].life == 10)
+			{
+				if(!parts[r>>8].ctype || (parts[r>>8].ctype==pt)!=(parts[r>>8].tmp&1))
+					result = 1;
+				else
+					result = 0;
+			}
 			else result = 0;
+		}
+		if ((r&0xFF)==PT_VOID)
+		{
+			if(!parts[r>>8].ctype || (parts[r>>8].ctype==pt)!=(parts[r>>8].tmp&1))
+				result = 1;
+			else
+				result = 0;
 		}
 	}
 	if (bmap[ny/CELL][nx/CELL])
@@ -371,8 +384,8 @@ int try_move(int i, int x, int y, int nx, int ny)
 	}
 	if ((r&0xFF)==PT_VOID || (r&0xFF)==PT_PVOD) //this is where void eats particles
 	{
-		if(!parts[r>>8].ctype || (parts[r>>8].ctype==parts[i].type)!=(parts[r>>8].tmp&1))
-			kill_part(i);
+		//void ctype already checked in eval_move
+		kill_part(i);
 		return 0;
 	}
 	if ((r&0xFF)==PT_BHOL || (r&0xFF)==PT_NBHL) //this is where blackhole eats particles
@@ -820,6 +833,11 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 			return -1;
 		if (parts[pmap[y][x]>>8].life!=0)
 			return -1;
+		if (p==-2 && (pmap[y][x]&0xFF)==PT_INST)
+		{
+			flood_INST(x, y, PT_SPRK, PT_INST);
+			return pmap[y][x]>>8;
+		}
 		parts[pmap[y][x]>>8].type = PT_SPRK;
 		parts[pmap[y][x]>>8].life = 4;
 		parts[pmap[y][x]>>8].ctype = pmap[y][x]&0xFF;
@@ -942,24 +960,6 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 	}*/
 	switch (t)
 	{
-		case PT_LIGH:
-			if (p==-2)
-			{
-				switch (gravityMode)
-				{
-					default:
-					case 0:
-						parts[i].tmp= 270+rand()%40-20;
-						break;
-					case 1:
-						parts[i].tmp = rand()%360;
-						break;
-					case 2:
-						parts[i].tmp = atan2(x-XCNTR, y-YCNTR)*(180.0f/M_PI)+90;
-				}
-				parts[i].tmp2 = 4;
-			}
-			break;
 		case PT_SOAP:
 			parts[i].tmp = -1;
 			parts[i].tmp2 = -1;
@@ -1169,6 +1169,27 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 				parts[i].tmp = 1|(randomdir<<5)|(randhue<<7);//set as a head and a direction
 				parts[i].tmp2 = 4;//tail
 				parts[i].life = 5;
+			}
+			if (t==PT_LIGH)
+			{
+				float gx, gy, gsize;
+				if (p!=-2)
+				{
+					parts[i].life=30;
+					parts[i].temp=parts[i].life*150.0f; // temperature of the lighting shows the power of the lighting
+				}
+				get_gravity_field(x, y, 1.0f, 1.0f, &gx, &gy);
+				gsize = gx*gx+gy*gy;
+				if (gsize<0.0016f)
+				{
+					float angle = (rand()%6284)*0.001f;//(in radians, between 0 and 2*pi)
+					gsize = sqrtf(gsize);
+					// randomness in weak gravity fields (more randomness with weaker fields)
+					gx += cosf(angle)*(0.04f-gsize);
+					gy += sinf(angle)*(0.04f-gsize);
+				}
+				parts[i].tmp = (((int)(atan2f(-gy, gx)*(180.0f/M_PI)))+rand()%40-20+360)%360;
+				parts[i].tmp2 = 4;
 			}
 	}
 	//and finally set the pmap/photon maps to the newly created particle
@@ -3067,7 +3088,7 @@ int flood_INST(int x, int y, int fullc, int cm)
 	int x1, x2, dy = (c<PT_NUM)?1:CELL;
 	int co = c;
 	int coord_stack_limit = XRES*YRES;
-	unsigned short (*coord_stack)[2] = malloc(sizeof(unsigned short)*2*coord_stack_limit);
+	unsigned short (*coord_stack)[2];
 	int coord_stack_size = 0;
 	int created_something = 0;
 
@@ -3086,9 +3107,10 @@ int flood_INST(int x, int y, int fullc, int cm)
 			cm = 0;
 	}
 
-	if ((pmap[y][x]&0xFF)!=cm)
+	if ((pmap[y][x]&0xFF)!=cm || parts[pmap[y][x]>>8].life!=0)
 		return 1;
 
+	coord_stack = malloc(sizeof(unsigned short)*2*coord_stack_limit);
 	coord_stack[coord_stack_size][0] = x;
 	coord_stack[coord_stack_size][1] = y;
 	coord_stack_size++;
@@ -3102,7 +3124,7 @@ int flood_INST(int x, int y, int fullc, int cm)
 		// go left as far as possible
 		while (x1>=CELL)
 		{
-			if ((pmap[y][x1-1]&0xFF)!=cm)
+			if ((pmap[y][x1-1]&0xFF)!=cm || parts[pmap[y][x1-1]>>8].life!=0)
 			{
 				break;
 			}
@@ -3111,7 +3133,7 @@ int flood_INST(int x, int y, int fullc, int cm)
 		// go right as far as possible
 		while (x2<XRES-CELL)
 		{
-			if ((pmap[y][x2+1]&0xFF)!=cm)
+			if ((pmap[y][x2+1]&0xFF)!=cm || parts[pmap[y][x2+1]>>8].life!=0)
 			{
 				break;
 			}
@@ -3131,20 +3153,23 @@ int flood_INST(int x, int y, int fullc, int cm)
 				!PMAP_CMP_CONDUCTIVE(pmap[y-2][x1-1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y-2][x1], cm) && !PMAP_CMP_CONDUCTIVE(pmap[y-2][x1+1], cm))
 		{
 			// travelling vertically up, skipping a horizontal line
-			if ((pmap[y-2][x1]&0xFF)==cm)
+			if ((pmap[y-2][x1]&0xFF)==cm && !parts[pmap[y-2][x1]>>8].life)
 			{
 				coord_stack[coord_stack_size][0] = x1;
 				coord_stack[coord_stack_size][1] = y-2;
 				coord_stack_size++;
 				if (coord_stack_size>=coord_stack_limit)
+				{
+					free(coord_stack);
 					return -1;
+				}
 			}
 		}
 		else if (y>=CELL+1)
 		{
 			for (x=x1; x<=x2; x++)
 			{
-				if ((pmap[y-1][x]&0xFF)==cm)
+				if ((pmap[y-1][x]&0xFF)==cm && !parts[pmap[y-1][x]>>8].life)
 				{
 					if (x==x1 || x==x2 || y>=YRES-CELL-1 || !PMAP_CMP_CONDUCTIVE(pmap[y+1][x], cm))
 					{
@@ -3153,7 +3178,10 @@ int flood_INST(int x, int y, int fullc, int cm)
 						coord_stack[coord_stack_size][1] = y-1;
 						coord_stack_size++;
 						if (coord_stack_size>=coord_stack_limit)
+						{
+							free(coord_stack);
 							return -1;
+						}
 					}
 				}
 			}
@@ -3164,20 +3192,23 @@ int flood_INST(int x, int y, int fullc, int cm)
 				!PMAP_CMP_CONDUCTIVE(pmap[y+2][x1-1], cm) && PMAP_CMP_CONDUCTIVE(pmap[y+2][x1], cm) && !PMAP_CMP_CONDUCTIVE(pmap[y+2][x1+1], cm))
 		{
 			// travelling vertically down, skipping a horizontal line
-			if ((pmap[y+2][x1]&0xFF)==cm)
+			if ((pmap[y+2][x1]&0xFF)==cm && !parts[pmap[y+2][x1]>>8].life)
 			{
 				coord_stack[coord_stack_size][0] = x1;
 				coord_stack[coord_stack_size][1] = y+2;
 				coord_stack_size++;
 				if (coord_stack_size>=coord_stack_limit)
+				{
+					free(coord_stack);
 					return -1;
+				}
 			}
 		}
 		else if (y<YRES-CELL-1)
 		{
 			for (x=x1; x<=x2; x++)
 			{
-				if ((pmap[y+1][x]&0xFF)==cm)
+				if ((pmap[y+1][x]&0xFF)==cm && !parts[pmap[y+1][x]>>8].life)
 				{
 					if (x==x1 || x==x2 || y<0 || !PMAP_CMP_CONDUCTIVE(pmap[y-1][x], cm))
 					{
@@ -3186,7 +3217,10 @@ int flood_INST(int x, int y, int fullc, int cm)
 						coord_stack[coord_stack_size][1] = y+1;
 						coord_stack_size++;
 						if (coord_stack_size>=coord_stack_limit)
+						{
+							free(coord_stack);
 							return -1;
+						}
 					}
 
 				}
@@ -3204,7 +3238,7 @@ int flood_parts(int x, int y, int fullc, int cm, int bm, int flags)
 	int x1, x2, dy = (c<PT_NUM)?1:CELL;
 	int co = c;
 	int coord_stack_limit = XRES*YRES;
-	unsigned short (*coord_stack)[2] = malloc(sizeof(unsigned short)*2*coord_stack_limit);
+	unsigned short (*coord_stack)[2];
 	int coord_stack_size = 0;
 	int created_something = 0;
 
@@ -3240,6 +3274,7 @@ int flood_parts(int x, int y, int fullc, int cm, int bm, int flags)
 	if (((pmap[y][x]&0xFF)!=cm || bmap[y/CELL][x/CELL]!=bm )||( (flags&BRUSH_SPECIFIC_DELETE) && cm!=SLALT))
 		return 1;
 
+	coord_stack = malloc(sizeof(unsigned short)*2*coord_stack_limit);
 	coord_stack[coord_stack_size][0] = x;
 	coord_stack[coord_stack_size][1] = y;
 	coord_stack_size++;
@@ -3284,7 +3319,10 @@ int flood_parts(int x, int y, int fullc, int cm, int bm, int flags)
 					coord_stack[coord_stack_size][1] = y-dy;
 					coord_stack_size++;
 					if (coord_stack_size>=coord_stack_limit)
+					{
+						free(coord_stack);
 						return -1;
+					}
 				}
 		if (y<YRES-CELL-dy)
 			for (x=x1; x<=x2; x++)
@@ -3294,7 +3332,10 @@ int flood_parts(int x, int y, int fullc, int cm, int bm, int flags)
 					coord_stack[coord_stack_size][1] = y+dy;
 					coord_stack_size++;
 					if (coord_stack_size>=coord_stack_limit)
+					{
+						free(coord_stack);
 						return -1;
+					}
 				}
 	} while (coord_stack_size>0);
 	free(coord_stack);
