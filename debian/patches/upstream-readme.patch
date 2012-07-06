@@ -2,13 +2,16 @@ Description: Update upstream's changelog in README
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
 Forwarded: no
 diff --git a/README b/README
-index 3b6aeed..40619c9 100644
+index 3b6aeed..930f688 100644
 --- a/README
 +++ b/README
-@@ -103,6 +103,109 @@ History:
+@@ -103,6 +103,112 @@ History:
  
  ---------------------------------------------------------------------------
  
++* Version 81.2 Build 184
++      o Ensure an array terminator is only written if the signs array actually exists
++
 +* Version 81.1 Build 183
 +      o Allow INST to be sparked directly with the brush
 +      o Lightning direction affected by Newtonian gravity
