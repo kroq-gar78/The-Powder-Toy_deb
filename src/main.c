@@ -1548,7 +1548,7 @@ int main(int argc, char *argv[])
 					for (i=0; i<NPART; i++)
 						if (parts[i].type==PT_SPRK)
 						{
-							if (parts[i].ctype >= 0 && parts[i].ctype < PT_NUM)
+							if (parts[i].ctype >= 0 && parts[i].ctype < PT_NUM && ptypes[parts[i].ctype].enabled)
 							{
 								parts[i].type = parts[i].ctype;
 								parts[i].life = 0;
@@ -1778,7 +1778,7 @@ int main(int argc, char *argv[])
 				if (ZSIZE<2)
 					ZSIZE = 2;
 				ZFACTOR = 256/ZSIZE;
-				sdl_wheel = 0;
+				//sdl_wheel = 0;
 			}
 			else //change brush size
 			{
@@ -1803,7 +1803,7 @@ int main(int argc, char *argv[])
 					bsy = 1180;
 				if (bsy<0)
 					bsy = 0;
-				sdl_wheel = 0;
+				//sdl_wheel = 0;
 				/*if(su >= PT_NUM) {
 					if(sl < PT_NUM)
 						su = sl;
@@ -1818,23 +1818,27 @@ int main(int argc, char *argv[])
 
 #ifdef LUACONSOLE
 		if(bc && bq){
-			if(!luacon_mouseevent(x, y, bc, LUACON_MPRESS)){
+			if(!luacon_mouseevent(x, y, bc, LUACON_MPRESS, sdl_wheel)){
 				b = 0;
 			}
 		}
 		else if(bc && !bq){
-			if(!luacon_mouseevent(x, y, bc, LUACON_MDOWN)){
+			if(!luacon_mouseevent(x, y, bc, LUACON_MDOWN, sdl_wheel)){
 				b = 0;
 			}
 		}
 		else if(!bc && bq){
-			if(!luacon_mouseevent(x, y, bq, LUACON_MUP)){
+			if(!luacon_mouseevent(x, y, bq, LUACON_MUP, sdl_wheel)){
 				b = 0;
 			}
 		}
-		luacon_step(x, y,sl,sr);
+		else if (sdl_wheel){
+			luacon_mouseevent(x, y, bq, 0, sdl_wheel);
+		}
+		
+		luacon_step(x, y,sl,sr,bsx,bsy);
 #endif
-
+		sdl_wheel = 0;
 		quickoptions_menu(vid_buf, b, bq, x, y);
 
 		for (i=0; i<SC_TOTAL; i++)//draw all the menu sections
@@ -2793,14 +2797,14 @@ int main(int argc, char *argv[])
 		//Setting an element for the stick man
 		if (player.spwn==0)
 		{
-			if ((sr<PT_NUM && ptypes[sr].falldown>0) || sr==SPC_AIR || sr == PT_NEUT || sr == PT_PHOT || sr == PT_LIGH)
+			if ((sr>0 && sr<PT_NUM && ptypes[sr].enabled && ptypes[sr].falldown>0) || sr==SPC_AIR || sr == PT_NEUT || sr == PT_PHOT || sr == PT_LIGH)
 				player.elem = sr;
 			else
 				player.elem = PT_DUST;
 		}
 		if (player2.spwn==0)
 		{
-			if ((sr<PT_NUM && ptypes[sr].falldown>0) || sr==SPC_AIR || sr == PT_NEUT || sr == PT_PHOT || sr == PT_LIGH)
+			if ((sr>0 && sr<PT_NUM && ptypes[sr].enabled && ptypes[sr].falldown>0) || sr==SPC_AIR || sr == PT_NEUT || sr == PT_PHOT || sr == PT_LIGH)
 				player2.elem = sr;
 			else
 				player2.elem = PT_DUST;
