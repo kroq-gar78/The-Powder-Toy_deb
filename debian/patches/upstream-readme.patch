@@ -2,13 +2,19 @@ Description: Update upstream's changelog in README
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
 Forwarded: no
 diff --git a/README b/README
-index 3b6aeed..930f688 100644
+index 3b6aeed..54eb248 100644
 --- a/README
 +++ b/README
-@@ -103,6 +103,112 @@ History:
+@@ -103,6 +103,118 @@ History:
  
  ---------------------------------------------------------------------------
  
++* Version 81.3 Build 185
++      o SALT only melts ICE that is above SLTW freezing temperature
++      o Brush size and mouse wheel added to lua
++      o Fix PLNT lag
++      o Some under-the-hood fixes and optimization
++
 +* Version 81.2 Build 184
 +      o Ensure an array terminator is only written if the signs array actually exists
 +
