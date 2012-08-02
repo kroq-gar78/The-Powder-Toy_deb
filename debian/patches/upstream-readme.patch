@@ -2,13 +2,21 @@ Description: Update upstream's changelog in README
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
 Forwarded: no
 diff --git a/README b/README
-index 3b6aeed..54eb248 100644
+index 3b6aeed..e412bb1 100644
 --- a/README
 +++ b/README
-@@ -103,6 +103,118 @@ History:
+@@ -103,6 +103,126 @@ History:
  
  ---------------------------------------------------------------------------
  
++* Version 81.4 Build 187
++      o Fixed pasting text within existing text
++      o Disable decorations by default
++      o Some under-the-hood tweaks
++
++* Version 81.3 Build 186
++      o Now stickmen can shoot plasma.
++
 +* Version 81.3 Build 185
 +      o SALT only melts ICE that is above SLTW freezing temperature
 +      o Brush size and mouse wheel added to lua
