@@ -95,6 +95,7 @@ static quick_option quickmenu[] =
 	{"D", "Show decorations", QM_TOGGLE, &decorations_enable},
 	{"N", "Newtonian gravity", QM_TOGGLE, &ngrav_enable},
 	{"A", "Ambient heat", QM_TOGGLE, &aheat_enable},
+	{"C", "Show Console", QM_TOGGLE, &console_mode},
 	{NULL}
 };
 
@@ -196,7 +197,7 @@ typedef struct ui_richtext ui_richtext;
 
 int SLALT;
 extern SDLMod sdl_mod;
-extern int sdl_key, sdl_rkey, sdl_wheel, sdl_caps, sdl_ascii, sdl_zoom_trig;
+extern int sdl_key, sdl_rkey, sdl_wheel, sdl_ascii, sdl_zoom_trig;
 #if (defined(LIN32) || defined(LIN64)) && defined(SDL_VIDEO_DRIVER_X11)
 extern SDL_SysWMinfo sdl_wminfo;
 extern Atom XA_CLIPBOARD, XA_TARGETS;
@@ -318,6 +319,8 @@ void menu_ui_v3(pixel *vid_buf, int i, int *sl, int *sr, int *su, int *dae, int 
 int color_menu_ui(pixel *vid_buf, int i, int *cr, int *cg, int *cb, int b, int bq, int mx, int my, int * tool);
 
 int sdl_poll(void);
+
+void stickmen_keys();
 
 void set_cmode(int cm);
 
