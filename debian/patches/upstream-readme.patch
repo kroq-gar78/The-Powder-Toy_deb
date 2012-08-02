@@ -2,13 +2,20 @@ Description: Update upstream's changelog in README
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
 Forwarded: no
 diff --git a/README b/README
-index 3b6aeed..e412bb1 100644
+index 3b6aeed..44e6249 100644
 --- a/README
 +++ b/README
-@@ -103,6 +103,126 @@ History:
+@@ -103,6 +103,133 @@ History:
  
  ---------------------------------------------------------------------------
  
++* Version 81.6 Build 189
++      o Fixed zoom in deco mode
++
++* Version 81.5 Build 188
++      o Add console show button to quick menu
++      o Some under-the-hood tweaks
++
 +* Version 81.4 Build 187
 +      o Fixed pasting text within existing text
 +      o Disable decorations by default
