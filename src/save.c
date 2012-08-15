@@ -56,6 +56,7 @@ int parse_save(void *save, int size, int replace, int x0, int y0, unsigned char 
 		return 1;
 	}
 	force_stacking_check = 1;//check for excessive stacking of particles next time update_particles is run
+	ppip_changed = 1;
 	if(saveData[0] == 'O' && saveData[1] == 'P' && saveData[2] == 'S')
 	{
 		return parse_save_OPS(save, size, replace, x0, y0, bmap, vx, vy, pv, fvx, fvy, signs, partsptr, pmap);
@@ -391,6 +392,11 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 						if(fieldDescriptor & 0x10)
 						{
 							if(i++ >= partsDataLen) goto fail;
+							if(fieldDescriptor & 0x1000)
+							{
+								if(i+1 >= partsDataLen) goto fail;
+								i += 2;
+							}
 						}
 					}
 					
@@ -488,6 +494,12 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 	wallDataLen = blockW*blockH;
 	fanData = malloc((blockW*blockH)*2);
 	fanDataLen = 0;
+	if (!wallData || !fanData)
+	{
+		puts("Save Error, out of memory\n");
+		outputData = NULL;
+		goto fin;
+	}
 	for(x = blockX; x < blockX+blockW; x++)
 	{
 		for(y = blockY; y < blockY+blockH; y++)
@@ -528,6 +540,12 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 	partsPosLastMap = calloc(fullW*fullH, sizeof(unsigned));
 	partsPosCount = calloc(fullW*fullH, sizeof(unsigned));
 	partsPosLink = calloc(NPART, sizeof(unsigned));
+	if (!partsPosFirstMap || !partsPosLastMap || !partsPosCount || !partsPosLink)
+	{
+		puts("Save Error, out of memory\n");
+		outputData = NULL;
+		goto fin;
+	}
 	for(i = 0; i < NPART; i++)
 	{
 		if(partsptr[i].type)
@@ -559,6 +577,12 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 	//Store number of particles in each position
 	partsPosData = malloc(fullW*fullH*3);
 	partsPosDataLen = 0;
+	if (!partsPosData)
+	{
+		puts("Save Error, out of memory\n");
+		outputData = NULL;
+		goto fin;
+	}
 	for (y=0;y<fullH;y++)
 	{
 		for (x=0;x<fullW;x++)
@@ -573,13 +597,19 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 	//Copy parts data
 	/* Field descriptor format:
 	|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|
-																	|		tmp2[2]	|		tmp2[1]	|	ctype[2]	|		vy		|		vx		|	dcololour	|	ctype[1]	|		tmp[2]	|		tmp[1]	|		life[2]	|		life[1]	|	temp dbl len|
+														tmp[3+4]	|		tmp2[2]	|		tmp2[1]	|	ctype[2]	|		vy		|		vx		|	dcololour	|	ctype[1]	|		tmp[2]	|		tmp[1]	|		life[2]	|		life[1]	|	temp dbl len|
 	life[2] means a second byte (for a 16 bit field) if life[1] is present
 	*/
 	partsData = malloc(NPART * (sizeof(particle)+1));
 	partsDataLen = 0;
 	partsSaveIndex = calloc(NPART, sizeof(unsigned));
 	partsCount = 0;
+	if (!partsData || !partsSaveIndex)
+	{
+		puts("Save Error, out of memory\n");
+		outputData = NULL;
+		goto fin;
+	}
 	for (y=0;y<fullH;y++)
 	{
 		for (x=0;x<fullW;x++)
@@ -634,7 +664,7 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 					}
 				}
 				
-				//Tmp (optional), 1 to 2 bytes
+				//Tmp (optional), 1, 2 or 4 bytes
 				if(partsptr[i].tmp)
 				{
 					fieldDesc |= 1 << 3;
@@ -643,6 +673,12 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 					{
 						fieldDesc |= 1 << 4;
 						partsData[partsDataLen++] = partsptr[i].tmp >> 8;
+						if(partsptr[i].tmp > 65535)
+						{
+							fieldDesc |= 1 << 12;
+							partsData[partsDataLen++] = (partsptr[i].tmp&0xFF000000)>>24;
+							partsData[partsDataLen++] = (partsptr[i].tmp&0x00FF0000)>>16;
+						}
 					}
 				}
 				
@@ -714,6 +750,12 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 
 	soapLinkData = malloc(3*elementCount[PT_SOAP]);
 	soapLinkDataLen = 0;
+	if (!soapLinkData)
+	{
+		puts("Save Error, out of memory\n");
+		outputData = NULL;
+		goto fin;
+	}
 	//Iterate through particles in the same order that they were saved
 	for (y=0;y<fullH;y++)
 	{
@@ -810,7 +852,13 @@ void *build_save_OPS(int *size, int orig_x0, int orig_y0, int orig_w, int orig_h
 	finalData = bson_data(&b);
 	finalDataLen = bson_size(&b);
 	outputDataLen = finalDataLen*2+12;
-	outputData = malloc(outputDataLen);
+	outputData = (unsigned char*)malloc(outputDataLen);
+	if (!outputData)
+	{
+		puts("Save Error, out of memory\n");
+		outputData = NULL;
+		goto fin;
+	}
 
 	outputData[0] = 'O';
 	outputData[1] = 'P';
@@ -1307,6 +1355,13 @@ int parse_save_OPS(void *save, int size, int replace, int x0, int y0, unsigned c
 						{
 							if(i >= partsDataLen) goto fail;
 							partsptr[newIndex].tmp |= (((unsigned)partsData[i++]) << 8);
+							//Read 3rd and 4th bytes
+							if(fieldDescriptor & 0x1000)
+							{
+								if(i+1 >= partsDataLen) goto fail;
+								partsptr[newIndex].tmp |= (((unsigned)partsData[i++]) << 24);
+								partsptr[newIndex].tmp |= (((unsigned)partsData[i++]) << 16);
+							}
 						}
 					}
 					
