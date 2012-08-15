@@ -1,6 +1,12 @@
+the-powder-toy (81.7) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 15 Aug 2012 10:05:52 -0500
+
 the-powder-toy (81.6-0~ppa1) precise; urgency=low
 
-  * "New upstream release"
+  * New upstream release
   * debian/patches/upstream-readme.patch: updated for new releases
 
  -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 02 Aug 2012 13:07:52 -0500
