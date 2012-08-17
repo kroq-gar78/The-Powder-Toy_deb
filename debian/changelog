@@ -2,8 +2,9 @@ the-powder-toy (81.7-0~ppa2) precise; urgency=low
 
   * debian/docs: added upstream changelog
   * debian/changelog: removed stray tab
+  * debian/the-powder-toy.xpm: downsized from 48x48 to 32x32
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 17 Aug 2012 16:36:40 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 17 Aug 2012 18:21:39 -0500
 
 the-powder-toy (81.7-0~ppa1) precise; urgency=low
 
