@@ -1,8 +1,9 @@
 the-powder-toy (81.7-0~ppa2) precise; urgency=low
 
   * debian/docs: added upstream changelog
+  * debian/changelog: removed stray tab
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 17 Aug 2012 15:58:54 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 17 Aug 2012 16:36:40 -0500
 
 the-powder-toy (81.7-0~ppa1) precise; urgency=low
 
@@ -247,7 +248,7 @@ the-powder-toy (74.1-0ubuntu1) precise; urgency=low
 
   * New upstream release
     - Icon for Force Elements
-	- Allow DEST to be used with clone elements
+    - Allow DEST to be used with clone elements
   * debian/the-powder-toy.desktop: updated icon path to use larger icon
   * debian/the-powder-toy.install: change icon from 32x32 to 48x48
 
