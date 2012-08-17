@@ -1,3 +1,9 @@
+the-powder-toy (81.7-0~ppa2) precise; urgency=low
+
+  * debian/docs: added upstream changelog
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 17 Aug 2012 15:58:54 -0500
+
 the-powder-toy (81.7-0~ppa1) precise; urgency=low
 
   * New upstream release
