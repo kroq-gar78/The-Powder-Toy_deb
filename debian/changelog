@@ -1,3 +1,10 @@
+the-powder-toy (81.7-0~ppa3) precise; urgency=low
+
+  * debian/patches/remove-installer.patch: remove mimetype registration
+    in-game
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 18 Aug 2012 09:37:31 -0500
+
 the-powder-toy (81.7-0~ppa2) precise; urgency=low
 
   * debian/docs: added upstream changelog
