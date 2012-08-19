@@ -13,7 +13,9 @@ endif
 override_dh_auto_build:
 	make $(target)
 	mv build/$(target) build/powder
+	cp -p Changelog changelog
 
 override_dh_auto_clean:
 	make clean
 	rm -f build/powder*
+	rm -f changelog

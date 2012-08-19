@@ -1,6 +1,20 @@
+the-powder-toy (81.7-0~ppa2) precise; urgency=low
+
+  * debian/docs: added upstream changelog
+  * debian/changelog: removed stray tab
+  * debian/the-powder-toy.xpm: downsized from 48x48 to 32x32
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 17 Aug 2012 18:21:39 -0500
+
+the-powder-toy (81.7-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 15 Aug 2012 10:05:52 -0500
+
 the-powder-toy (81.6-0~ppa1) precise; urgency=low
 
-  * "New upstream release"
+  * New upstream release
   * debian/patches/upstream-readme.patch: updated for new releases
 
  -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 02 Aug 2012 13:07:52 -0500
@@ -235,7 +249,7 @@ the-powder-toy (74.1-0ubuntu1) precise; urgency=low
 
   * New upstream release
     - Icon for Force Elements
-	- Allow DEST to be used with clone elements
+    - Allow DEST to be used with clone elements
   * debian/the-powder-toy.desktop: updated icon path to use larger icon
   * debian/the-powder-toy.install: change icon from 32x32 to 48x48
 
