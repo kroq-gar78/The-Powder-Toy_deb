@@ -1,6 +1,9 @@
+Description: Remove the mimetype registration in-game
+ Because the package does mimetype registration already,
+ there should be no way to redo the process in-game.
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Forwarded: no
-Description: Remove the mimetype registration in-game because the package does it
+Forwarded: not-needed
+Last-Update: 2012-08-18
 diff --git a/src/main.c b/src/main.c
 index d61e015..64b2b89 100644
 --- a/src/main.c
