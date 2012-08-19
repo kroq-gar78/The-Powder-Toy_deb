@@ -1,5 +1,5 @@
 Description: Fix compiling on the Raspberry Pi
-From: http://powdertoy.co.uk/Discussions/Thread/View.html?Thread=14606&PageNum=0
+Origin: http://powdertoy.co.uk/Discussions/Thread/View.html?Thread=14606&PageNum=0
 diff --git a/Makefile b/Makefile
 index b2d4570..dddd2db 100644
 --- a/Makefile
