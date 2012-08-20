@@ -1,7 +1,7 @@
 Description: Fix compiling on the Raspberry Pi
 Origin: http://powdertoy.co.uk/Discussions/Thread/View.html?Thread=14606&PageNum=0
 diff --git a/Makefile b/Makefile
-index b2d4570..dddd2db 100644
+index b2d4570..7d2c8b5 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -7,9 +7,9 @@ OFLAGS := -O3 -ffast-math -ftree-vectorize -funsafe-math-optimizations
@@ -43,38 +43,26 @@ index b2d4570..dddd2db 100644
  # libs:
  build/powder build/powder-debug build/powder-sse3 build/powder-sse2 build/powder-sse build/powder-sse3-opengl build/powder-debug-64 build/powder-64-sse3 build/powder-64-sse2 build/powder-64-sse3-opengl: LIBS += $(LFLAGS)
 diff --git a/src/misc.c b/src/misc.c
-index 322a56a..61a48ca 100644
+index 322a56a..99ea91f 100644
 --- a/src/misc.c
 +++ b/src/misc.c
-@@ -532,30 +532,7 @@ void *file_load(char *fn, int *size)
- 
- int cpu_check(void)
+@@ -534,7 +534,10 @@ int cpu_check(void)
  {
--#ifdef MACOSX
--	return 0;
+ #ifdef MACOSX
+ 	return 0;
 -#else
--#ifdef X86
--	unsigned af,bf,cf,df;
--	x86_cpuid(0, af, bf, cf, df);
--	if (bf==0x68747541 && cf==0x444D4163 && df==0x69746E65)
--		amd = 1;
--	x86_cpuid(1, af, bf, cf, df);
--#ifdef X86_SSE
--	if (!(df&(1<<25)))
--		return 1;
++#endif
++#ifdef __arm__
++	return 0;
++#endif
+ #ifdef X86
+ 	unsigned af,bf,cf,df;
+ 	x86_cpuid(0, af, bf, cf, df);
+@@ -554,7 +557,6 @@ int cpu_check(void)
+ 		return 1;
+ #endif
+ #endif
 -#endif
--#ifdef X86_SSE2
--	if (!(df&(1<<26)))
--		return 1;
--#endif
--#ifdef X86_SSE3
--	if (!(cf&1))
--		return 1;
--#endif
--#endif
--#endif
--	return 0;
-+return 0;
+ 	return 0;
  }
  
- matrix2d m2d_multiply_m2d(matrix2d m1, matrix2d m2)
