@@ -1,3 +1,9 @@
+the-powder-toy (82.0-0~ppa2) precise; urgency=low
+
+  * Added a new -dbg package containing all debugging symbols
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 25 Aug 2012 00:38:25 -0500
+
 the-powder-toy (82.0-0~ppa1) precise; urgency=low
 
   * New upstream release
