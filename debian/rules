@@ -19,3 +19,7 @@ override_dh_auto_clean:
 	make clean
 	rm -f build/powder*
 	rm -f changelog
+
+override_dh_strip:
+	dh_strip --dbg-package=the-powder-toy-dbg
+
