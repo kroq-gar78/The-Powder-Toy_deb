@@ -12,7 +12,7 @@ Standards-Version: 3.9.3
 Homepage: http://powdertoy.co.uk
 
 Package: the-powder-toy
-Architecture: any
+Architecture: armhf
 Depends: ${misc:Depends}, ${shlibs:Depends}, libx11-6
 Conflicts: the-powder-toy-beta
 Replaces: the-powder-toy-beta
@@ -22,7 +22,7 @@ Description: Physics sandbox game
  air pressure and velocity as well as heat!
 
 Package: the-powder-toy-dbg
-Architecture: any
+Architecture: armhf
 Depends: ${misc:Depends}, ${shlibs:Depends}, the-powder-toy (= ${binary:Version})
 Description: Physics sandbox game (debug)
  The Powder Toy is a desktop version of the classic
