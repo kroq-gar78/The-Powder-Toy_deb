@@ -791,28 +791,12 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 	}
 	if (t==SPC_AIR)
 	{
-		pv[y/CELL][x/CELL] += 0.03f;
-		if (y+CELL<YRES)
-			pv[y/CELL+1][x/CELL] += 0.03f;
-		if (x+CELL<XRES)
-		{
-			pv[y/CELL][x/CELL+1] += 0.03f;
-			if (y+CELL<YRES)
-				pv[y/CELL+1][x/CELL+1] += 0.03f;
-		}
+		pv[y/CELL][x/CELL] += 0.10f;
 		return -1;
 	}
 	if (t==SPC_VACUUM)
 	{
-		pv[y/CELL][x/CELL] -= 0.03f;
-		if (y+CELL<YRES)
-			pv[y/CELL+1][x/CELL] -= 0.03f;
-		if (x+CELL<XRES)
-		{
-			pv[y/CELL][x/CELL+1] -= 0.03f;
-			if (y+CELL<YRES)
-				pv[y/CELL+1][x/CELL+1] -= 0.03f;
-		}
+		pv[y/CELL][x/CELL] -= 0.10f;
 		return -1;
 	}
 	if (t==SPC_PGRV)
@@ -876,13 +860,14 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 	{
 		if (pmap[y][x])
 		{
+			int pmaptype = (pmap[y][x]&0xFF);
 			if ((
-				((pmap[y][x]&0xFF)==PT_STOR&&!(ptypes[t].properties&TYPE_SOLID))||
-				(pmap[y][x]&0xFF)==PT_CLNE||
-				(pmap[y][x]&0xFF)==PT_BCLN||
-				(pmap[y][x]&0xFF)==PT_CONV||
-				((pmap[y][x]&0xFF)==PT_PCLN&&t!=PT_PSCN&&t!=PT_NSCN)||
-				((pmap[y][x]&0xFF)==PT_PBCN&&t!=PT_PSCN&&t!=PT_NSCN)
+				(pmaptype==PT_STOR&&!(ptypes[t].properties&TYPE_SOLID))||
+				pmaptype==PT_CLNE||
+				pmaptype==PT_BCLN||
+				pmaptype==PT_CONV||
+				(pmaptype==PT_PCLN&&t!=PT_PSCN&&t!=PT_NSCN)||
+				(pmaptype==PT_PBCN&&t!=PT_PSCN&&t!=PT_NSCN)
 			)&&(
 				t!=PT_CLNE&&t!=PT_PCLN&&
 				t!=PT_BCLN&&t!=PT_STKM&&
@@ -892,6 +877,11 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 			{
 				parts[pmap[y][x]>>8].ctype = t;
 				if (t==PT_LIFE && v<NGOLALT && (pmap[y][x]&0xFF)!=PT_STOR) parts[pmap[y][x]>>8].tmp = v;
+			}
+			else if (pmaptype == PT_DTEC && pmaptype != t)
+			{
+				parts[pmap[y][x]>>8].ctype = t;
+				if (t==PT_LIFE && v<NGOLALT) parts[pmap[y][x]>>8].tmp = v;
 			}
 			return -1;
 		}
@@ -1113,6 +1103,9 @@ inline int create_part(int p, int x, int y, int tv)//the function for creating a
 			break;
 		case PT_BIZR: case PT_BIZRG: case PT_BIZRS:
 			parts[i].ctype = 0x47FFFF;
+			break;
+		case PT_DTEC:
+			parts[i].tmp2 = 2;
 			break;
 		default:
 			if (t==PT_FIGH)
