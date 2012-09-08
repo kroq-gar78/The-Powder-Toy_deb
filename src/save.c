@@ -899,6 +899,17 @@ fin:
 		free(partsSaveIndex);
 	if (soapLinkData)
 		free(soapLinkData);
+	if (partsPosData)
+		free(partsPosData);
+	if (partsPosLink)
+		free(partsPosLink);
+	if (partsPosFirstMap)
+		free(partsPosFirstMap);
+	if (partsPosCount)
+		free(partsPosCount);
+	if (partsPosLastMap)
+		free(partsPosLastMap);
+	
 	
 	return outputData;
 }
