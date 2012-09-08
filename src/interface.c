@@ -6824,6 +6824,8 @@ void render_ui(pixel * vid_buf, int xcoord, int ycoord, int orientation)
 	part_vbuf_store = part_vbuf;
 	
 	if (!o_vid_buf || !part_vbuf || !part_vbuf_store)
+		if(o_vid_buf)
+			free(o_vid_buf);
 		free(display_cb);
 		free(colour_cb);
 		free(render_cb);
