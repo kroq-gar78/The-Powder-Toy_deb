@@ -1651,10 +1651,10 @@ int main(int argc, char *argv[])
 				if (clipboard_ready==1 && clipboard_data)
 				{
 					load_data = malloc(clipboard_length);
-					memcpy(load_data, clipboard_data, clipboard_length);
-					load_size = clipboard_length;
 					if (load_data)
 					{
+						memcpy(load_data, clipboard_data, clipboard_length);
+						load_size = clipboard_length;
 						load_img = prerender_save(load_data, load_size, &load_w, &load_h);
 						if (load_img)
 							load_mode = 1;
