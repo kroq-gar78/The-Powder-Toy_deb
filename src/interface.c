@@ -6824,6 +6824,9 @@ void render_ui(pixel * vid_buf, int xcoord, int ycoord, int orientation)
 	part_vbuf_store = part_vbuf;
 	
 	if (!o_vid_buf || !part_vbuf || !part_vbuf_store)
+		free(display_cb);
+		free(colour_cb);
+		free(render_cb);
 		return;
 	while (!sdl_poll())
 	{
