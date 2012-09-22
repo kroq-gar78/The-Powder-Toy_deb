@@ -1,7 +1,8 @@
 Source: the-powder-toy
 Section: games
 Priority: optional
-Maintainer: Aditya Vaidya <kroq.gar78@gmail.com>
+Maintainer: Debian Games Team <pkg-games-devel@list.alioth.debian.org>
+Uploaders: Aditya Vaidya <kroq.gar78@gmail.com>
 Build-Depends: debhelper (>= 7.0.50),
                libsdl1.2-dev (>=1.2.14),
                liblua5.1-0-dev (>= 5.1),
