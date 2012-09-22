@@ -1,11 +1,8 @@
-the-powder-toy (83.0-1) EXPERIMENTAL; urgency=low
+the-powder-toy (83.0-1) experimental; urgency=low
 
-  * New upstream release
-  * Added a new -dbg package containing all debugging symbols
-  * debian/patches/makefile-remove-strip.patch: move the removal of
-    debugging symbols to 'debian/rules'
+  * Initial release
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 20 Sep 2012 20:23:51 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 21 Sep 2012 22:05:51 -0500
 
 the-powder-toy (82.0-0~ppa1) precise; urgency=low
 
