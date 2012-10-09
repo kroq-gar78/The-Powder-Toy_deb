@@ -5,20 +5,19 @@
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 SCONS_OPTS := --lin --sse2 --release
+OUTNAME = powder
 
 ifeq ($(DEB_HOST_ARCH),amd64)
 	SCONS_OPTS += --64bit
+	OUTNAME += 64
 endif
 
 override_dh_auto_build:
 	scons $(SCONS_OPTS)
-	mv build/$(target) build/powder
-	cp -p Changelog changelog
+	mv build/$(OUTNAME) build/powder
 
 override_dh_auto_clean:
-	make clean
-	rm -f build/powder*
-	rm -f changelog
+	rm -rf build/
 
 override_dh_strip:
 	dh_strip --dbg-package=the-powder-toy-dbg
