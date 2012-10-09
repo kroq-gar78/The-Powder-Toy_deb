@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+
+target = powder-sse2
+
+ifeq ($(DEB_HOST_ARCH),amd64)
+	target = powder-64-sse2
+endif
+
+override_dh_auto_build:
+	make $(target)
+	mv build/$(target) build/powder
+	cp -p Changelog changelog
+
+override_dh_auto_clean:
+	make clean
+	rm -f build/powder*
+	rm -f changelog
+
+override_dh_strip:
+	dh_strip --dbg-package=the-powder-toy-dbg
+

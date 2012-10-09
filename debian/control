@@ -1,0 +1,33 @@
+Source: the-powder-toy
+Section: games
+Priority: optional
+Maintainer: Aditya Vaidya <kroq.gar78@gmail.com>
+Build-Depends: debhelper (>= 7.0.50),
+               libsdl1.2-dev (>=1.2.14),
+               liblua5.1-0-dev (>= 5.1),
+               libfftw3-dev (>= 3.2.2),
+               libbz2-dev (>= 1.0.5),
+               gcc (>= 4.4)
+Standards-Version: 3.9.3
+Homepage: http://powdertoy.co.uk
+
+Package: the-powder-toy
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, libx11-6
+Conflicts: the-powder-toy-beta
+Replaces: the-powder-toy-beta
+Description: Physics sandbox game
+ The Powder Toy is a desktop version of the classic
+ 'falling sand' physics sandbox game. It simulates
+ air pressure and velocity as well as heat!
+
+Package: the-powder-toy-dbg
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, the-powder-toy (= ${binary:Version})
+Description: Physics sandbox game (debug)
+ The Powder Toy is a desktop version of the classic
+ 'falling sand' physics sandbox game. It simulates
+ air pressure and velocity as well as heat!
+ .
+ This package contains debugging symbols useful for tracking bugs in
+ the-powder-toy.
