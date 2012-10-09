@@ -4,14 +4,14 @@
 
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
-target = powder-sse2
+SCONS_OPTS := --lin --sse2 --release
 
 ifeq ($(DEB_HOST_ARCH),amd64)
-	target = powder-64-sse2
+	SCONS_OPTS += --64bit
 endif
 
 override_dh_auto_build:
-	make $(target)
+	scons $(SCONS_OPTS)
 	mv build/$(target) build/powder
 	cp -p Changelog changelog
 
