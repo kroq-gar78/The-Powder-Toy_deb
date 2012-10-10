@@ -15,9 +15,11 @@ endif
 override_dh_auto_build:
 	scons $(SCONS_OPTS)
 	mv build/$(OUTNAME) build/powder
+	cp Changelog.txt changelog
 
 override_dh_auto_clean:
 	rm -rf build/
+	rm -f changelog
 
 override_dh_strip:
 	dh_strip --dbg-package=the-powder-toy-dbg
