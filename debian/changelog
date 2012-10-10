@@ -3,8 +3,9 @@ the-powder-toy (83.9-0~ppa1) precise; urgency=low
   * New upstream release
     - Codebase switched from C to C++
   * debian/control: bumped Standards-Version to 3.9.4
+  * debian/control: added 'scons' to Build-Depends
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 09 Oct 2012 17:56:31 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 09 Oct 2012 20:54:52 -0500
 
 the-powder-toy (83.0-0~ppa1) precise; urgency=low
 
