@@ -5,11 +5,11 @@
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 SCONS_OPTS := --lin --sse2 --release
-OUTNAME = powder
+OUTNAME := powder
 
 ifeq ($(DEB_HOST_ARCH),amd64)
 	SCONS_OPTS += --64bit
-	OUTNAME += 64
+	OUTNAME := powder64
 endif
 
 override_dh_auto_build:
