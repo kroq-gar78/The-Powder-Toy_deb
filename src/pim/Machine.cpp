@@ -424,20 +424,20 @@ namespace pim
 
 				//Load value at base stack + offset into eax
 				emit("8B 85");	//mov eax [ebp+ram+offset]
-				emit((intptr_t) (ram - argument.Integer));
+				emit((int) (ram - argument.Integer));
 				
 				//Store value in eax onto top of program stack
 				emit("89 07");	//mov [edi], eax
-				emit((intptr_t) (ram));
+				emit((int) (ram));
 				break;
 			case Opcode::Store:
 				//Load value on top of the program stack into eax
 				emit("8B 07");	//mov eax [edi]
-				emit((intptr_t) (ram));
+				emit((int) (ram));
 
 				//Load value in eax onto top of program stack
 				emit("89 85");	//mov [ebp+ram+offset], eax
-				emit((intptr_t) (ram - argument.Integer));
+				emit((int) (ram - argument.Integer));
 
 				emit("83 C7 04"); //add edi 4
 				break;

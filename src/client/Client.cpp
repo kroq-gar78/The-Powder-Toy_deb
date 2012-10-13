@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <deque>
 #include <fstream>
-#include <dirent.h>
 
 #ifdef MACOSX
 #include <mach-o/dyld.h>
@@ -850,8 +849,6 @@ void Client::DeleteStamp(std::string stampID)
 			return;
 		}
 	}
-
-	updateStamps();
 }
 
 std::string Client::AddStamp(GameSave * saveData)
@@ -911,28 +908,6 @@ void Client::updateStamps()
 	stampsStream.write("\0", 1);
 	stampsStream.close();
 	return;
-}
-
-void Client::RescanStamps()
-{
-	DIR * directory;
-	struct dirent * entry;
-	directory = opendir("stamps");
-	if (directory != NULL)
-	{
-		stampIDs.clear();
-		while (entry = readdir(directory))
-		{
-			if(strncmp(entry->d_name, "..", 3) && strncmp(entry->d_name, ".", 2) && strstr(entry->d_name, ".stm") && strlen(entry->d_name) == 14)
-			{
-				char stampname[11];
-				strncpy(stampname, entry->d_name, 10);
-				stampIDs.push_front(stampname);
-			}
-		}
-		closedir(directory);
-		updateStamps();
-	}
 }
 
 int Client::GetStampsCount()

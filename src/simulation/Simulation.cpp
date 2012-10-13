@@ -230,7 +230,6 @@ Snapshot * Simulation::CreateSnapshot()
 	snap->AirPressure.insert(snap->AirPressure.begin(), &pv[0][0], &pv[0][0]+((XRES/CELL)*(YRES/CELL)));
 	snap->AirVelocityX.insert(snap->AirVelocityX.begin(), &vx[0][0], &vx[0][0]+((XRES/CELL)*(YRES/CELL)));
 	snap->AirVelocityY.insert(snap->AirVelocityY.begin(), &vy[0][0], &vy[0][0]+((XRES/CELL)*(YRES/CELL)));
-	snap->AmbientHeat.insert(snap->AmbientHeat.begin(), &hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)));
 	snap->Particles.insert(snap->Particles.begin(), parts, parts+NPART);
 	snap->PortalParticles.insert(snap->PortalParticles.begin(), &portalp[0][0][0], &portalp[CHANNELS-1][8-1][80-1]);
 	snap->WirelessData.insert(snap->WirelessData.begin(), &wireless[0][0], &wireless[CHANNELS-1][2-1]);
@@ -251,7 +250,6 @@ void Simulation::Restore(const Snapshot & snap)
 	std::copy(snap.AirPressure.begin(), snap.AirPressure.end(), &pv[0][0]);
 	std::copy(snap.AirVelocityX.begin(), snap.AirVelocityX.end(), &vx[0][0]);
 	std::copy(snap.AirVelocityY.begin(), snap.AirVelocityY.end(), &vy[0][0]);
-	std::copy(snap.AmbientHeat.begin(), snap.AmbientHeat.end(), &hv[0][0]);
 	std::copy(snap.Particles.begin(), snap.Particles.end(), parts);
 	std::copy(snap.PortalParticles.begin(), snap.PortalParticles.end(), &portalp[0][0][0]);
 	std::copy(snap.WirelessData.begin(), snap.WirelessData.end(), &wireless[0][0]);
@@ -439,8 +437,6 @@ SimulationSample Simulation::Get(int x, int y)
 		sample.GravityVelocityX = gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
 		sample.GravityVelocityY = gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
 	}
-
-	sample.NumParts = NUM_PARTS;
 	return sample;
 }
 
@@ -2932,8 +2928,6 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				break;
 			case PT_DTEC:
 				parts[i].tmp2 = 2;
-			case PT_TSNS:
-				parts[i].tmp2 = 1;
 				break;
 			default:
 				if (t==PT_FIGH)
@@ -3274,77 +3268,6 @@ void Simulation::update_particles_i(int start, int inc)
     		}
     	}
     }
-
-	if (ISLOVE || ISLOLZ) //LOVE and LOLZ element handling
-	{
-		int nx, nnx, ny, nny, r, rt;
-		ISLOVE = 0;
-		ISLOLZ = 0;
-		for (ny=0; ny<YRES-4; ny++)
-		{
-			for (nx=0; nx<XRES-4; nx++)
-			{
-				r=pmap[ny][nx];
-				if (!r)
-				{
-					continue;
-				}
-				else if ((ny<9||nx<9||ny>YRES-7||nx>XRES-10)&&(parts[r>>8].type==PT_LOVE||parts[r>>8].type==PT_LOLZ))
-					kill_part(r>>8);
-				else if (parts[r>>8].type==PT_LOVE)
-				{
-					love[nx/9][ny/9] = 1;
-				}
-				else if (parts[r>>8].type==PT_LOLZ)
-				{
-					lolz[nx/9][ny/9] = 1;
-				}
-			}
-		}
-		for (nx=9; nx<=XRES-18; nx++)
-		{
-			for (ny=9; ny<=YRES-7; ny++)
-			{
-				if (love[nx/9][ny/9]==1)
-				{
-					for ( nnx=0; nnx<9; nnx++)
-						for ( nny=0; nny<9; nny++)
-						{
-							if (ny+nny>0&&ny+nny<YRES&&nx+nnx>=0&&nx+nnx<XRES)
-							{
-								rt=pmap[ny+nny][nx+nnx];
-								if (!rt&&Element_LOVE::RuleTable[nnx][nny]==1)
-									create_part(-1,nx+nnx,ny+nny,PT_LOVE);
-								else if (!rt)
-									continue;
-								else if (parts[rt>>8].type==PT_LOVE&&Element_LOVE::RuleTable[nnx][nny]==0)
-									kill_part(rt>>8);
-							}
-						}
-				}
-				love[nx/9][ny/9]=0;
-				if (lolz[nx/9][ny/9]==1)
-				{
-					for ( nnx=0; nnx<9; nnx++)
-						for ( nny=0; nny<9; nny++)
-						{
-							if (ny+nny>0&&ny+nny<YRES&&nx+nnx>=0&&nx+nnx<XRES)
-							{
-								rt=pmap[ny+nny][nx+nnx];
-								if (!rt&&Element_LOLZ::RuleTable[nny][nnx]==1)
-									create_part(-1,nx+nnx,ny+nny,PT_LOLZ);
-								else if (!rt)
-									continue;
-								else if (parts[rt>>8].type==PT_LOLZ&&Element_LOLZ::RuleTable[nny][nnx]==0)
-									kill_part(rt>>8);
-
-							}
-						}
-				}
-				lolz[nx/9][ny/9]=0;
-			}
-		}
-	}
 
 	//wire!
 	if(elementCount[PT_WIRE] > 0)

@@ -6,7 +6,7 @@ Element_DTEC::Element_DTEC()
     Name = "DTEC";
     Colour = PIXPACK(0xFD9D18);
     MenuVisible = 1;
-    MenuSection = SC_SENSOR;
+    MenuSection = SC_ELEC;
     Enabled = 1;
     
     Advection = 0.0f;
@@ -46,8 +46,7 @@ Element_DTEC::Element_DTEC()
     
 }
 
-//#TPT-Directive ElementHeader Element_DTEC static int in_radius(int rd, int x, int y)
-int Element_DTEC::in_radius(int rd, int x, int y)
+int in_radius(int rd, int x, int y)
 {
 	return (pow((double)x,2)*pow((double)rd,2)+pow((double)y,2)*pow((double)rd,2)<=pow((double)rd,2)*pow((double)rd,2));
 }
@@ -84,9 +83,7 @@ int Element_DTEC::update(UPDATE_FUNC_ARGS)
 			if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
 			{
 				r = pmap[y+ry][x+rx];
-				if(!r)
-					r = sim->photons[y+ry][x+rx];
-				if(!r)
+				if (!r)
 					continue;
 				if (parts[r>>8].type == parts[i].ctype && (parts[i].ctype != PT_LIFE || parts[i].tmp == parts[r>>8].tmp))
 					parts[i].life = 1;

@@ -33,7 +33,6 @@ public:
 	void SetEdgeMode(int airMode);
 	void SetFullscreen(bool fullscreen);
 	void SetScale(bool scale);
-	void SetFastQuit(bool fastquit);
 	void Exit();
 	OptionsView * GetView();
 	virtual ~OptionsController();

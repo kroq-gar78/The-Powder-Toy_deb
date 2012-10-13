@@ -32,7 +32,6 @@ public:
 	void AddObserver(LocalBrowserView * observer);
 	std::vector<SaveFile *> GetSavesList();
 	void UpdateSavesList(int pageNumber);
-	void RescanStamps();
 	SaveFile * GetSave();
 	void SetSave(SaveFile * newStamp);
 	std::vector<std::string> GetSelected() { return selected; }

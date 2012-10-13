@@ -33,6 +33,7 @@ public:
 	}
 };
 
+//Currently, reading is done on another thread, we can't render outside the main thread due to some bullshit with OpenGL 
 class SaveUploadTask: public Task
 {
 	SaveInfo save;
@@ -127,7 +128,7 @@ ServerSaveActivity::ServerSaveActivity(SaveInfo save, ServerSaveActivity::SaveUp
 	SetOkayButton(okayButton);
 
 	if(save.GetGameSave())
-		ThumbnailBroker::Ref().RenderThumbnail(save.GetGameSave(), false, true, (Size.X/2)-16, -1, this);
+		ThumbnailBroker::Ref().RenderThumbnail(save.GetGameSave(), false, (Size.X/2)-16, -1, this);
 }
 
 ServerSaveActivity::ServerSaveActivity(SaveInfo save, bool saveNow, ServerSaveActivity::SaveUploadedCallback * callback) :
@@ -150,18 +151,10 @@ ServerSaveActivity::ServerSaveActivity(SaveInfo save, bool saveNow, ServerSaveAc
 
 void ServerSaveActivity::NotifyDone(Task * task)
 {
+	Exit();
 	if(!task->GetSuccess())
 	{
-		Exit();
 		new ErrorMessage("Error", Client::Ref().GetLastError());
-	}
-	else
-	{
-		if(callback)
-		{
-			callback->SaveUploaded(save);
-		}
-		Exit();
 	}
 }
 

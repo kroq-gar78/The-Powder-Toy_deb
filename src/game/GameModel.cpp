@@ -98,6 +98,7 @@ GameModel::GameModel():
 	}
 
 	BuildMenus();
+	BuildQuickOptionMenu();
 
 	//Set default decoration colour
 	unsigned char colourR = min(Client::Ref().GetPrefInteger("Decoration.Red", 200), 255);
@@ -172,7 +173,7 @@ void GameModel::UpdateQuickOptions()
 	}	
 }
 
-void GameModel::BuildQuickOptionMenu(GameController * controller)
+void GameModel::BuildQuickOptionMenu()
 {
 	for(std::vector<QuickOption*>::iterator iter = quickOptions.begin(), end = quickOptions.end(); iter != end; ++iter)
 	{
@@ -185,7 +186,6 @@ void GameModel::BuildQuickOptionMenu(GameController * controller)
 	quickOptions.push_back(new DecorationsOption(this));
 	quickOptions.push_back(new NGravityOption(this));
 	quickOptions.push_back(new AHeatOption(this));
-	quickOptions.push_back(new ConsoleShowOption(this, controller));
 
 	notifyQuickOptionsChanged();
 	UpdateQuickOptions();
@@ -754,30 +754,11 @@ void GameModel::SetDecoration(bool decorationState)
 	ren->decorations_enable = decorationState?1:0;
 	notifyDecorationChanged();
 	UpdateQuickOptions();
-	if (decorationState)
-		SetInfoTip("Decorations Layer: On");
-	else
-		SetInfoTip("Decorations Layer: Off");
 }
 
 bool GameModel::GetDecoration()
 {
 	return ren->decorations_enable?true:false;
-}
-
-void GameModel::SetAHeatEnable(bool aHeat)
-{
-	sim->aheat_enable = aHeat;
-	UpdateQuickOptions();
-	if (aHeat)
-		SetInfoTip("Ambient Heat: On");
-	else
-		SetInfoTip("Ambient Heat: Off");
-}
-
-bool GameModel::GetAHeatEnable()
-{
-	return sim->aheat_enable;
 }
 
 void GameModel::FrameStep(int frames)

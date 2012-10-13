@@ -10,7 +10,6 @@ public:
 	std::vector<float> AirPressure;
 	std::vector<float> AirVelocityX;
 	std::vector<float> AirVelocityY;
-	std::vector<float> AmbientHeat;
 
 	std::vector<Particle> Particles;
 	std::vector<Particle> PortalParticles;
@@ -32,7 +31,6 @@ public:
 		AirPressure(),
 		AirVelocityX(),
 		AirVelocityY(),
-		AmbientHeat(),
 		Particles(),
 		PortalParticles(),
 		WirelessData(),

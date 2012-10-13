@@ -46,24 +46,16 @@ Element_LOLZ::Element_LOLZ()
     
 }
 
-//#TPT-Directive ElementHeader Element_LOLZ static int RuleTable[9][9]
-int Element_LOLZ::RuleTable[9][9] =
-{
-    {0,0,0,0,0,0,0,0,0},
-    {1,0,0,0,0,0,1,0,0},
-    {1,0,0,0,0,0,1,0,0},
-    {1,0,0,1,1,0,0,1,0},
-    {1,0,1,0,0,1,0,1,0},
-    {1,0,1,0,0,1,0,1,0},
-    {0,1,0,1,1,0,0,1,0},
-    {0,1,0,0,0,0,0,1,0},
-    {0,1,0,0,0,0,0,1,0},
-};
-
 //#TPT-Directive ElementHeader Element_LOLZ static int update(UPDATE_FUNC_ARGS)
 int Element_LOLZ::update(UPDATE_FUNC_ARGS)
  {
-	sim->ISLOLZ = true;
+	/*int t = parts[i].type;
+	if (t==PT_LOVE)
+		ISLOVE=1;
+	else if (t==PT_LOLZ)
+		ISLOLZ=1;
+	else if (t==PT_GRAV)
+		ISGRAV=1;*/
 	return 0;
 }
 

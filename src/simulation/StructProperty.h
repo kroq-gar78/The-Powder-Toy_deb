@@ -10,7 +10,6 @@
 #define The_Powder_Toy_StructProperty_h
 
 #include <string>
-#include <stdint.h>
 
 struct StructProperty
 {

@@ -47,11 +47,11 @@ public:
 	}
 	virtual bool GetToggle() 
 	{
-		return m->GetDecoration();
+		return m->GetRenderer()->decorations_enable;
 	}
 	virtual void perform()
 	{
-		m->SetDecoration(!m->GetDecoration());
+		m->GetRenderer()->decorations_enable = !m->GetRenderer()->decorations_enable;
 	}
 };
 
@@ -72,12 +72,10 @@ public:
 		if(m->GetSimulation()->grav->ngrav_enable)
 		{
 			m->GetSimulation()->grav->stop_grav_async();
-			m->SetInfoTip("Newtonian Gravity: Off");
 		}
 		else
 		{
 			m->GetSimulation()->grav->start_grav_async();
-			m->SetInfoTip("Newtonian Gravity: On");
 		}
 	}
 };
@@ -92,29 +90,10 @@ public:
 	}
 	virtual bool GetToggle() 
 	{
-		return m->GetAHeatEnable();
+		return m->GetSimulation()->aheat_enable;
 	}
 	virtual void perform()
 	{
-		m->SetAHeatEnable(!m->GetAHeatEnable());
-	}
-};
-
-class ConsoleShowOption: public QuickOption
-{
-	GameController * c;
-public:
-	ConsoleShowOption(GameModel * m, GameController * c_):
-	QuickOption("C", "Show Console", m, Toggle)
-	{
-		c = c_;
-	}
-	virtual bool GetToggle()
-	{
-		return 0;
-	}
-	virtual void perform()
-	{
-		c->ShowConsole();
+		m->GetSimulation()->aheat_enable = !m->GetSimulation()->aheat_enable;
 	}
 };
