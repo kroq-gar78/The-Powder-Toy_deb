@@ -23,6 +23,8 @@ Description: Physics sandbox game
  air pressure and velocity as well as heat!
 
 Package: the-powder-toy-dbg
+Section: debug
+Priority: extra
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, the-powder-toy (= ${binary:Version})
 Description: Physics sandbox game (debug)

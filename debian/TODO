@@ -2,9 +2,6 @@ Add the new scons upstream patch
 
 Lintian:
 W: the-powder-toy source: newer-standards-version 3.9.4 (current is 3.9.3)
-W: the-powder-toy-dbg: wrong-section-according-to-package-name the-powder-toy-dbg => debug
-W: the-powder-toy-dbg: debug-package-should-be-priority-extra the-powder-toy-dbg
-Finished running lintian.
 
 Use scons --clean instead of manual cleaning
 
