@@ -1,2 +1,3 @@
 gcc4.7-fix-compile.patch
 remove-updater.patch
+scons-fixes-f1ffe50a6a.patch
