@@ -573,7 +573,7 @@ void Client::Tick()
 				notifyMessageOfTheDay();
 
 				//Check for updates
-				json::Object versions = objDocument["Updates"];
+				/*json::Object versions = objDocument["Updates"];
 				
 				json::Object stableVersion = versions["Stable"];
 				json::Object betaVersion = versions["Beta"];
@@ -617,7 +617,7 @@ void Client::Tick()
 				if(updateAvailable)
 				{
 					notifyUpdateAvailable();
-				}
+				}*/
 			}
 			catch (json::Exception &e)
 			{
