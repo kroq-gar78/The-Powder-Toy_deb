@@ -6,5 +6,3 @@ W: the-powder-toy source: newer-standards-version 3.9.4 (current is 3.9.3)
 Use scons --clean instead of manual cleaning
 
 Change renaming to 'powder' from 'mv' to 'cp'
-
-Remove the checking of updates b/c should be done by maintainer

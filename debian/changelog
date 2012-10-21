@@ -9,8 +9,9 @@ the-powder-toy (83.9-0~ppa1) precise; urgency=low
   * Added 256x256 PNG mimetype icon
   * debian/patches/gcc4.7-fix-compile.patch: fix compile for amd64
     machines
+  * debian/patches/remove-updater.patch: remove the built-in updater
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 13 Oct 2012 00:22:42 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 20 Oct 2012 22:51:25 -0500
 
 the-powder-toy (83.0-0~ppa1) precise; urgency=low
 

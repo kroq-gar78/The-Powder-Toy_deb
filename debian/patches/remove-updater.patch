@@ -1,0 +1,22 @@
+diff --git a/src/client/Client.cpp b/src/client/Client.cpp
+index b35c292..9dad38e 100644
+--- a/src/client/Client.cpp
++++ b/src/client/Client.cpp
+@@ -573,7 +573,7 @@ void Client::Tick()
+ 				notifyMessageOfTheDay();
+ 
+ 				//Check for updates
+-				json::Object versions = objDocument["Updates"];
++				/*json::Object versions = objDocument["Updates"];
+ 				
+ 				json::Object stableVersion = versions["Stable"];
+ 				json::Object betaVersion = versions["Beta"];
+@@ -617,7 +617,7 @@ void Client::Tick()
+ 				if(updateAvailable)
+ 				{
+ 					notifyUpdateAvailable();
+-				}
++				}*/
+ 			}
+ 			catch (json::Exception &e)
+ 			{
