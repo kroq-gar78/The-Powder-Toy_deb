@@ -9,7 +9,7 @@ Build-Depends: debhelper (>= 7.0.50),
                libbz2-dev (>= 1.0.5),
                gcc (>= 4.4),
                scons (>= 2.1.0)
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: http://powdertoy.co.uk
 
 Package: the-powder-toy
