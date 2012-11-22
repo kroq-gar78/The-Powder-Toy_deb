@@ -1,3 +1,9 @@
+the-powder-toy (84.2-0~ppa1) precise; urgency=low
+
+  * New upstream release (beta)
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 22 Nov 2012 01:49:50 -0600
+
 the-powder-toy (83.9-0~ppa1) precise; urgency=low
 
   * New upstream release
