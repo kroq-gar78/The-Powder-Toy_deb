@@ -94,6 +94,7 @@ public:
 	void SetPaused();
 	void SetDecoration(bool decorationState);
 	void SetDecoration();
+	void ShowGravityGrid();
 	void SetActiveMenu(Menu * menu);
 	void SetActiveTool(int toolSelection, Tool * tool);
 	void SetActiveColourPreset(int preset);
@@ -105,7 +106,7 @@ public:
 	void OpenLogin();
 	void OpenTags();
 	void OpenSavePreview(int saveID, int saveDate);
-	void OpenLocalSaveWindow();
+	void OpenLocalSaveWindow(bool asCurrent);
 	void OpenLocalBrowse();
 	void OpenOptions();
 	void OpenRenderOptions();

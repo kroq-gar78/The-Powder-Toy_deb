@@ -98,6 +98,7 @@ public:
 	void Initialise(std::string proxyString);
 	void SetProxy(std::string proxy);
 
+	int MakeDirectory(const char * dirname);
 	void WriteFile(std::vector<unsigned char> fileData, std::string filename);
 	void WriteFile(std::vector<char> fileData, std::string filename);
 	bool FileExists(std::string filename);
@@ -112,6 +113,7 @@ public:
 	void DeleteStamp(std::string stampID);
 	std::string AddStamp(GameSave * saveData);
 	std::vector<std::string> GetStamps(int start, int count);
+	void RescanStamps();
 	int GetStampsCount();
 	SaveFile * GetFirstStamp();
 

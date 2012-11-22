@@ -8,6 +8,7 @@
 #include "interface/Colour.h"
 #include "graphics/Renderer.h"
 #include "GameView.h"
+#include "GameController.h"
 #include "Brush.h"
 #include "client/User.h"
 #include "Notification.h"
@@ -18,6 +19,7 @@
 using namespace std;
 
 class GameView;
+class GameController;
 class Simulation;
 class Renderer;
 
@@ -55,6 +57,7 @@ private:
 	int currentBrush;
 	vector<Brush *> brushList;
 	SaveInfo * currentSave;
+	SaveFile * currentFile;
 	Simulation * sim;
 	Renderer * ren;
 	Tool * lastTool;
@@ -126,7 +129,7 @@ public:
 	std::string GetInfoTip();
 
 	void BuildMenus();
-	void BuildQuickOptionMenu();
+	void BuildQuickOptionMenu(GameController * controller);
 
 	std::deque<Snapshot*> GetHistory();
 	void SetHistory(std::deque<Snapshot*> newHistory);
@@ -141,6 +144,7 @@ public:
 
 	void SetVote(int direction);
 	SaveInfo * GetSave();
+	SaveFile * GetSaveFile();
 	Brush * GetBrush();
 	void SetSave(SaveInfo * newSave);
 	void SetSaveFile(SaveFile * newSave);
@@ -156,6 +160,10 @@ public:
 	void SetPaused(bool pauseState);
 	bool GetDecoration();
 	void SetDecoration(bool decorationState);
+	bool GetAHeatEnable();
+	void SetAHeatEnable(bool aHeat);
+	bool GetGravityGrid();
+	void ShowGravityGrid(bool showGrid);
 	void ClearSimulation();
 	vector<Menu*> GetMenuList();
 	vector<Tool*> GetUnlistedTools();

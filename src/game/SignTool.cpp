@@ -199,7 +199,7 @@ void SignWindow::DoDraw()
 				sprintf(buff, "Temp: 0.00");  //...temperature
 			g->drawtext(x+3, y+3, buff, 255, 255, 255, 255);
 		}
-		else if (sregexp(currentSign.text.c_str(), "^{c:[0-9]*|.*}$")==0)
+		else if (sregexp(currentSign.text.c_str(), "^{[c|t]:[0-9]*|.*}$")==0)
 		{
 			int sldr, startm;
 			memset(buff, 0, sizeof(buff));
@@ -284,5 +284,6 @@ void SignTool::Click(Simulation * sim, Brush * brush, ui::Point position)
 			break;
 		}
 	}
-	new SignWindow(this, sim, signIndex, position);
+	if (signIndex != -1 || sim->signs.size() < MAXSIGNS)
+		new SignWindow(this, sim, signIndex, position);
 }

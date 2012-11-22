@@ -22,6 +22,7 @@ GameModel::GameModel():
 	currentBrush(0),
 	currentUser(0, ""),
 	currentSave(NULL),
+	currentFile(NULL),
 	colourSelector(false),
 	clipboard(NULL),
 	stamp(NULL),
@@ -98,7 +99,6 @@ GameModel::GameModel():
 	}
 
 	BuildMenus();
-	BuildQuickOptionMenu();
 
 	//Set default decoration colour
 	unsigned char colourR = min(Client::Ref().GetPrefInteger("Decoration.Red", 200), 255);
@@ -160,6 +160,8 @@ GameModel::~GameModel()
 		delete stamp;
 	if(currentSave)
 		delete currentSave;
+	if(currentFile)
+		delete currentFile;
 	//if(activeTools)
 	//	delete[] activeTools;
 }
@@ -173,7 +175,7 @@ void GameModel::UpdateQuickOptions()
 	}	
 }
 
-void GameModel::BuildQuickOptionMenu()
+void GameModel::BuildQuickOptionMenu(GameController * controller)
 {
 	for(std::vector<QuickOption*>::iterator iter = quickOptions.begin(), end = quickOptions.end(); iter != end; ++iter)
 	{
@@ -186,6 +188,7 @@ void GameModel::BuildQuickOptionMenu()
 	quickOptions.push_back(new DecorationsOption(this));
 	quickOptions.push_back(new NGravityOption(this));
 	quickOptions.push_back(new AHeatOption(this));
+	quickOptions.push_back(new ConsoleShowOption(this, controller));
 
 	notifyQuickOptionsChanged();
 	UpdateQuickOptions();
@@ -536,6 +539,9 @@ void GameModel::SetSave(SaveInfo * newSave)
 		else
 			currentSave = new SaveInfo(*newSave);
 	}
+	if(currentFile)
+		delete currentFile;
+	currentFile = NULL;
 
 	if(currentSave && currentSave->GetGameSave())
 	{
@@ -558,9 +564,25 @@ void GameModel::SetSave(SaveInfo * newSave)
 	UpdateQuickOptions();
 }
 
+SaveFile * GameModel::GetSaveFile()
+{
+	return currentFile;
+}
+
 void GameModel::SetSaveFile(SaveFile * newSave)
 {
-	SetSave(NULL);
+	if(currentFile != newSave)
+	{
+		if(currentFile)
+			delete currentFile;
+		if(newSave == NULL)
+			currentFile = NULL;
+		else
+			currentFile = new SaveFile(*newSave);
+	}
+	if (currentSave)
+		delete currentSave;
+	currentSave = NULL;
 
 	if(newSave && newSave->GetGameSave())
 	{
@@ -754,11 +776,44 @@ void GameModel::SetDecoration(bool decorationState)
 	ren->decorations_enable = decorationState?1:0;
 	notifyDecorationChanged();
 	UpdateQuickOptions();
+	if (decorationState)
+		SetInfoTip("Decorations Layer: On");
+	else
+		SetInfoTip("Decorations Layer: Off");
 }
 
 bool GameModel::GetDecoration()
 {
 	return ren->decorations_enable?true:false;
+}
+
+void GameModel::SetAHeatEnable(bool aHeat)
+{
+	sim->aheat_enable = aHeat;
+	UpdateQuickOptions();
+	if (aHeat)
+		SetInfoTip("Ambient Heat: On");
+	else
+		SetInfoTip("Ambient Heat: Off");
+}
+
+bool GameModel::GetAHeatEnable()
+{
+	return sim->aheat_enable;
+}
+
+void GameModel::ShowGravityGrid(bool showGrid)
+{
+	ren->gravityFieldEnabled = showGrid;
+	if (showGrid)
+		SetInfoTip("Gravity Grid: On");
+	else
+		SetInfoTip("Gravity Grid: Off");
+}
+
+bool GameModel::GetGravityGrid()
+{
+	return ren->gravityFieldEnabled;
 }
 
 void GameModel::FrameStep(int frames)

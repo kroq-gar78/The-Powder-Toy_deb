@@ -29,11 +29,11 @@ public:
 	}
 	virtual bool GetToggle() 
 	{
-		return m->GetRenderer()->gravityFieldEnabled;
+		return m->GetGravityGrid();
 	}
 	virtual void perform()
 	{
-		m->GetRenderer()->gravityFieldEnabled = !m->GetRenderer()->gravityFieldEnabled;
+		m->ShowGravityGrid(!m->GetGravityGrid());
 	}
 };
 
@@ -47,11 +47,11 @@ public:
 	}
 	virtual bool GetToggle() 
 	{
-		return m->GetRenderer()->decorations_enable;
+		return m->GetDecoration();
 	}
 	virtual void perform()
 	{
-		m->GetRenderer()->decorations_enable = !m->GetRenderer()->decorations_enable;
+		m->SetDecoration(!m->GetDecoration());
 	}
 };
 
@@ -72,10 +72,12 @@ public:
 		if(m->GetSimulation()->grav->ngrav_enable)
 		{
 			m->GetSimulation()->grav->stop_grav_async();
+			m->SetInfoTip("Newtonian Gravity: Off");
 		}
 		else
 		{
 			m->GetSimulation()->grav->start_grav_async();
+			m->SetInfoTip("Newtonian Gravity: On");
 		}
 	}
 };
@@ -90,10 +92,29 @@ public:
 	}
 	virtual bool GetToggle() 
 	{
-		return m->GetSimulation()->aheat_enable;
+		return m->GetAHeatEnable();
 	}
 	virtual void perform()
 	{
-		m->GetSimulation()->aheat_enable = !m->GetSimulation()->aheat_enable;
+		m->SetAHeatEnable(!m->GetAHeatEnable());
+	}
+};
+
+class ConsoleShowOption: public QuickOption
+{
+	GameController * c;
+public:
+	ConsoleShowOption(GameModel * m, GameController * c_):
+	QuickOption("C", "Show Console", m, Toggle)
+	{
+		c = c_;
+	}
+	virtual bool GetToggle()
+	{
+		return 0;
+	}
+	virtual void perform()
+	{
+		c->ShowConsole();
 	}
 };

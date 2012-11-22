@@ -146,6 +146,7 @@ GameController::GameController():
 {
 	gameView = new GameView();
 	gameModel = new GameModel();
+	gameModel->BuildQuickOptionMenu(this);
 
 	gameView->AttachController(this);
 	gameModel->AddObserver(gameView);
@@ -536,7 +537,7 @@ bool GameController::MouseUp(int x, int y, unsigned button)
 				(*iter).pos(signx, signy, signw, signh);
 				if (x>=signx && x<=signx+signw && y>=signy && y<=signy+signh)
 				{
-					if (sregexp((*iter).text.c_str(), "^{c:[0-9]*|.*}$")==0)
+					if (sregexp((*iter).text.c_str(), "^{[c|t]:[0-9]*|.*}$")==0)
 					{
 						const char * signText = (*iter).text.c_str();
 						char buff[256];
@@ -550,8 +551,17 @@ bool GameController::MouseUp(int x, int y, unsigned button)
 						buff[sldr-3] = '\0';
 
 						int tempSaveID = format::StringToNumber<int>(std::string(buff));
-						if(tempSaveID)
-							OpenSavePreview(tempSaveID, 0);
+						if (tempSaveID)
+						{
+							if ((*iter).text.c_str()[1] == 'c')
+								OpenSavePreview(tempSaveID, 0);
+							else if ((*iter).text.c_str()[1] == 't')
+							{
+								char url[256];
+								sprintf(url, "http://powdertoy.co.uk/Discussions/Thread/View.html?Thread=%i", tempSaveID);
+								OpenURI(url);
+							}
+						}
 						break;
 					}
 				}
@@ -654,7 +664,7 @@ bool GameController::KeyRelease(int key, Uint16 character, bool shift, bool ctrl
 		{
 			sim->player2.comm = (int)(sim->player2.comm)&11;
 		}
-		if (key == SDLK_s)
+		if (key == KEY_s)
 		{
 			sim->player2.comm = (int)(sim->player2.comm)&7;
 		}
@@ -744,8 +754,7 @@ void GameController::SwitchAir()
 
 void GameController::ToggleAHeat()
 {
-	gameModel->GetSimulation()->aheat_enable = !gameModel->GetSimulation()->aheat_enable;
-	gameModel->UpdateQuickOptions();
+	gameModel->SetAHeatEnable(!gameModel->GetAHeatEnable());
 }
 
 
@@ -851,6 +860,12 @@ void GameController::SetDecoration()
 	gameModel->SetDecoration(!gameModel->GetDecoration());
 }
 
+void GameController::ShowGravityGrid()
+{
+	gameModel->ShowGravityGrid(!gameModel->GetGravityGrid());
+	gameModel->UpdateQuickOptions();
+}
+
 void GameController::SetActiveColourPreset(int preset)
 {
 	gameModel->SetActiveColourPreset(preset);
@@ -900,7 +915,7 @@ void GameController::OpenSearch()
 	ui::Engine::Ref().ShowWindow(search->GetView());
 }
 
-void GameController::OpenLocalSaveWindow()
+void GameController::OpenLocalSaveWindow(bool asCurrent)
 {
 	Simulation * sim = gameModel->GetSimulation();
 	GameSave * gameSave = sim->Save();
@@ -916,9 +931,33 @@ void GameController::OpenLocalSaveWindow()
 	}
 	else
 	{
-		SaveFile tempSave("");
+		std::string filename = "";
+		if (gameModel->GetSaveFile())
+			filename = gameModel->GetSaveFile()->GetDisplayName();
+		SaveFile tempSave(filename);
 		tempSave.SetGameSave(gameSave);
-		new LocalSaveActivity(tempSave);
+
+		if (!asCurrent || !gameModel->GetSaveFile())
+		{
+			class LocalSaveCallback: public FileSavedCallback
+			{
+				GameController * c;
+			public:
+				LocalSaveCallback(GameController * _c): c(_c) {}
+				virtual  ~LocalSaveCallback() {};
+				virtual void FileSaved(SaveFile* file)
+				{
+					c->gameModel->SetSaveFile(file);
+				}
+			};
+
+			new LocalSaveActivity(tempSave, new LocalSaveCallback(this));
+		}
+		else if (gameModel->GetSaveFile())
+		{
+			Client::Ref().MakeDirectory(LOCAL_SAVE_DIR);
+			Client::Ref().WriteFile(gameSave->Serialise(), gameModel->GetSaveFile()->GetName());
+		}
 	}
 }
 
@@ -1101,8 +1140,7 @@ void GameController::SaveAsCurrent()
 		virtual  ~SaveUploadedCallback() {};
 		virtual void SaveUploaded(SaveInfo save)
 		{
-			//Don't do anything
-			//c->LoadSave(&save);
+			c->LoadSave(&save);
 		}
 	};
 
@@ -1184,6 +1222,10 @@ void GameController::ReloadSim()
 	if(gameModel->GetSave() && gameModel->GetSave()->GetGameSave())
 	{
 		gameModel->SetSave(gameModel->GetSave());
+	}
+	else if(gameModel->GetSaveFile() && gameModel->GetSaveFile()->GetGameSave())
+	{
+		gameModel->SetSaveFile(gameModel->GetSaveFile());
 	}
 }
 

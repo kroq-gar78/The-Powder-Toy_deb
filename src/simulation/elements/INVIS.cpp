@@ -42,13 +42,22 @@ Element_INVIS::Element_INVIS()
     HighTemperature = ITH;
     HighTemperatureTransition = NT;
     
-    Update = NULL;
+    Update = &Element_INVIS::update;
     Graphics = &Element_INVIS::graphics;
+}
+
+//#TPT-Directive ElementHeader Element_INVIS static int update(UPDATE_FUNC_ARGS)
+int Element_INVIS::update(UPDATE_FUNC_ARGS)
+{
+	if (sim->pv[y/CELL][x/CELL]>4.0f || sim->pv[y/CELL][x/CELL]<-4.0f)
+		parts[i].tmp = 1;
+	else
+		parts[i].tmp = 0;
+	return 0;
 }
 
 //#TPT-Directive ElementHeader Element_INVIS static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_INVIS::graphics(GRAPHICS_FUNC_ARGS)
-
 {
 	//pv[ny/CELL][nx/CELL]>4.0f || pv[ny/CELL][nx/CELL]<-4.0f
 	if(cpart->tmp)

@@ -45,6 +45,29 @@ int Simulation::Load(int fullX, int fullY, GameSave * save)
 	fullX = blockX*CELL;
 	fullY = blockY*CELL;
 
+	int partMap[PT_NUM];
+	for(int i = 0; i < PT_NUM; i++)
+	{
+		partMap[i] = i;
+	}
+	if(save->palette.size())
+	{
+		for(std::vector<GameSave::PaletteItem>::iterator iter = save->palette.begin(), end = save->palette.end(); iter != end; ++iter)
+		{
+			GameSave::PaletteItem pi = *iter;
+			if(pi.second >= 0 && pi.second < PT_NUM)
+			{
+				int myId = 0;//pi.second;
+				for(int i = 0; i < PT_NUM; i++)
+				{
+					if(elements[i].Enabled && elements[i].Identifier == pi.first)
+						myId = i;
+				}
+				partMap[pi.second] = myId;
+			}
+		}
+	}
+
 	int i;
 	for(int n = 0; n < NPART && n < save->particlesCount; n++)
 	{
@@ -53,6 +76,9 @@ int Simulation::Load(int fullX, int fullY, GameSave * save)
 		tempPart.y += (float)fullY;
 		x = int(tempPart.x + 0.5f);
 		y = int(tempPart.y + 0.5f);
+
+		if(tempPart.type >= 0 && tempPart.type < PT_NUM)
+			tempPart.type = partMap[tempPart.type];
 
 		if ((player.spwn == 1 && tempPart.type==PT_STKM) || (player2.spwn == 1 && tempPart.type==PT_STKM2))
 			continue;
@@ -103,9 +129,9 @@ int Simulation::Load(int fullX, int fullY, GameSave * save)
 					fighcount++;
 					//currentPart.tmp = fcount;
 					parts[i].tmp = fcount;
+					Element_STKM::STKM_init_legs(this, &(fighters[fcount]), i);
 					fighters[fcount].spwn = 1;
 					fighters[fcount].elem = PT_DUST;
-					Element_STKM::STKM_init_legs(this, &(fighters[fcount]), i);
 					break;
 				}
 			}
@@ -182,6 +208,9 @@ GameSave * Simulation::Save(int fullX, int fullY, int fullX2, int fullY2)
 
 	GameSave * newSave = new GameSave(blockW, blockH);
 	
+	int storedParts = 0;
+	int elementCount[PT_NUM];
+	std::fill(elementCount, elementCount+PT_NUM, 0);
 	for(int i = 0; i < NPART; i++)
 	{
 		int x, y;
@@ -193,7 +222,22 @@ GameSave * Simulation::Save(int fullX, int fullY, int fullX2, int fullY2)
 			tempPart.x -= fullX;
 			tempPart.y -= fullY;
 			if(elements[tempPart.type].Enabled)
+			{
 				*newSave << tempPart;
+				storedParts++;
+				elementCount[tempPart.type]++;
+			}
+		}
+	}
+
+	if(storedParts)
+	{
+		for(int i = 0; i < PT_NUM; i++)
+		{
+			if(elements[i].Enabled && elementCount[i])
+			{
+				newSave->palette.push_back(GameSave::PaletteItem(elements[i].Identifier, i));
+			}
 		}
 	}
 	
@@ -230,6 +274,7 @@ Snapshot * Simulation::CreateSnapshot()
 	snap->AirPressure.insert(snap->AirPressure.begin(), &pv[0][0], &pv[0][0]+((XRES/CELL)*(YRES/CELL)));
 	snap->AirVelocityX.insert(snap->AirVelocityX.begin(), &vx[0][0], &vx[0][0]+((XRES/CELL)*(YRES/CELL)));
 	snap->AirVelocityY.insert(snap->AirVelocityY.begin(), &vy[0][0], &vy[0][0]+((XRES/CELL)*(YRES/CELL)));
+	snap->AmbientHeat.insert(snap->AmbientHeat.begin(), &hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)));
 	snap->Particles.insert(snap->Particles.begin(), parts, parts+NPART);
 	snap->PortalParticles.insert(snap->PortalParticles.begin(), &portalp[0][0][0], &portalp[CHANNELS-1][8-1][80-1]);
 	snap->WirelessData.insert(snap->WirelessData.begin(), &wireless[0][0], &wireless[CHANNELS-1][2-1]);
@@ -250,6 +295,7 @@ void Simulation::Restore(const Snapshot & snap)
 	std::copy(snap.AirPressure.begin(), snap.AirPressure.end(), &pv[0][0]);
 	std::copy(snap.AirVelocityX.begin(), snap.AirVelocityX.end(), &vx[0][0]);
 	std::copy(snap.AirVelocityY.begin(), snap.AirVelocityY.end(), &vy[0][0]);
+	std::copy(snap.AmbientHeat.begin(), snap.AmbientHeat.end(), &hv[0][0]);
 	std::copy(snap.Particles.begin(), snap.Particles.end(), parts);
 	std::copy(snap.PortalParticles.begin(), snap.PortalParticles.end(), &portalp[0][0][0]);
 	std::copy(snap.WirelessData.begin(), snap.WirelessData.end(), &wireless[0][0]);
@@ -437,6 +483,8 @@ SimulationSample Simulation::Get(int x, int y)
 		sample.GravityVelocityX = gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
 		sample.GravityVelocityY = gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
 	}
+
+	sample.NumParts = NUM_PARTS;
 	return sample;
 }
 
@@ -1973,7 +2021,7 @@ void Simulation::init_can_move()
 		can_move[PT_STKM2][t] = stkm_move;
 		can_move[PT_FIGH][t] = stkm_move;
 	}
-	for (t=0;t<PT_NUM;t++)
+	for (t=1;t<PT_NUM;t++)
 	{
 		// make them eat things
 		can_move[t][PT_BHOL] = 1;
@@ -1988,6 +2036,13 @@ void Simulation::init_can_move()
 		//void behaviour varies with powered state and ctype
 		can_move[t][PT_PVOD] = 3;
 		can_move[t][PT_VOID] = 3;
+		can_move[t][PT_EMBR] = 0;
+		can_move[PT_EMBR][t] = 0;
+		if (elements[t].Properties&TYPE_ENERGY)
+		{
+			can_move[t][PT_VIBR] = 1;
+			can_move[t][PT_BVBR] = 1;
+		}
 	}
 	for (t=0;t<PT_NUM;t++)
 	{
@@ -2013,6 +2068,7 @@ void Simulation::init_can_move()
 	//whol eats anar
 	can_move[PT_ANAR][PT_WHOL] = 1;
 	can_move[PT_ANAR][PT_NWHL] = 1;
+	can_move[PT_ELEC][PT_DEUT] = 1;
 	can_move[PT_THDR][PT_THDR] = 2;
 	can_move[PT_EMBR][PT_EMBR] = 2;
 }
@@ -2181,6 +2237,11 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 			if (temp_bin > 25) temp_bin = 25;
 			parts[i].ctype = 0x1F << temp_bin;
 		}
+		if (((r&0xFF)==PT_BIZR || (r&0xFF)==PT_BIZRG || (r&0xFF)==PT_BIZRS) && parts[i].type==PT_PHOT)
+		{
+			part_change_type(i, x, y, PT_ELEC);
+			parts[i].ctype = 0;
+		}
 		return 1;
 	}
 	//else e=1 , we are trying to swap the particles, return 0 no swap/move, 1 is still overlap/move, because the swap takes place later
@@ -2211,6 +2272,20 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 		{
 			parts[r>>8].temp = restrict_flt(parts[r>>8].temp- (MAX_TEMP-parts[i].temp)/2, MIN_TEMP, MAX_TEMP);
 		}
+		kill_part(i);
+		return 0;
+	}
+	if ((r&0xFF)==PT_DEUT && parts[i].type==PT_ELEC)
+	{
+		if(parts[r>>8].life < 6000)
+			parts[r>>8].life += 1;
+		parts[r>>8].temp = 0;
+		kill_part(i);
+		return 0;
+	}
+	if (((r&0xFF)==PT_VIBR || (r&0xFF)==PT_BVBR) && (elements[parts[i].type].Properties & TYPE_ENERGY))
+	{
+		parts[r>>8].tmp += 20;
 		kill_part(i);
 		return 0;
 	}
@@ -2500,7 +2575,7 @@ void Simulation::kill_part(int i)//kills particle number i
 	if (parts[i].type == PT_NONE)
 		return;
 
-	if(parts[i].type > 0 && parts[i].type < PT_NUM && elementCount[parts[i].type] && parts[i].type)
+	if(parts[i].type > 0 && parts[i].type < PT_NUM && elementCount[parts[i].type])
 		elementCount[parts[i].type]--;
 	if (parts[i].type == PT_STKM)
 	{
@@ -2928,6 +3003,8 @@ int Simulation::create_part(int p, int x, int y, int tv)
 				break;
 			case PT_DTEC:
 				parts[i].tmp2 = 2;
+			case PT_TSNS:
+				parts[i].tmp2 = 2;
 				break;
 			default:
 				if (t==PT_FIGH)
@@ -3268,6 +3345,77 @@ void Simulation::update_particles_i(int start, int inc)
     		}
     	}
     }
+
+	if (ISLOVE || ISLOLZ) //LOVE and LOLZ element handling
+	{
+		int nx, nnx, ny, nny, r, rt;
+		ISLOVE = 0;
+		ISLOLZ = 0;
+		for (ny=0; ny<YRES-4; ny++)
+		{
+			for (nx=0; nx<XRES-4; nx++)
+			{
+				r=pmap[ny][nx];
+				if (!r)
+				{
+					continue;
+				}
+				else if ((ny<9||nx<9||ny>YRES-7||nx>XRES-10)&&(parts[r>>8].type==PT_LOVE||parts[r>>8].type==PT_LOLZ))
+					kill_part(r>>8);
+				else if (parts[r>>8].type==PT_LOVE)
+				{
+					love[nx/9][ny/9] = 1;
+				}
+				else if (parts[r>>8].type==PT_LOLZ)
+				{
+					lolz[nx/9][ny/9] = 1;
+				}
+			}
+		}
+		for (nx=9; nx<=XRES-18; nx++)
+		{
+			for (ny=9; ny<=YRES-7; ny++)
+			{
+				if (love[nx/9][ny/9]==1)
+				{
+					for ( nnx=0; nnx<9; nnx++)
+						for ( nny=0; nny<9; nny++)
+						{
+							if (ny+nny>0&&ny+nny<YRES&&nx+nnx>=0&&nx+nnx<XRES)
+							{
+								rt=pmap[ny+nny][nx+nnx];
+								if (!rt&&Element_LOVE::RuleTable[nnx][nny]==1)
+									create_part(-1,nx+nnx,ny+nny,PT_LOVE);
+								else if (!rt)
+									continue;
+								else if (parts[rt>>8].type==PT_LOVE&&Element_LOVE::RuleTable[nnx][nny]==0)
+									kill_part(rt>>8);
+							}
+						}
+				}
+				love[nx/9][ny/9]=0;
+				if (lolz[nx/9][ny/9]==1)
+				{
+					for ( nnx=0; nnx<9; nnx++)
+						for ( nny=0; nny<9; nny++)
+						{
+							if (ny+nny>0&&ny+nny<YRES&&nx+nnx>=0&&nx+nnx<XRES)
+							{
+								rt=pmap[ny+nny][nx+nnx];
+								if (!rt&&Element_LOLZ::RuleTable[nny][nnx]==1)
+									create_part(-1,nx+nnx,ny+nny,PT_LOLZ);
+								else if (!rt)
+									continue;
+								else if (parts[rt>>8].type==PT_LOLZ&&Element_LOLZ::RuleTable[nny][nnx]==0)
+									kill_part(rt>>8);
+
+							}
+						}
+				}
+				lolz[nx/9][ny/9]=0;
+			}
+		}
+	}
 
 	//wire!
 	if(elementCount[PT_WIRE] > 0)
@@ -3610,7 +3758,9 @@ void Simulation::update_particles_i(int start, int inc)
 						rt = r&0xFF;
 						if (rt&&elements[rt].HeatConduct&&(rt!=PT_HSWC||parts[r>>8].life==10)
 						        &&(t!=PT_FILT||(rt!=PT_BRAY&&rt!=PT_BIZR&&rt!=PT_BIZRG))
-						        &&(rt!=PT_FILT||(t!=PT_BRAY&&t!=PT_PHOT&&t!=PT_BIZR&&t!=PT_BIZRG)))
+						        &&(rt!=PT_FILT||(t!=PT_BRAY&&t!=PT_PHOT&&t!=PT_BIZR&&t!=PT_BIZRG))
+						        &&(t!=PT_ELEC||rt!=PT_DEUT)
+						        &&(t!=PT_DEUT||rt!=PT_ELEC))
 						{
 							surround_hconduct[j] = r>>8;
 #ifdef REALISTIC
@@ -3758,6 +3908,7 @@ void Simulation::update_particles_i(int start, int inc)
 						else if (t==PT_LAVA) {
 							if (parts[i].ctype>0 && parts[i].ctype<PT_NUM && parts[i].ctype!=PT_LAVA) {
 								if (parts[i].ctype==PT_THRM&&pt>=elements[PT_BMTL].HighTemperature) s = 0;
+								else if ((parts[i].ctype==PT_VIBR || parts[i].ctype==PT_BVBR) && pt>=273.15f) s = 0;
 								else if (elements[parts[i].ctype].HighTemperatureTransition==PT_LAVA) {
 									if (pt>=elements[parts[i].ctype].HighTemperature) s = 0;
 								}
@@ -4507,7 +4658,7 @@ void Simulation::update_particles()//doesn't update the particles themselves, bu
 					if (!pmap[y][x] || (t!=PT_INVIS && t!= PT_FILT))
 						pmap[y][x] = t|(i<<8);
 					// (there are a few exceptions, including energy particles - currently no limit on stacking those)
-					if (t!=PT_THDR && t!=PT_EMBR && t!=PT_FIGH)
+					if (t!=PT_THDR && t!=PT_EMBR && t!=PT_FIGH && t!=PT_PLSM)
 						pmap_count[y][x]++;
 				}
 			}

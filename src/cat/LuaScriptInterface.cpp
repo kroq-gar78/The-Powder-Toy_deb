@@ -39,6 +39,10 @@
 #include "LuaSlider.h"
 #include "LuaProgressBar.h"
 
+#ifdef __unix__
+#include <unistd.h>
+#endif
+
 extern "C"
 {
 #ifdef WIN
@@ -303,10 +307,9 @@ tpt.partsdata = nil");
 
 void LuaScriptInterface::Init()
 {
-	if(luacon_eval("dofile(\"autorun.lua\")"))
-	{
-		luacon_ci->Log(CommandInterface::LogError, luacon_geterror());
-	}
+	if(Client::Ref().FileExists("autorun.lua"))		
+		if(luacon_eval("dofile(\"autorun.lua\")"))
+			luacon_ci->Log(CommandInterface::LogError, luacon_geterror());
 }
 
 void LuaScriptInterface::SetWindow(ui::Window * window)
@@ -697,6 +700,7 @@ void LuaScriptInterface::initElementsAPI()
 	lua_pushinteger(l, SC_LIFE);		lua_setfield(l, elementsAPI, "SC_LIFE");
 	lua_pushinteger(l, SC_TOOL);		lua_setfield(l, elementsAPI, "SC_TOOL");
 	lua_pushinteger(l, SC_DECO);		lua_setfield(l, elementsAPI, "SC_DECO");
+	lua_pushinteger(l, SC_SENSOR);		lua_setfield(l, elementsAPI, "SC_SENSOR");
 
 	//Element identifiers
 	for(int i = 0; i < PT_NUM; i++)
@@ -1517,14 +1521,10 @@ int LuaScriptInterface::fileSystem_isDirectory(lua_State * l)
 
 int LuaScriptInterface::fileSystem_makeDirectory(lua_State * l)
 {
-	const char * filename = lua_tostring(l, 1);
+	const char * dirname = lua_tostring(l, 1);
 
 	int ret = 0;
-#ifdef WIN
-	ret = _mkdir(filename);
-#else
-	ret = mkdir(filename, 0755);
-#endif
+	ret = Client::Ref().MakeDirectory(dirname);
 	lua_pushboolean(l, ret == 0);
 	return 1;
 }

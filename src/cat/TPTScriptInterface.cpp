@@ -82,6 +82,8 @@ ValueType TPTScriptInterface::testType(std::string word)
 		return TypeFunction;
 	else if(word == "bubble")
 		return TypeFunction;
+	else if(word == "quit")
+		return TypeFunction;
 	//Basic type
 	parseNumber:
 			for(i = 0; i < word.length(); i++)
@@ -129,6 +131,8 @@ AnyType TPTScriptInterface::eval(std::deque<std::string> * words)
 			return tptS_reset(words);
 		else if(word == "bubble")
 			return tptS_bubble(words);
+		else if(word == "quit")
+			return tptS_quit(words);
 		break;
 	case TypeNumber:
 		return NumberType(atoi(rawWord));
@@ -211,9 +215,20 @@ AnyType TPTScriptInterface::tptS_set(std::deque<std::string> * words)
 	if(value.GetType() == TypeNumber)
 		newValue = ((NumberType)value).Value();
 	else if(value.GetType() == TypeString)
+	{
 		newValue = GetParticleType(((StringType)value).Value());
+		if (newValue < 0 || newValue >= PT_NUM)
+		{
+			if (((StringType)value).Value() == "GOLD")
+				throw GeneralException("No, GOLD will not be an element");
+			else
+				throw GeneralException("Invalid element");
+		}
+	}
 	else
 		throw GeneralException("Invalid value for assignment");
+	if (property.Value() == "type" && (newValue < 0 || newValue >= PT_NUM))
+		throw GeneralException("Invalid element");
 
 	if(selector.GetType() == TypePoint || selector.GetType() == TypeNumber)
 	{
@@ -457,6 +472,13 @@ AnyType TPTScriptInterface::tptS_reset(std::deque<std::string> * words)
 	{
 		throw GeneralException("Unknown reset command");
 	}
+
+	return NumberType(0);
+}
+
+AnyType TPTScriptInterface::tptS_quit(std::deque<std::string> * words)
+{
+	ui::Engine::Ref().Exit();
 
 	return NumberType(0);
 }

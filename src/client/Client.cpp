@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <deque>
 #include <fstream>
+#include <dirent.h>
 
 #ifdef MACOSX
 #include <mach-o/dyld.h>
@@ -427,6 +428,15 @@ std::vector<std::string> Client::DirectorySearch(std::string directory, std::str
 
 	//Filter results
 	return searchResults;
+}
+
+int Client::MakeDirectory(const char * dirName)
+{
+#ifdef WIN
+	return _mkdir(dirName);
+#else
+	return mkdir(dirName, 0755);
+#endif
 }
 
 void Client::WriteFile(std::vector<unsigned char> fileData, std::string filename)
@@ -849,6 +859,8 @@ void Client::DeleteStamp(std::string stampID)
 			return;
 		}
 	}
+
+	updateStamps();
 }
 
 std::string Client::AddStamp(GameSave * saveData)
@@ -867,11 +879,7 @@ std::string Client::AddStamp(GameSave * saveData)
 	<< std::setw(8) << std::setfill('0') << std::hex << lastStampTime
 	<< std::setw(2) << std::setfill('0') << std::hex << lastStampName;
 
-#ifdef WIN
-	_mkdir(STAMPS_DIR);
-#else
-	mkdir(STAMPS_DIR, 0755);
-#endif
+	MakeDirectory(STAMPS_DIR);
 
 	int gameDataLength;
 	char * gameData = saveData->Serialise(gameDataLength);
@@ -892,12 +900,7 @@ std::string Client::AddStamp(GameSave * saveData)
 
 void Client::updateStamps()
 {
-
-#ifdef WIN
-	_mkdir(STAMPS_DIR);
-#else
-	mkdir(STAMPS_DIR, 0755);
-#endif
+	MakeDirectory(STAMPS_DIR);
 
 	std::ofstream stampsStream;
 	stampsStream.open(std::string(STAMPS_DIR PATH_SEP "stamps.def").c_str(), std::ios::binary);
@@ -908,6 +911,28 @@ void Client::updateStamps()
 	stampsStream.write("\0", 1);
 	stampsStream.close();
 	return;
+}
+
+void Client::RescanStamps()
+{
+	DIR * directory;
+	struct dirent * entry;
+	directory = opendir("stamps");
+	if (directory != NULL)
+	{
+		stampIDs.clear();
+		while (entry = readdir(directory))
+		{
+			if(strncmp(entry->d_name, "..", 3) && strncmp(entry->d_name, ".", 2) && strstr(entry->d_name, ".stm") && strlen(entry->d_name) == 14)
+			{
+				char stampname[11];
+				strncpy(stampname, entry->d_name, 10);
+				stampIDs.push_front(stampname);
+			}
+		}
+		closedir(directory);
+		updateStamps();
+	}
 }
 
 int Client::GetStampsCount()

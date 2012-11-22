@@ -1,5 +1,6 @@
 import os, sys, subprocess, time
 
+
 ##Fix for long command line - http://scons.org/wiki/LongCmdLinesOnWin32
 class ourSpawn:
 	def ourspawn(self, sh, escape, cmd, args, env):
@@ -25,6 +26,7 @@ def SetupSpawn( env ):
 
 AddOption('--opengl',dest="opengl",action='store_true',default=False,help="Build with OpenGL interface support.")
 AddOption('--opengl-renderer',dest="opengl-renderer",action='store_true',default=False,help="Build with OpenGL renderer support. (requires --opengl)")
+AddOption('--renderer',dest="renderer",action='store_true',default=False,help="Save renderer")
 AddOption('--win',dest="win",action='store_true',default=False,help="Windows platform target.")
 AddOption('--lin',dest="lin",action='store_true',default=False,help="Linux platform target")
 AddOption('--macosx',dest="macosx",action='store_true',default=False,help="Mac OS X platform target")
@@ -122,9 +124,9 @@ else:
 	env.Append(LIBS=['z', 'bz2', 'fftw3f'])
 
 env.Append(CPPPATH=['src/', 'data/', 'generated/'])
-env.Append(CCFLAGS=['-w', '-std=c99', '-fkeep-inline-functions'])
+env.Append(CCFLAGS=['-w', '-std=c++98', '-fkeep-inline-functions'])
 env.Append(LIBS=['pthread', 'm'])
-env.Append(CPPDEFINES=["USE_SDL", "LUACONSOLE", "GRAVFFT", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L"])
+env.Append(CPPDEFINES=["LUACONSOLE", "GRAVFFT", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L"])
 
 if GetOption("ptw32-static"):
 	env.Append(CPPDEFINES=['PTW32_STATIC_LIB']);
@@ -132,9 +134,15 @@ if GetOption("ptw32-static"):
 if(GetOption('static')):
 	env.Append(LINKFLAGS=['-static-libgcc'])
 
+if(GetOption('renderer')):
+	env.Append(CPPDEFINES=['RENDERER'])
+else:
+	env.Append(CPPDEFINES=["USE_SDL"])
+
 if(GetOption('win')):
 	openGLLibs = ['opengl32', 'glew32']
 	env.Prepend(LIBS=['mingw32', 'ws2_32', 'SDLmain', 'regex'])
+	env.Append(CCFLAGS=['-std=gnu++98'])
 	env.Append(LIBS=['winmm', 'gdi32'])
 	env.Append(CPPDEFINES=["WIN"])
 	env.Append(LINKFLAGS=['-mwindows'])
@@ -237,8 +245,6 @@ if(GetOption('win')):
 sources+=Glob("src/*/*.cpp")
 sources+=Glob("src/simulation/elements/*.cpp")
 sources+=Glob("src/simulation/tools/*.cpp")
-sources+=Glob("generated/ToolClasses.cpp")
-sources+=Glob("generated/ElementClasses.cpp")
 
 if(GetOption('win')):
 	sources = filter(lambda source: str(source) != 'src/simulation/Gravity.cpp', sources)
@@ -247,8 +253,14 @@ SetupSpawn(env)
 
 programName = "powder"
 
+if(GetOption('renderer')):
+	programName = "render"
+
 if(GetOption('win')):
-	programName = "Powder"
+	if(GetOption('renderer')):
+		programName = "Render"
+	else:
+		programName = "Powder"
 
 if(GetOption('_64bit')):
 	programName += "64"
@@ -273,8 +285,12 @@ if(GetOption('win')):
 	envCopy.Append(CCFLAGS=['-mincoming-stack-boundary=2'])
 	sources+=envCopy.Object('src/simulation/Gravity.cpp')
 
-env.Command(['generated/ElementClasses.cpp', 'generated/ElementClasses.h'], Glob('src/simulation/elements/*.cpp'), "python generator.py elements $TARGETS $SOURCES")
-env.Command(['generated/ToolClasses.cpp', 'generated/ToolClasses.h'], Glob('src/simulation/tools/*.cpp'), "python generator.py tools $TARGETS $SOURCES")
+env.Command(['generated/ElementClasses.cpp', 'generated/ElementClasses.h'], Glob('src/simulation/elements/*.cpp'), "python2 generator.py elements $TARGETS $SOURCES")
+sources+=Glob("generated/ElementClasses.cpp")
+
+env.Command(['generated/ToolClasses.cpp', 'generated/ToolClasses.h'], Glob('src/simulation/tools/*.cpp'), "python2 generator.py tools $TARGETS $SOURCES")
+sources+=Glob("generated/ToolClasses.cpp")
+
 env.Decider('MD5')
 t=env.Program(target=programName, source=sources)
 Default(t)

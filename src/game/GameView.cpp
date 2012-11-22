@@ -181,7 +181,8 @@ GameView::GameView():
 	recording(false),
 	screenshotIndex(0),
 	recordingIndex(0),
-	toolTipPresence(0)
+	toolTipPresence(0),
+	currentSaveType(0)
 {
 	
 	int currentX = 1;
@@ -238,14 +239,14 @@ GameView::GameView():
         void ActionCallbackRight(ui::Button * sender)
         {
         	if(v->CtrlBehaviour())
-        		v->c->OpenLocalSaveWindow();
+        		v->c->OpenLocalSaveWindow(false);
         	else
 	            v->c->OpenSaveWindow();
         }
         void ActionCallbackLeft(ui::Button * sender)
         {
         	if(v->CtrlBehaviour())
-        		v->c->OpenLocalSaveWindow();
+        		v->c->OpenLocalSaveWindow(true);
         	else
 	            v->c->SaveAsCurrent();
         }
@@ -846,6 +847,23 @@ void GameView::NotifySaveChanged(GameModel * sender)
 		{
 			tagSimulationButton->SetText("[no tags set]");
 		}
+		currentSaveType = 1;
+	}
+	else if (sender->GetSaveFile())
+	{
+		if (ctrlBehaviour)
+			((SplitButton*)saveSimulationButton)->SetShowSplit(true);
+		else
+			((SplitButton*)saveSimulationButton)->SetShowSplit(false);
+		saveSimulationButton->SetText(sender->GetSaveFile()->GetDisplayName());
+		reloadButton->Enabled = true;
+		upVoteButton->Enabled = false;
+		upVoteButton->Appearance.BackgroundInactive = (ui::Colour(0, 0, 0));
+		downVoteButton->Enabled = false;
+		upVoteButton->Appearance.BackgroundInactive = (ui::Colour(0, 0, 0));
+		tagSimulationButton->Enabled = false;
+		tagSimulationButton->SetText("[no tags set]");
+		currentSaveType = 2;
 	}
 	else
 	{
@@ -858,6 +876,7 @@ void GameView::NotifySaveChanged(GameModel * sender)
 		upVoteButton->Appearance.BackgroundInactive = (ui::Colour(0, 0, 0));
 		tagSimulationButton->Enabled = false;
 		tagSimulationButton->SetText("[no tags set]");
+		currentSaveType = 0;
 	}
 }
 
@@ -1252,7 +1271,9 @@ void GameView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 		c->FrameStep();
 		break;
 	case 'g':
-		if(shift)
+		if (ctrl)
+			c->ShowGravityGrid();
+		else if(shift)
 			c->AdjustGridSize(-1);
 		else
 			c->AdjustGridSize(1);
@@ -1400,7 +1421,7 @@ void GameView::OnBlur()
 void GameView::OnTick(float dt)
 {
 	if(selectMode==PlaceSave && !placeSaveThumb)
-			selectMode = SelectNone;
+		selectMode = SelectNone;
 	if(zoomEnabled && !zoomCursorFixed)
 		c->SetZoomPosition(currentMouse);
 	if(drawMode == DrawPoints)
@@ -1629,10 +1650,7 @@ void GameView::enableShiftBehaviour()
 		shiftBehaviour = true;
 		if(isMouseDown)
 		{
-			if(!ctrlBehaviour)
-				c->SetToolStrength(10.0f);
-			else
-				c->SetToolStrength(1.0f);
+			c->SetToolStrength(10.0f);
 		}
 	}
 }
@@ -1676,12 +1694,14 @@ void GameView::enableCtrlBehaviour()
 		saveSimulationButton->Appearance.TextInactive = saveSimulationButton->Appearance.TextHover = ui::Colour(0, 0, 0);
 		searchButton->Appearance.BackgroundInactive = searchButton->Appearance.BackgroundHover = ui::Colour(255, 255, 255);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(0, 0, 0);
+		if (currentSaveType == 2)
+			((SplitButton*)saveSimulationButton)->SetShowSplit(true);
 		if(isMouseDown)
 		{
 			if(!shiftBehaviour)
 				c->SetToolStrength(.1f);
 			else
-				c->SetToolStrength(1.0f);
+				c->SetToolStrength(10.0f);
 		}
 	}
 }
@@ -1699,6 +1719,8 @@ void GameView::disableCtrlBehaviour()
 		searchButton->Appearance.BackgroundInactive = ui::Colour(0, 0, 0);
 		searchButton->Appearance.BackgroundHover = ui::Colour(20, 20, 20);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(255, 255, 255);
+		if (currentSaveType == 2)
+			((SplitButton*)saveSimulationButton)->SetShowSplit(false);
 		if(!shiftBehaviour)
 			c->SetToolStrength(1.0f);
 		else
@@ -1885,11 +1907,22 @@ void GameView::OnDraw()
 		{
 			if(showDebug)
 			{
-				sampleInfo << c->ElementResolve(sample.particle.type);
-				if(sample.particle.ctype > 0 && sample.particle.ctype < PT_NUM)
-					sampleInfo << " (" << c->ElementResolve(sample.particle.ctype) << ")";
+				int ctype = sample.particle.ctype;
+				if (sample.particle.type == PT_PIPE || sample.particle.type == PT_PPIP)
+					ctype = sample.particle.tmp;
+
+				if (sample.particle.type == PT_LAVA && ctype > 0 && ctype < PT_NUM)
+					sampleInfo << "Molten " << c->ElementResolve(ctype);
+				else if((sample.particle.type == PT_PIPE || sample.particle.type == PT_PPIP) && ctype > 0 && ctype < PT_NUM)
+					sampleInfo << c->ElementResolve(sample.particle.type) << " with " << c->ElementResolve(ctype);
 				else
-					sampleInfo << " ()";
+				{
+					sampleInfo << c->ElementResolve(sample.particle.type);
+					if(ctype > 0 && ctype < PT_NUM)
+						sampleInfo << " (" << c->ElementResolve(ctype) << ")";
+					else
+						sampleInfo << " ()";
+				}
 				sampleInfo << ", Temp: " << std::fixed << sample.particle.temp -273.15f;
 				sampleInfo << ", Life: " << sample.particle.life;
 				sampleInfo << ", Tmp: " << sample.particle.tmp;
@@ -1897,8 +1930,10 @@ void GameView::OnDraw()
 			}
 			else
 			{
-				if(sample.particle.type == PT_LAVA && sample.particle.ctype > 0 && sample.particle.ctype < PT_NUM)
+				if (sample.particle.type == PT_LAVA && sample.particle.ctype > 0 && sample.particle.ctype < PT_NUM)
 					sampleInfo << "Molten " << c->ElementResolve(sample.particle.ctype);
+				else if((sample.particle.type == PT_PIPE || sample.particle.type == PT_PPIP) && sample.particle.tmp > 0 && sample.particle.tmp < PT_NUM)
+					sampleInfo << c->ElementResolve(sample.particle.type) << " with " << c->ElementResolve(sample.particle.tmp);
 				else
 					sampleInfo << c->ElementResolve(sample.particle.type);
 				sampleInfo << ", Temp: " << std::fixed << sample.particle.temp -273.15f;
@@ -1986,6 +2021,11 @@ void GameView::OnDraw()
 		fpsInfo << "Beta " << SAVE_VERSION << "." << MINOR_VERSION << "." << BUILD_NUM << ", ";
 #endif
 		fpsInfo << "FPS: " << std::fixed << ui::Engine::Ref().GetFps();
+
+		if (showDebug)
+			fpsInfo << " Parts: " << sample.NumParts;
+		if (ren->GetGridSize())
+			fpsInfo << " [GRID: " << ren->GetGridSize() << "]";
 
 		textWidth = Graphics::textwidth((char*)fpsInfo.str().c_str());
 		g->fillrect(12, 12, textWidth+8, 15, 0, 0, 0, 255*0.5);
