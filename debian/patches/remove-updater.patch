@@ -1,6 +1,6 @@
 --- a/src/client/Client.cpp
 +++ b/src/client/Client.cpp
-@@ -572,7 +572,7 @@
+@@ -582,7 +582,7 @@
  				notifyMessageOfTheDay();
  
  				//Check for updates
@@ -9,7 +9,7 @@
  				
  				json::Object stableVersion = versions["Stable"];
  				json::Object betaVersion = versions["Beta"];
-@@ -616,7 +616,7 @@
+@@ -626,7 +626,7 @@
  				if(updateAvailable)
  				{
  					notifyUpdateAvailable();
