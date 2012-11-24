@@ -5,16 +5,16 @@
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 SCONS_OPTS := --lin --sse2 --release
-OUTNAME := powder
 
 ifeq ($(DEB_HOST_ARCH),amd64)
 	SCONS_OPTS += --64bit
-	OUTNAME := powder64
 endif
 
 override_dh_auto_build:
 	scons $(SCONS_OPTS)
-	cp build/$(OUTNAME) build/powder
+ifeq ($(DEB_HOST_ARCH),amd64)
+	cp -f build/powder64 build/powder
+endif
 	cp Changelog.txt changelog
 
 override_dh_auto_clean:

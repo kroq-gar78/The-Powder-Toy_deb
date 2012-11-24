@@ -1,3 +1,10 @@
+the-powder-toy (84.2-0~ppa2) precise; urgency=low
+
+  * debian/rules: fixed FTBFS on non-amd64 systems because
+    of renaming
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 24 Nov 2012 01:36:53 -0600
+
 the-powder-toy (84.2-0~ppa1) precise; urgency=low
 
   * New upstream release (beta)
