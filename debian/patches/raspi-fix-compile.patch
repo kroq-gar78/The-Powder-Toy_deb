@@ -1,0 +1,41 @@
+diff --git a/SConscript b/SConscript
+index 517c839..00a7f9a 100644
+--- a/SConscript
++++ b/SConscript
+@@ -285,10 +285,10 @@ if(GetOption('win')):
+ 	envCopy.Append(CCFLAGS=['-mincoming-stack-boundary=2'])
+ 	sources+=envCopy.Object('src/simulation/Gravity.cpp')
+ 
+-env.Command(['generated/ElementClasses.cpp', 'generated/ElementClasses.h'], Glob('src/simulation/elements/*.cpp'), "python2 generator.py elements $TARGETS $SOURCES")
++env.Command(['generated/ElementClasses.cpp', 'generated/ElementClasses.h'], Glob('src/simulation/elements/*.cpp'), "python generator.py elements $TARGETS $SOURCES")
+ sources+=Glob("generated/ElementClasses.cpp")
+ 
+-env.Command(['generated/ToolClasses.cpp', 'generated/ToolClasses.h'], Glob('src/simulation/tools/*.cpp'), "python2 generator.py tools $TARGETS $SOURCES")
++env.Command(['generated/ToolClasses.cpp', 'generated/ToolClasses.h'], Glob('src/simulation/tools/*.cpp'), "python generator.py tools $TARGETS $SOURCES")
+ sources+=Glob("generated/ToolClasses.cpp")
+ 
+ env.Decider('MD5')
+diff --git a/src/Misc.cpp b/src/Misc.cpp
+index 21e5cac..926c50b 100644
+--- a/src/Misc.cpp
++++ b/src/Misc.cpp
+@@ -281,7 +281,10 @@ int cpu_check(void)
+ {
+ #ifdef MACOSX
+ 	return 0;
+-#else
++#endif
++#ifdef __arm__
++	return 0;
++#endif
+ #ifdef X86
+ 	unsigned af,bf,cf,df;
+ 	x86_cpuid(0, af, bf, cf, df);
+@@ -301,7 +304,6 @@ int cpu_check(void)
+ 		return 1;
+ #endif
+ #endif
+-#endif
+ 	return 0;
+ }
+ 

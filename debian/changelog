@@ -1,3 +1,10 @@
+the-powder-toy (84.2-0~ppa2+raspi1) wheezy; urgency=low
+
+  * debian/patches/raspi-fix-compile.patch: fix FTBFS on the
+    Raspberry Pi
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 25 Nov 2012 01:31:16 -0600
+
 the-powder-toy (84.2-0~ppa2) precise; urgency=low
 
   * debian/rules: fixed FTBFS on non-amd64 systems because
