@@ -158,9 +158,9 @@ if(GetOption('lin')):
 	if GetOption('_64bit'):
 		env.Append(LINKFAGS=['-m64'])
 		env.Append(CCFLAGS=['-m64'])
-	else:
-		env.Append(LINKFLAGS=['-m32'])
-		env.Append(CCFLAGS=['-m32'])
+	#else:
+	#	env.Append(LINKFLAGS=['-m32'])
+	#	env.Append(CCFLAGS=['-m32'])
 if(GetOption('macosx')):
 	env.Append(CPPDEFINES=["MACOSX"])
 	env.Append(CCFLAGS=['-I/Library/Frameworks/SDL.framework/Headers'])

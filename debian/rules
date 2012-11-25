@@ -4,7 +4,7 @@
 
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
-SCONS_OPTS := --lin --sse2 --release
+SCONS_OPTS := --lin --release
 
 ifeq ($(DEB_HOST_ARCH),amd64)
 	SCONS_OPTS += --64bit
