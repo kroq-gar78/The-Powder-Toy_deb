@@ -1,3 +1,9 @@
+the-powder-toy (84.2-0~ppa3) precise; urgency=low
+
+  * debian/rules: lower dependency for 'scons' from 2.1.0 to 2.0.0
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 09 Dec 2012 01:06:16 -0600
+
 the-powder-toy (84.2-0~ppa2) precise; urgency=low
 
   * debian/rules: fixed FTBFS on non-amd64 systems because
