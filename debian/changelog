@@ -2,8 +2,9 @@ the-powder-toy (84.2-0~ppa5) precise; urgency=low
 
   * debian/patches/remove-installer.patch: remove the builtin mimetype
     installer because it's handled by the package
+  * debian/changelog: updated for new codebase
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 21 Dec 2012 20:37:28 -0600
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 21 Dec 2012 21:17:52 -0600
 
 the-powder-toy (84.2-0~ppa4) precise; urgency=low
 
