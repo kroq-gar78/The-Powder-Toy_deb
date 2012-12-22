@@ -1,3 +1,10 @@
+the-powder-toy (84.2-0~ppa5) precise; urgency=low
+
+  * debian/patches/remove-installer.patch: remove the builtin mimetype
+    installer because it's handled by the package
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 21 Dec 2012 20:37:28 -0600
+
 the-powder-toy (84.2-0~ppa4) precise; urgency=low
 
   * debian/patches/upstream-readme.patch: backport the new 'README' file

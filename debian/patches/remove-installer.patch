@@ -1,0 +1,16 @@
+--- a/src/game/GameView.cpp
++++ b/src/game/GameView.cpp
+@@ -1366,10 +1366,10 @@
+ 			c->AdjustBrushSize(-1, !alt, shiftBehaviour, ctrlBehaviour);
+ 		break;
+ 	case 'i':
+-		if(ctrl)
++		/*if(ctrl)
+ 			c->Install();
+-		else
+-			c->InvertAirSim();
++		else*/
++		c->InvertAirSim();
+ 		break;
+ 	}
+ 
