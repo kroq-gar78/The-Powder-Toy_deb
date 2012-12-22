@@ -2,5 +2,3 @@ Lintian:
 W: the-powder-toy source: newer-standards-version 3.9.4 (current is 3.9.3)
 
 Use scons --clean instead of manual cleaning (might require upstream changes)
-
-Remove the "installation" feature, which installs mimetype association
