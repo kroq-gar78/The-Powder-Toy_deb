@@ -1,3 +1,57 @@
+the-powder-toy (84.2-0~ppa5) precise; urgency=low
+
+  * debian/patches/remove-installer.patch: remove the builtin mimetype
+    installer because it's handled by the package
+  * debian/changelog: updated for new codebase
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 21 Dec 2012 21:17:52 -0600
+
+the-powder-toy (84.2-0~ppa4) precise; urgency=low
+
+  * debian/patches/upstream-readme.patch: backport the new 'README' file
+    from upstream
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 20 Dec 2012 17:05:47 -0600
+
+the-powder-toy (84.2-0~ppa3) precise; urgency=low
+
+  * debian/rules: lower dependency for 'scons' from 2.1.0 to 2.0.0
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 09 Dec 2012 01:06:16 -0600
+
+the-powder-toy (84.2-0~ppa2) precise; urgency=low
+
+  * debian/rules: fixed FTBFS on non-amd64 systems because
+    of renaming
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 24 Nov 2012 01:36:53 -0600
+
+the-powder-toy (84.2-0~ppa1) precise; urgency=low
+
+  * New upstream release (beta)
+  * Removed old patches
+  * debian/patches/remove-updater.patch: remove the update checking
+    process
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 22 Nov 2012 21:57:57 -0600
+
+the-powder-toy (83.9-0~ppa1) precise; urgency=low
+
+  * New upstream release
+    - Codebase switched from C to C++
+  * debian/control:
+    - bumped Standards-Version to 3.9.4
+    - added 'scons' to Build-Depends
+  * debian/rules: updated for use with scons
+  * Added 256x256 PNG mimetype icon
+  * debian/patches/gcc4.7-fix-compile.patch: fix compile for amd64
+    machines
+  * debian/patches/remove-updater.patch: remove the built-in updater
+  * debian/patches/scons-fixes-f1ffe50.patch: more scons fixes from
+    commit f1ffe50a6a of upstream
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 20 Oct 2012 23:19:25 -0500
+
 the-powder-toy (83.0-0~ppa1) precise; urgency=low
 
   * New upstream release
