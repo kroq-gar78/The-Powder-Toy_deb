@@ -86,7 +86,7 @@ void LocalBrowserController::removeSelectedC()
 	};
 
 	std::vector<std::string> selected = browserModel->GetSelected();
-	new TaskWindow("Removing saves", new RemoveSavesTask(this, selected));
+	new TaskWindow("Removing stamps", new RemoveSavesTask(this, selected));
 }
 
 void LocalBrowserController::RescanStamps()
@@ -103,7 +103,7 @@ void LocalBrowserController::RescanStamps()
 	};
 
 	std::stringstream desc;
-	desc << "Rescanning the stamps folder can find stamps added to the stamps folder or recover stamps when the stamps.def file has been lost or damaged. However, be warned that this may mess up the current sorting order";
+	desc << "Rescanning the stamps folder can find stamps added to the stamps folder or recover stamps when the stamps.def file has been lost or damaged. However, be warned that this will mess up the current sorting order";
 	new ConfirmPrompt("Rescan", desc.str(), new RescanConfirmation(this));
 }
 
@@ -150,6 +150,16 @@ void LocalBrowserController::Selected(std::string saveName, bool selected)
 		browserModel->SelectSave(saveName);
 	else
 		browserModel->DeselectSave(saveName);
+}
+
+bool LocalBrowserController::GetMoveToFront()
+{
+	return browserModel->GetMoveToFront();
+}
+
+void LocalBrowserController::SetMoveToFront(bool move)
+{
+	browserModel->SetMoveToFront(move);
 }
 
 void LocalBrowserController::Exit()

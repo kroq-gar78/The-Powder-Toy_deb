@@ -46,6 +46,7 @@ class ClientListener;
 class Client: public Singleton<Client> {
 private:
 	std::string messageOfTheDay;
+	std::vector<std::pair<std::string, std::string> > serverNotifications; 
 
 	void * versionCheckRequest;
 	bool updateAvailable;
@@ -73,6 +74,7 @@ private:
 	void notifyUpdateAvailable();
 	void notifyAuthUserChanged();
 	void notifyMessageOfTheDay();
+	void notifyNewNotification(std::pair<std::string, std::string> notification);
 
 	//Config file handle
 	json::Object configDocument;
@@ -92,12 +94,16 @@ public:
 
 	std::vector<unsigned char> ReadFile(std::string filename);
 
+	void AddServerNotification(std::pair<std::string, std::string> notification);
+	std::vector<std::pair<std::string, std::string> > GetServerNotifications();
+
 	void SetMessageOfTheDay(std::string message);
 	std::string GetMessageOfTheDay();
 
 	void Initialise(std::string proxyString);
 	void SetProxy(std::string proxy);
 
+	int MakeDirectory(const char * dirname);
 	void WriteFile(std::vector<unsigned char> fileData, std::string filename);
 	void WriteFile(std::vector<char> fileData, std::string filename);
 	bool FileExists(std::string filename);
@@ -115,6 +121,7 @@ public:
 	void RescanStamps();
 	int GetStampsCount();
 	SaveFile * GetFirstStamp();
+	void MoveStampToFront(std::string stampID);
 
 	RequestStatus AddComment(int saveID, std::string comment);
 

@@ -22,6 +22,7 @@
 #include "dialogues/ConfirmPrompt.h" 
 #include "simulation/Simulation.h"
 #include "game/GameModel.h"
+#include "game/Tool.h"
 #include "LuaScriptHelper.h"
 #include "client/HTTP.h"
 
@@ -39,9 +40,10 @@
 #include "LuaSlider.h"
 #include "LuaProgressBar.h"
 
-#ifdef __unix__
+#ifndef WIN
 #include <unistd.h>
 #endif
+#include "SDL.h"
 
 extern "C"
 {
@@ -54,6 +56,7 @@ extern "C"
 }
 
 GameModel * luacon_model;
+GameController * luacon_controller;
 Simulation * luacon_sim;
 LuaScriptInterface * luacon_ci;
 Graphics * luacon_g;
@@ -78,9 +81,19 @@ int tptParts, tptPartsMeta, tptElementTransitions, tptPartsCData, tptPartMeta, t
 LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	CommandInterface(c, m),
 	currentCommand(false),
-	legacy(new TPTScriptInterface(c, m))
+	legacy(new TPTScriptInterface(c, m)),
+	luacon_mousex(0),
+	luacon_mousey(0),
+	luacon_mousebutton(0),
+	luacon_brushx(0),
+	luacon_brushy(0),
+	luacon_selectedl(""),
+	luacon_selectedr(""),
+	luacon_selectedalt(""),
+	luacon_mousedown(false)
 {
 	luacon_model = m;
+	luacon_controller = c;
 	luacon_sim = m->GetSimulation();
 	luacon_g = ui::Engine::Ref().g;
 	luacon_ren = m->GetRenderer();
@@ -190,10 +203,12 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	lua_setfield(l, tptProperties, "mousex");
 	lua_pushinteger(l, 0);
 	lua_setfield(l, tptProperties, "mousey");
-	lua_pushinteger(l, 0);
+	lua_pushstring(l, "");
 	lua_setfield(l, tptProperties, "selectedl");
-	lua_pushinteger(l, 0);
+	lua_pushstring(l, "");
 	lua_setfield(l, tptProperties, "selectedr");
+	lua_pushstring(l, "");
+	lua_setfield(l, tptProperties, "selecteda");
 
 	lua_newtable(l);
 	tptPropertiesVersion = lua_gettop(l);
@@ -301,6 +316,7 @@ tpt.partsdata = nil");
 	for(i = 0; i < PT_NUM; i++)
 	{
 		lua_el_mode[i] = 0;
+		lua_gr_func[i] = 0;
 	}
 
 }
@@ -391,6 +407,11 @@ void LuaScriptInterface::initSimulationAPI()
 		{"partChangeType", simulation_partChangeType},
 		{"partCreate", simulation_partCreate},
 		{"partKill", simulation_partKill},
+		{"pressure", simulation_pressure},
+		{"ambientHeat", simulation_ambientHeat},
+		{"velocityX", simulation_velocityX},
+		{"velocityY", simulation_velocityY},
+		{"gravMap", simulation_gravMap},
 		{NULL, NULL}
 	};
 	luaL_register(l, "simulation", simulationAPIMethods);
@@ -400,6 +421,42 @@ void LuaScriptInterface::initSimulationAPI()
 	lua_getglobal(l, "simulation");
 	lua_setglobal(l, "sim");
 
+	//Static values
+	lua_pushinteger(l, XRES); lua_setfield(l, simulationAPI, "XRES");
+	lua_pushinteger(l, YRES); lua_setfield(l, simulationAPI, "YRES");
+	lua_pushinteger(l, PT_NUM); lua_setfield(l, simulationAPI, "PT_NUM");
+	lua_pushinteger(l, luacon_sim->NUM_PARTS); lua_setfield(l, simulationAPI, "NUM_PARTS");
+	lua_pushinteger(l, R_TEMP); lua_setfield(l, simulationAPI, "R_TEMP");
+	lua_pushinteger(l, MAX_TEMP); lua_setfield(l, simulationAPI, "MAX_TEMP");
+	lua_pushinteger(l, MIN_TEMP); lua_setfield(l, simulationAPI, "MIN_TEMP");
+
+}
+
+void LuaScriptInterface::set_map(int x, int y, int width, int height, float value, int map) // A function so this won't need to be repeated many times later
+{
+	int nx, ny;
+	if(x > (XRES/CELL)-1)
+		x = (XRES/CELL)-1;
+	if(y > (YRES/CELL)-1)
+		y = (YRES/CELL)-1;
+	if(x+width > (XRES/CELL)-1)
+		width = (XRES/CELL)-x;
+	if(y+height > (YRES/CELL)-1)
+		height = (YRES/CELL)-y;
+	for (nx = x; nx<x+width; nx++)
+		for (ny = y; ny<y+height; ny++)
+		{
+			if (map == 1)
+				luacon_sim->pv[ny][nx] = value;
+			else if (map == 2)
+				luacon_sim->hv[ny][nx] = value;
+			else if (map == 3)
+				luacon_sim->vx[ny][nx] = value;
+			else if (map == 4)
+				luacon_sim->vy[ny][nx] = value;
+			else if (map == 5)
+				luacon_sim->gravmap[ny*XRES/CELL+nx] = value; //gravx/y don't seem to work, but this does. opposite of tpt
+		}
 }
 
 int LuaScriptInterface::simulation_partNeighbours(lua_State * l)
@@ -469,6 +526,186 @@ int LuaScriptInterface::simulation_partKill(lua_State * l)
 	return 0;
 }
 
+int LuaScriptInterface::simulation_pressure(lua_State* l)
+{
+	int argCount = lua_gettop(l);
+	luaL_checktype(l, 1, LUA_TNUMBER);
+	luaL_checktype(l, 2, LUA_TNUMBER);
+	int x = lua_tointeger(l, 1);
+	int y = lua_tointeger(l, 2);
+	if (x*CELL<0 || y*CELL<0 || x*CELL>=XRES || y*CELL>=YRES)
+		return luaL_error(l, "coordinates out of range (%d,%d)", x, y);
+
+	if (argCount == 2)
+	{
+		lua_pushnumber(l, luacon_sim->pv[y][x]);
+		return 1;
+	}
+	int width = 1, height = 1;
+	float value;
+	luaL_checktype(l, 3, LUA_TNUMBER);
+	if (argCount == 3)
+		value = (float)lua_tonumber(l, 3);
+	else
+	{
+		luaL_checktype(l, 4, LUA_TNUMBER);
+		luaL_checktype(l, 5, LUA_TNUMBER);
+		width = lua_tointeger(l, 3);
+		height = lua_tointeger(l, 4);
+		value = (float)lua_tonumber(l, 5);
+	}
+	if(value > 256.0f)
+		value = 256.0f;
+	else if(value < -256.0f)
+		value = -256.0f;
+
+	set_map(x, y, width, height, value, 1);
+	return 0;
+}
+
+int LuaScriptInterface::simulation_ambientHeat(lua_State* l)
+{
+	int argCount = lua_gettop(l);
+	luaL_checktype(l, 1, LUA_TNUMBER);
+	luaL_checktype(l, 2, LUA_TNUMBER);
+	int x = lua_tointeger(l, 1);
+	int y = lua_tointeger(l, 2);
+	if (x*CELL<0 || y*CELL<0 || x*CELL>=XRES || y*CELL>=YRES)
+		return luaL_error(l, "coordinates out of range (%d,%d)", x, y);
+
+	if (argCount == 2)
+	{
+		lua_pushnumber(l, luacon_sim->hv[y][x]);
+		return 1;
+	}
+	int width = 1, height = 1;
+	float value;
+	luaL_checktype(l, 3, LUA_TNUMBER);
+	if (argCount == 3)
+		value = (float)lua_tonumber(l, 3);
+	else
+	{
+		luaL_checktype(l, 4, LUA_TNUMBER);
+		luaL_checktype(l, 5, LUA_TNUMBER);
+		width = lua_tointeger(l, 3);
+		height = lua_tointeger(l, 4);
+		value = (float)lua_tonumber(l, 5);
+	}
+	if(value > MAX_TEMP)
+		value = MAX_TEMP;
+	else if(value < MIN_TEMP)
+		value = MIN_TEMP;
+
+	set_map(x, y, width, height, value, 2);
+	return 0;
+}
+
+int LuaScriptInterface::simulation_velocityX(lua_State* l)
+{
+	int argCount = lua_gettop(l);
+	luaL_checktype(l, 1, LUA_TNUMBER);
+	luaL_checktype(l, 2, LUA_TNUMBER);
+	int x = lua_tointeger(l, 1);
+	int y = lua_tointeger(l, 2);
+	if (x*CELL<0 || y*CELL<0 || x*CELL>=XRES || y*CELL>=YRES)
+		return luaL_error(l, "coordinates out of range (%d,%d)", x, y);
+
+	if (argCount == 2)
+	{
+		lua_pushnumber(l, luacon_sim->vx[y][x]);
+		return 1;
+	}
+	int width = 1, height = 1;
+	float value;
+	luaL_checktype(l, 3, LUA_TNUMBER);
+	if (argCount == 3)
+		value = (float)lua_tonumber(l, 3);
+	else
+	{
+		luaL_checktype(l, 4, LUA_TNUMBER);
+		luaL_checktype(l, 5, LUA_TNUMBER);
+		width = lua_tointeger(l, 3);
+		height = lua_tointeger(l, 4);
+		value = (float)lua_tonumber(l, 5);
+	}
+	if(value > 256.0f)
+		value = 256.0f;
+	else if(value < -256.0f)
+		value = -256.0f;
+
+	set_map(x, y, width, height, value, 3);
+	return 0;
+}
+
+int LuaScriptInterface::simulation_velocityY(lua_State* l)
+{
+	int argCount = lua_gettop(l);
+	luaL_checktype(l, 1, LUA_TNUMBER);
+	luaL_checktype(l, 2, LUA_TNUMBER);
+	int x = lua_tointeger(l, 1);
+	int y = lua_tointeger(l, 2);
+	if (x*CELL<0 || y*CELL<0 || x*CELL>=XRES || y*CELL>=YRES)
+		return luaL_error(l, "coordinates out of range (%d,%d)", x, y);
+
+	if (argCount == 2)
+	{
+		lua_pushnumber(l, luacon_sim->vy[y][x]);
+		return 1;
+	}
+	int width = 1, height = 1;
+	float value;
+	luaL_checktype(l, 3, LUA_TNUMBER);
+	if (argCount == 3)
+		value = (float)lua_tonumber(l, 3);
+	else
+	{
+		luaL_checktype(l, 4, LUA_TNUMBER);
+		luaL_checktype(l, 5, LUA_TNUMBER);
+		width = lua_tointeger(l, 3);
+		height = lua_tointeger(l, 4);
+		value = (float)lua_tonumber(l, 5);
+	}
+	if(value > 256.0f)
+		value = 256.0f;
+	else if(value < -256.0f)
+		value = -256.0f;
+
+	set_map(x, y, width, height, value, 4);
+	return 0;
+}
+
+int LuaScriptInterface::simulation_gravMap(lua_State* l)
+{
+	int argCount = lua_gettop(l);
+	luaL_checktype(l, 1, LUA_TNUMBER);
+	luaL_checktype(l, 2, LUA_TNUMBER);
+	int x = lua_tointeger(l, 1);
+	int y = lua_tointeger(l, 2);
+	if (x*CELL<0 || y*CELL<0 || x*CELL>=XRES || y*CELL>=YRES)
+		return luaL_error(l, "coordinates out of range (%d,%d)", x, y);
+
+	/*if (argCount == 2)
+	{
+		lua_pushnumber(l, luacon_sim->gravmap[y*XRES/CELL+x]);
+		return 1;
+	}*/
+	int width = 1, height = 1;
+	float value;
+	luaL_checktype(l, 3, LUA_TNUMBER);
+	if (argCount == 3)
+		value = (float)lua_tonumber(l, 3);
+	else
+	{
+		luaL_checktype(l, 4, LUA_TNUMBER);
+		luaL_checktype(l, 5, LUA_TNUMBER);
+		width = lua_tointeger(l, 3);
+		height = lua_tointeger(l, 4);
+		value = (float)lua_tonumber(l, 5);
+	}
+
+	set_map(x, y, width, height, value, 5);
+	return 0;
+}
 
 //// Begin Renderer API
 
@@ -479,7 +716,7 @@ void LuaScriptInterface::initRendererAPI()
 		{"renderModes", renderer_renderModes},
 		{"displayModes", renderer_displayModes},
 		{"colourMode", renderer_colourMode},
-		{"colorMode", renderer_colourMode}, //Duplicate of above to make americans happy
+		{"colorMode", renderer_colourMode}, //Duplicate of above to make Americans happy
 		{"decorations", renderer_decorations},
 		{NULL, NULL}
 	};
@@ -700,6 +937,7 @@ void LuaScriptInterface::initElementsAPI()
 	lua_pushinteger(l, SC_LIFE);		lua_setfield(l, elementsAPI, "SC_LIFE");
 	lua_pushinteger(l, SC_TOOL);		lua_setfield(l, elementsAPI, "SC_TOOL");
 	lua_pushinteger(l, SC_DECO);		lua_setfield(l, elementsAPI, "SC_DECO");
+	lua_pushinteger(l, SC_SENSOR);		lua_setfield(l, elementsAPI, "SC_SENSOR");
 
 	//Element identifiers
 	for(int i = 0; i < PT_NUM; i++)
@@ -912,11 +1150,12 @@ int LuaScriptInterface::elements_element(lua_State * l)
 		if(lua_type(l, -1) == LUA_TFUNCTION)
 		{
 			lua_el_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
-			luacon_sim->elements[id].Update = &luacon_elementReplacement;
+			lua_el_mode[id] = 1;
 		}
 		else if(lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			lua_el_func[id] = 0;
+			lua_el_mode[id] = 0;
 			luacon_sim->elements[id].Update = NULL;
 		}
 		else
@@ -925,12 +1164,11 @@ int LuaScriptInterface::elements_element(lua_State * l)
 		lua_getfield(l, -1, "Graphics");
 		if(lua_type(l, -1) == LUA_TFUNCTION)
 		{
-			lua_el_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
-			luacon_sim->elements[id].Graphics = &luacon_graphicsReplacement;
+			lua_gr_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
 		}
 		else if(lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
-			lua_el_func[id] = 0;
+			lua_gr_func[id] = 0;
 			luacon_sim->elements[id].Graphics = NULL;
 		}
 		else
@@ -938,7 +1176,7 @@ int LuaScriptInterface::elements_element(lua_State * l)
 
 		luacon_model->BuildMenus();
 		luacon_sim->init_can_move();
-		std::fill(luacon_ren->graphicscache, luacon_ren->graphicscache+PT_NUM, gcache_item());
+		luacon_ren->graphicscache[id].isready = 0;
 
 		lua_pop(l, 1);
 		return 0;
@@ -1001,8 +1239,6 @@ int LuaScriptInterface::elements_property(lua_State * l)
 	if(id < 0 || id >= PT_NUM || !luacon_sim->elements[id].Enabled)
 		return luaL_error(l, "Invalid element");
 
-
-
 	if(args > 2)
 	{
 		StructProperty property;
@@ -1057,7 +1293,7 @@ int LuaScriptInterface::elements_property(lua_State * l)
 
 			luacon_model->BuildMenus();
 			luacon_sim->init_can_move();
-			std::fill(luacon_ren->graphicscache, luacon_ren->graphicscache+PT_NUM, gcache_item());
+			luacon_ren->graphicscache[id].isready = 0;
 
 			return 0;
 		}
@@ -1067,7 +1303,17 @@ int LuaScriptInterface::elements_property(lua_State * l)
 			{
 				lua_pushvalue(l, 3);
 				lua_el_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
-				luacon_sim->elements[id].Update = &luacon_elementReplacement;
+				if (args > 3)
+				{
+					luaL_checktype(l, 4, LUA_TNUMBER);
+					int replace = lua_tointeger(l, 4);
+					if (replace == 1)
+						lua_el_mode[id] = 2;
+					else
+						lua_el_mode[id] = 1;
+				}
+				else
+					lua_el_mode[id] = 1;
 			}
 			else if(lua_type(l, 3) == LUA_TLIGHTUSERDATA)
 			{
@@ -1077,6 +1323,7 @@ int LuaScriptInterface::elements_property(lua_State * l)
 			else if(lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				lua_el_func[id] = 0;
+				lua_el_mode[id] = 0;
 				luacon_sim->elements[id].Update = NULL;
 			}
 		}
@@ -1085,15 +1332,14 @@ int LuaScriptInterface::elements_property(lua_State * l)
 			if(lua_type(l, 3) == LUA_TFUNCTION)
 			{
 				lua_pushvalue(l, 3);
-				lua_el_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
-				luacon_sim->elements[id].Graphics = &luacon_graphicsReplacement;
+				lua_gr_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
 			}
 			else if(lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 			{
-				lua_el_func[id] = 0;
+				lua_gr_func[id] = 0;
 				luacon_sim->elements[id].Graphics = NULL;
 			}
-			std::fill(luacon_ren->graphicscache, luacon_ren->graphicscache+PT_NUM, gcache_item());
+			luacon_ren->graphicscache[id].isready = 0;
 		}
 		else
 			return luaL_error(l, "Invalid element property");
@@ -1452,7 +1698,7 @@ int LuaScriptInterface::fileSystem_isFile(lua_State * l)
 {
 	const char * filename = lua_tostring(l, 1);
 
-	bool exists = false;
+	bool isFile = false;
 #ifdef WIN
 	struct _stat s;
 	if(_stat(filename, &s) == 0)
@@ -1461,25 +1707,21 @@ int LuaScriptInterface::fileSystem_isFile(lua_State * l)
 	if(stat(filename, &s) == 0)
 #endif
 	{
-		if(s.st_mode & S_IFDIR)
+		if(s.st_mode & S_IFREG)
 		{
-			exists = true;
-		}
-		else if(s.st_mode & S_IFREG)
-		{
-			exists = false;
+			isFile = true; //Is file
 		}
 		else
 		{
-			exists = false;
+			isFile = false; //Is directory or something else
 		}
 	}
 	else
 	{
-		exists = false;
+		isFile = false; //Doesn't exist
 	}
 
-	lua_pushboolean(l, exists);
+	lua_pushboolean(l, isFile);
 	return 1;
 }
 
@@ -1487,7 +1729,7 @@ int LuaScriptInterface::fileSystem_isDirectory(lua_State * l)
 {
 	const char * filename = lua_tostring(l, 1);
 
-	bool exists = false;
+	bool isDir = false;
 #ifdef WIN
 	struct _stat s;
 	if(_stat(filename, &s) == 0)
@@ -1498,36 +1740,28 @@ int LuaScriptInterface::fileSystem_isDirectory(lua_State * l)
 	{
 		if(s.st_mode & S_IFDIR)
 		{
-			exists = false;
-		}
-		else if(s.st_mode & S_IFREG)
-		{
-			exists = true;
+			isDir = true; //Is directory
 		}
 		else
 		{
-			exists = false;
+			isDir = false; //Is file or something else
 		}
 	}
 	else
 	{
-		exists = false;
+		isDir = false; //Doesn't exist
 	}
 
-	lua_pushboolean(l, exists);
+	lua_pushboolean(l, isDir);
 	return 1;
 }
 
 int LuaScriptInterface::fileSystem_makeDirectory(lua_State * l)
 {
-	const char * filename = lua_tostring(l, 1);
+	const char * dirname = lua_tostring(l, 1);
 
 	int ret = 0;
-#ifdef WIN
-	ret = _mkdir(filename);
-#else
-	ret = mkdir(filename, 0755);
-#endif
+	ret = Client::Ref().MakeDirectory(dirname);
 	lua_pushboolean(l, ret == 0);
 	return 1;
 }
@@ -1612,6 +1846,17 @@ bool LuaScriptInterface::OnBrushChanged(int brushType, int rx, int ry)
 	return true;
 }
 
+bool LuaScriptInterface::OnActiveToolChanged(int toolSelection, Tool * tool)
+{
+	if (toolSelection == 0)
+		luacon_selectedl = tool->GetIdentifier();
+	else if (toolSelection == 1)
+		luacon_selectedr = tool->GetIdentifier();
+	else if (toolSelection == 2)
+		luacon_selectedalt = tool->GetIdentifier();
+	return true;
+}
+
 bool LuaScriptInterface::OnMouseMove(int x, int y, int dx, int dy)
 {
 	luacon_mousex = x;
@@ -1621,6 +1866,8 @@ bool LuaScriptInterface::OnMouseMove(int x, int y, int dx, int dy)
 
 bool LuaScriptInterface::OnMouseDown(int x, int y, unsigned button)
 {
+	if (button == 3)
+		button = 4;
 	luacon_mousedown = true;
 	luacon_mousebutton = button;
 	return luacon_mouseevent(x, y, button, LUACON_MDOWN, 0);
@@ -1628,6 +1875,8 @@ bool LuaScriptInterface::OnMouseDown(int x, int y, unsigned button)
 
 bool LuaScriptInterface::OnMouseUp(int x, int y, unsigned button)
 {
+	if (button == 3)
+		button = 4;
 	luacon_mousedown = false;
 	return luacon_mouseevent(x, y, button, LUACON_MUP, 0);
 }
@@ -1639,14 +1888,7 @@ bool LuaScriptInterface::OnMouseWheel(int x, int y, int d)
 
 bool LuaScriptInterface::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
 {
-	int modifiers = 0;
-	if(shift)
-		modifiers |= 0x001;
-	if(ctrl)
-		modifiers |= 0x040;
-	if(alt)
-		modifiers |= 0x100;
-	return luacon_keyevent(key, modifiers, LUACON_KDOWN);
+	return luacon_keyevent(key, SDL_GetModState(), LUACON_KDOWN);
 }
 
 bool LuaScriptInterface::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
@@ -1666,7 +1908,7 @@ void LuaScriptInterface::OnTick()
 	ui::Engine::Ref().LastTick(clock());
 	if(luacon_mousedown)
 		luacon_mouseevent(luacon_mousex, luacon_mousey, luacon_mousebutton, LUACON_MPRESS, 0);
-	luacon_step(luacon_mousex, luacon_mousey, luacon_selectedl, luacon_selectedr, luacon_brushx, luacon_brushy);
+	luacon_step(luacon_mousex, luacon_mousey, luacon_selectedl, luacon_selectedr, luacon_selectedalt, luacon_brushx, luacon_brushy);
 }
 
 int LuaScriptInterface::Command(std::string command)

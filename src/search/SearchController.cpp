@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <time.h>
 #include "SearchController.h"
 #include "SearchModel.h"
 #include "SearchView.h"
@@ -53,6 +54,11 @@ SearchController::SearchController(ControllerCallback * callback):
 SaveInfo * SearchController::GetLoadedSave()
 {
 	return searchModel->GetLoadedSave();
+}
+
+void SearchController::ReleaseLoadedSave()
+{
+	searchModel->SetLoadedSave(NULL);
 }
 
 void SearchController::Update()

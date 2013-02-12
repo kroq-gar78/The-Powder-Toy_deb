@@ -105,7 +105,7 @@ RenderView::RenderView():
 	presetButton->SetActionCallback(new RenderPresetAction(this, 2));
 	AddComponent(presetButton);
 
-	presetButton = new ui::Button(ui::Point(presetButtonOffset+161, YRES+6), ui::Point(30, 13), "", "Persistant display mode preset");
+	presetButton = new ui::Button(ui::Point(presetButtonOffset+161, YRES+6), ui::Point(30, 13), "", "Persistent display mode preset");
 	presetButton->SetIcon(IconPersistant);
 	presetButton->SetActionCallback(new RenderPresetAction(this, 3));
 	AddComponent(presetButton);
@@ -237,7 +237,7 @@ RenderView::RenderView():
 	AddComponent(tCheckbox);
 
 #ifdef OGLR
-	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Effect", "I don't know what this does...") //I would remove the whole checkbox, but then there's a large empty space
+	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Effect", "I don't know what this does..."); //I would remove the whole checkbox, but then there's a large empty space
 #else
 	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Effect", "Does nothing");
 #endif
@@ -257,7 +257,7 @@ RenderView::RenderView():
 	checkboxOffset += sSpace;
 	line3 = checkboxOffset-5;
 
-	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Heat", "Displays temperatures of the elements, dark blue is coldest, pink is hotest");
+	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Heat", "Displays temperatures of the elements, dark blue is coldest, pink is hottest");
 	colourModes.push_back(tCheckbox);
 	tCheckbox->SetIcon(IconHeat);
 	tCheckbox->SetActionCallback(new ColourModeAction(this, COLOUR_HEAT));

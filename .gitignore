@@ -8,6 +8,7 @@
 *.la
 *~
 *.pref
+*.lua
 stdout.txt
 stderr.txt
 build/*
@@ -32,6 +33,7 @@ Makefile.me
 *.manifest.res
 *manifest.rc
 *res.res
+*.idb
 *.obj
 *.tlog
 *.lib
@@ -44,6 +46,8 @@ Makefile.me
 *.project
 *.cproject
 *.settings
+*.cbp
+*.layout
 config.log
 *.sconsign.dblite
 *.sconf_temp
@@ -51,3 +55,4 @@ config.log
 *.pyc
 site_scons/site_tools/mfprogram/*.pyc
 site_scons/site_tools/gch/*.pyc
+others*

@@ -28,7 +28,7 @@ Element_TSNS::Element_TSNS()
     
     Temperature = R_TEMP+0.0f	+273.15f;
     HeatConduct = 0;
-    Description = "Creates a spark when there's a nearby particle with equal or greater temperature";
+    Description = "Creates a spark when there's a nearby particle with a greater temperature";
     
     State = ST_SOLID;
     Properties = TYPE_SOLID;
@@ -64,7 +64,7 @@ int Element_TSNS::update(UPDATE_FUNC_ARGS)
 					rt = parts[r>>8].type;
 					if (sim->parts_avg(i,r>>8,PT_INSL) != PT_INSL)
 					{
-						if ((sim->elements[rt].Properties&PROP_CONDUCTS) && !(rt==PT_WATR||rt==PT_SLTW||rt==PT_NTCT||rt==PT_PTCT||rt==PT_INWR) && parts[r>>8].life==0 && Element_DTEC::in_radius(rd, rx, ry))
+						if ((sim->elements[rt].Properties&PROP_CONDUCTS) && !(rt==PT_WATR||rt==PT_SLTW||rt==PT_NTCT||rt==PT_PTCT||rt==PT_INWR) && parts[r>>8].life==0)
 						{
 							parts[r>>8].life = 4;
 							parts[r>>8].ctype = rt;
@@ -82,7 +82,7 @@ int Element_TSNS::update(UPDATE_FUNC_ARGS)
 					r = sim->photons[y+ry][x+rx];
 				if(!r)
 					continue;
-				if (parts[r>>8].temp >= parts[i].temp && parts[r>>8].type != PT_TSNS)
+				if (parts[r>>8].temp > parts[i].temp && parts[r>>8].type != PT_TSNS && parts[r>>8].type != PT_METL)
 					parts[i].life = 1;
 			}
 	return 0;

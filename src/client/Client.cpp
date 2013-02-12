@@ -140,7 +140,7 @@ void Client::Initialise(std::string proxyString)
 	stampsLib.close();
 
 	//Begin version check
-	versionCheckRequest = http_async_req_start(NULL, SERVER "/Startup.json", NULL, 0, 1);
+	versionCheckRequest = http_async_req_start(NULL, SERVER "/Startup.json", NULL, 0, 0);
 
 	if(authUser.ID)
 	{
@@ -157,6 +157,7 @@ bool Client::DoInstallation()
 	char *currentfilename = exe_name();
 	char *iconname = NULL;
 	char *opencommand = NULL;
+	char *protocolcommand = NULL;
 	//char AppDataPath[MAX_PATH];
 	char *AppDataPath = NULL;
 	iconname = (char*)malloc(strlen(currentfilename)+6);
@@ -175,6 +176,7 @@ bool Client::DoInstallation()
 	//TODO: Implement
 	
 	opencommand = (char*)malloc(strlen(currentfilename)+53+strlen(AppDataPath));
+	protocolcommand = (char*)malloc(strlen(currentfilename)+53+strlen(AppDataPath));
 	/*if((strlen(AppDataPath)+strlen(APPDATA_SUBDIR "\\Powder Toy"))<MAX_PATH)
 	{
 		strappend(AppDataPath, APPDATA_SUBDIR);
@@ -186,6 +188,55 @@ bool Client::DoInstallation()
 		goto finalise;
 	}*/
 	sprintf(opencommand, "\"%s\" open \"%%1\" ddir \"%s\"", currentfilename, AppDataPath);
+	sprintf(protocolcommand, "\"%s\" ddir \"%s\" ptsave \"%%1\"", currentfilename, AppDataPath);
+
+	//Create protocol entry
+	rresult = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes\\ptsave", 0, 0, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &newkey, NULL);
+	if (rresult != ERROR_SUCCESS) {
+		returnval = 0;
+		goto finalise;
+	}
+	rresult = RegSetValueEx(newkey, 0, 0, REG_SZ, (LPBYTE)"Powder Toy Save", strlen("Powder Toy Save")+1);
+	if (rresult != ERROR_SUCCESS) {
+		RegCloseKey(newkey);
+		returnval = 0;
+		goto finalise;
+	}
+	rresult = RegSetValueEx(newkey, (LPCSTR)"URL Protocol", 0, REG_SZ, (LPBYTE)"", strlen("")+1);
+	if (rresult != ERROR_SUCCESS) {
+		RegCloseKey(newkey);
+		returnval = 0;
+		goto finalise;
+	}
+	RegCloseKey(newkey);
+	
+	//Set Protocol DefaultIcon
+	rresult = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes\\ptsave\\DefaultIcon", 0, 0, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &newkey, NULL);
+	if (rresult != ERROR_SUCCESS) {
+		returnval = 0;
+		goto finalise;
+	}
+	rresult = RegSetValueEx(newkey, 0, 0, REG_SZ, (LPBYTE)iconname, strlen(iconname)+1);
+	if (rresult != ERROR_SUCCESS) {
+		RegCloseKey(newkey);
+		returnval = 0;
+		goto finalise;
+	}
+	RegCloseKey(newkey);	
+	
+	//Set Protocol Launch command
+	rresult = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes\\ptsave\\shell\\open\\command", 0, 0, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &newkey, NULL);
+	if (rresult != ERROR_SUCCESS) {
+		returnval = 0;
+		goto finalise;
+	}
+	rresult = RegSetValueEx(newkey, 0, 0, REG_SZ, (LPBYTE)protocolcommand, strlen(protocolcommand)+1);
+	if (rresult != ERROR_SUCCESS) {
+		RegCloseKey(newkey);
+		returnval = 0;
+		goto finalise;
+	}
+	RegCloseKey(newkey);
 
 	//Create extension entry
 	rresult = RegCreateKeyEx(HKEY_CURRENT_USER, "Software\\Classes\\.cps", 0, 0, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &newkey, NULL);
@@ -261,6 +312,7 @@ bool Client::DoInstallation()
 
 	if(iconname) free(iconname);
 	if(opencommand) free(opencommand);
+	if(protocolcommand) free(protocolcommand);
 	if(currentfilename) free(currentfilename);
 	
 	return returnval;
@@ -367,6 +419,9 @@ std::vector<std::string> Client::DirectorySearch(std::string directory, std::str
 std::vector<std::string> Client::DirectorySearch(std::string directory, std::string search, std::vector<std::string> extensions)
 {
 	//Get full file listing
+	//Normalise directory string, ensure / or \ is present
+	if(*directory.rbegin() != '/' && *directory.rbegin() != '\\')
+		directory += PATH_SEP;
 	std::vector<std::string> directoryList;
 #if defined(WIN) && !defined(__GNUC__)
 	//Windows
@@ -376,7 +431,7 @@ std::vector<std::string> Client::DirectorySearch(std::string directory, std::str
 	findFileHandle = _findfirst(fileMatch.c_str(), &currentFile);
 	if (findFileHandle == -1L)
 	{
-		printf("Unable to open directory\n");
+		printf("Unable to open directory: %s\n", directory.c_str());
 		return std::vector<std::string>();
 	}
 	do
@@ -393,7 +448,7 @@ std::vector<std::string> Client::DirectorySearch(std::string directory, std::str
 	DIR *directoryHandle = opendir(directory.c_str());
 	if(!directoryHandle)
 	{
-		printf("Unable to open directory\n");
+		printf("Unable to open directory: %s\n", directory.c_str());
 		return std::vector<std::string>();
 	}
 	while(directoryEntry = readdir(directoryHandle))
@@ -412,7 +467,7 @@ std::vector<std::string> Client::DirectorySearch(std::string directory, std::str
 		bool extensionMatch = !extensions.size();
 		for(std::vector<std::string>::iterator extIter = extensions.begin(), extEnd = extensions.end(); extIter != extEnd; ++extIter)
 		{
-			if(filename.find(*extIter)==filename.length()-(*extIter).length())
+			if(filename.find(*extIter, filename.length()-(*extIter).length())==filename.length()-(*extIter).length())
 			{
 				extensionMatch = true;
 				break;
@@ -428,6 +483,15 @@ std::vector<std::string> Client::DirectorySearch(std::string directory, std::str
 
 	//Filter results
 	return searchResults;
+}
+
+int Client::MakeDirectory(const char * dirName)
+{
+#ifdef WIN
+	return _mkdir(dirName);
+#else
+	return mkdir(dirName, 0755);
+#endif
 }
 
 void Client::WriteFile(std::vector<unsigned char> fileData, std::string filename)
@@ -533,6 +597,17 @@ std::string Client::GetMessageOfTheDay()
 	return messageOfTheDay;
 }
 
+void Client::AddServerNotification(std::pair<std::string, std::string> notification)
+{
+	serverNotifications.push_back(notification);
+	notifyNewNotification(notification);
+}
+
+std::vector<std::pair<std::string, std::string> > Client::GetServerNotifications()
+{
+	return serverNotifications;
+}
+
 void Client::Tick()
 {
 	//Check thumbnail queue
@@ -564,8 +639,20 @@ void Client::Tick()
 				json::Boolean sessionStatus = objDocument["Session"];
 				if(!sessionStatus.Value())
 				{
-					authUser = User(0, "");
+					SetAuthUser(User(0, ""));
 				}
+
+				//Notifications from server
+				json::Array notificationsArray = objDocument["Notifications"];
+				for(int j = 0; j < notificationsArray.Size(); j++)
+				{
+					json::String notificationLink = notificationsArray[j]["Link"];
+					json::String notificationText = notificationsArray[j]["Text"];
+
+					std::pair<std::string, std::string> item = std::pair<std::string, std::string>(notificationText.Value(), notificationLink.Value());
+					AddServerNotification(item);
+				}
+
 
 				//MOTD
 				json::String messageOfTheDay = objDocument["MessageOfTheDay"];
@@ -614,10 +701,13 @@ void Client::Tick()
 				}
 #endif
 
+#ifndef IGNORE_UPDATES
 				if(updateAvailable)
 				{
 					notifyUpdateAvailable();
-				}*/
+				}
+#endif
+*/
 			}
 			catch (json::Exception &e)
 			{
@@ -656,6 +746,14 @@ void Client::notifyAuthUserChanged()
 	for (std::vector<ClientListener*>::iterator iterator = listeners.begin(), end = listeners.end(); iterator != end; ++iterator)
 	{
 		(*iterator)->NotifyAuthUserChanged(this);
+	}
+}
+
+void Client::notifyNewNotification(std::pair<std::string, std::string> notification)
+{
+	for (std::vector<ClientListener*>::iterator iterator = listeners.begin(), end = listeners.end(); iterator != end; ++iterator)
+	{
+		(*iterator)->NotifyNewNotification(this, notification);
 	}
 }
 
@@ -706,6 +804,7 @@ void Client::WritePrefs()
 
 void Client::Shutdown()
 {
+	ThumbnailBroker::Ref().Shutdown();
 	ClearThumbnailRequests();
 	http_done();
 
@@ -811,6 +910,20 @@ RequestStatus Client::UploadSave(SaveInfo & save)
 	return RequestFailure;
 }
 
+void Client::MoveStampToFront(std::string stampID)
+{
+	for (std::list<std::string>::iterator iterator = stampIDs.begin(), end = stampIDs.end(); iterator != end; ++iterator)
+	{
+		if((*iterator) == stampID)
+		{
+			stampIDs.erase(iterator);
+			break;
+		}
+	}
+	stampIDs.push_front(stampID);
+	updateStamps();
+}
+
 SaveFile * Client::GetStamp(std::string stampID)
 {
 	std::string stampFile = std::string(STAMPS_DIR PATH_SEP + stampID + ".stm");
@@ -870,11 +983,7 @@ std::string Client::AddStamp(GameSave * saveData)
 	<< std::setw(8) << std::setfill('0') << std::hex << lastStampTime
 	<< std::setw(2) << std::setfill('0') << std::hex << lastStampName;
 
-#ifdef WIN
-	_mkdir(STAMPS_DIR);
-#else
-	mkdir(STAMPS_DIR, 0755);
-#endif
+	MakeDirectory(STAMPS_DIR);
 
 	int gameDataLength;
 	char * gameData = saveData->Serialise(gameDataLength);
@@ -884,7 +993,7 @@ std::string Client::AddStamp(GameSave * saveData)
 	stampStream.write((const char *)gameData, gameDataLength);
 	stampStream.close();
 
-	delete[] gameData;
+	free(gameData);
 
 	stampIDs.push_front(saveID.str());
 
@@ -895,12 +1004,7 @@ std::string Client::AddStamp(GameSave * saveData)
 
 void Client::updateStamps()
 {
-
-#ifdef WIN
-	_mkdir(STAMPS_DIR);
-#else
-	mkdir(STAMPS_DIR, 0755);
-#endif
+	MakeDirectory(STAMPS_DIR);
 
 	std::ofstream stampsStream;
 	stampsStream.open(std::string(STAMPS_DIR PATH_SEP "stamps.def").c_str(), std::ios::binary);
@@ -1084,6 +1188,17 @@ LoginStatus Client::Login(std::string username, std::string password, User & use
 				json::String sessionIDTemp = objDocument["SessionID"];
 				json::String sessionKeyTemp = objDocument["SessionKey"];
 				json::String userElevationTemp = objDocument["Elevation"];
+				
+				json::Array notificationsArray = objDocument["Notifications"];
+				for(int j = 0; j < notificationsArray.Size(); j++)
+				{
+					json::String notificationLink = notificationsArray[j]["Link"];
+					json::String notificationText = notificationsArray[j]["Text"];
+
+					std::pair<std::string, std::string> item = std::pair<std::string, std::string>(notificationText.Value(), notificationLink.Value());
+					AddServerNotification(item);
+				}
+
 				user.Username = username;
 				user.ID = userIDTemp.Value();
 				user.SessionID = sessionIDTemp.Value();
@@ -1208,7 +1323,7 @@ RequestStatus Client::AddComment(int saveID, std::string comment)
 
 			if(status!=1)
 			{
-				lastError = ((json::Number)objDocument["Error"]).Value();
+				lastError = ((json::String)objDocument["Error"]).Value();
 			}
 
 			if(status!=1)
@@ -1380,7 +1495,10 @@ RequestStatus Client::UnpublishSave(int saveID)
 			int status = ((json::Number)objDocument["Status"]).Value();
 
 			if(status!=1)
+			{
+				lastError = ((json::String)objDocument["Error"]).Value();
 				goto failure;
+			}
 		}
 		catch (json::Exception &e)
 		{
@@ -1606,7 +1724,7 @@ std::vector<std::pair<std::string, int> > * Client::GetTags(int start, int count
 			{
 				json::Number tagCount = tagsArray[j]["Count"];
 				json::String tag = tagsArray[j]["Tag"];
-				tagArray->push_back(std::pair<std::string, int>(tag.Value(), tagCount.Value()));
+				tagArray->push_back(std::pair<std::string, int>(tag.Value(), (int)tagCount.Value()));
 			}
 		}
 		catch (json::Exception &e)
@@ -1728,7 +1846,7 @@ Thumbnail * Client::GetThumbnail(int saveID, int saveDate)
 	//Check active requests for any "forgotten" requests
 	for(i = 0; i < IMGCONNS; i++)
 	{
-		//If the request is active, and we've recieved a response
+		//If the request is active, and we've received a response
 		if(activeThumbRequests[i] && http_async_req_status(activeThumbRequests[i]))
 		{
 			//If we haven't already, mark the request as completed
@@ -1822,7 +1940,7 @@ Thumbnail * Client::GetThumbnail(int saveID, int saveDate)
 		{
 			if(!activeThumbRequests[i])
 			{
-				activeThumbRequests[i] = http_async_req_start(NULL, (char *)urlStream.str().c_str(), NULL, 0, 1);
+				activeThumbRequests[i] = http_async_req_start(NULL, (char *)urlStream.str().c_str(), NULL, 0, 0);
 				activeThumbRequestTimes[i] = currentTime;
 				activeThumbRequestCompleteTimes[i] = 0;
 				activeThumbRequestIDs[i] = idString;

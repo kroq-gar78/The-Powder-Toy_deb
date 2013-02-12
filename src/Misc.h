@@ -26,6 +26,13 @@ static char hex[] = "0123456789ABCDEF";
 
 char *exe_name(void);
 
+//Linear interpolation
+template <typename T> inline T LinearInterpolate(T val1, T val2, T lowerCoord, T upperCoord, T coord)
+{
+	if(lowerCoord == upperCoord) return val1;
+	return (((val2 - val1) / (upperCoord - lowerCoord)) * (coord - lowerCoord)) + val1;
+}
+
 //Signum function
 int isign(float i);
 
@@ -66,10 +73,6 @@ std::string URLEscape(std::string source);
 void strappend(char *dst, char *src);
 
 void *file_load(char *fn, int *size);
-
-void clipboard_push_text(char * text);
-
-char * clipboard_pull_text();
 
 extern char *clipboard_text;
 

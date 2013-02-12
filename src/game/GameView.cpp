@@ -12,6 +12,7 @@
 #include "interface/Slider.h"
 #include "search/Thumbnail.h"
 #include "simulation/SaveRenderer.h"
+#include "simulation/SimulationData.h"
 #include "dialogues/ConfirmPrompt.h"
 #include "Format.h"
 #include "QuickOption.h"
@@ -168,6 +169,7 @@ GameView::GameView():
 	toolTip(""),
 	infoTip(""),
 	infoTipPresence(0),
+	buttonTipShow(0),
 	toolTipPosition(-1, -1),
 	shiftBehaviour(false),
 	ctrlBehaviour(false),
@@ -181,9 +183,12 @@ GameView::GameView():
 	recording(false),
 	screenshotIndex(0),
 	recordingIndex(0),
-	toolTipPresence(0)
+	toolTipPresence(0),
+	currentSaveType(0),
+	lastLogEntry(0.0f),
+	lastMenu(NULL)
 {
-	
+
 	int currentX = 1;
 	//Set up UI
 	class SearchAction : public ui::ButtonAction
@@ -199,13 +204,13 @@ GameView::GameView():
 				v->c->OpenSearch();
 		}
 	};
-	
+
 	scrollBar = new ui::Button(ui::Point(0,YRES+21), ui::Point(XRES, 2), "");
 	scrollBar->Appearance.BackgroundInactive = ui::Colour(255, 255, 255);
 	scrollBar->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	scrollBar->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(scrollBar);
-	
+
 	searchButton = new ui::Button(ui::Point(currentX, Size.Y-16), ui::Point(17, 15), "", "Find & open a simulation");  //Open
 	searchButton->SetIcon(IconOpen);
 	currentX+=18;
@@ -221,6 +226,10 @@ GameView::GameView():
         void ActionCallback(ui::Button * sender)
         {
             v->c->ReloadSim();
+        }
+        void AltActionCallback(ui::Button * sender)
+        {
+        	v->c->OpenSavePreview();
         }
     };
     reloadButton = new ui::Button(ui::Point(currentX, Size.Y-16), ui::Point(17, 15), "", "Reload the simulation");
@@ -238,14 +247,14 @@ GameView::GameView():
         void ActionCallbackRight(ui::Button * sender)
         {
         	if(v->CtrlBehaviour())
-        		v->c->OpenLocalSaveWindow();
+        		v->c->OpenLocalSaveWindow(false);
         	else
 	            v->c->OpenSaveWindow();
         }
         void ActionCallbackLeft(ui::Button * sender)
         {
         	if(v->CtrlBehaviour())
-        		v->c->OpenLocalSaveWindow();
+        		v->c->OpenLocalSaveWindow(true);
         	else
 	            v->c->SaveAsCurrent();
         }
@@ -443,15 +452,27 @@ class GameView::MenuAction: public ui::ButtonAction
 	GameView * v;
 public:
 	Menu * menu;
-	MenuAction(GameView * _v, Menu * menu_) { v = _v; menu = menu_; }
+	bool needsClick;
+	MenuAction(GameView * _v, Menu * menu_)
+	{ 
+		v = _v;
+		menu = menu_; 
+		if (v->c->GetMenuList()[SC_DECO] == menu)
+			needsClick = true;
+		else
+			needsClick = false;
+	}
 	void MouseEnterCallback(ui::Button * sender)
 	{
-		if(!ui::Engine::Ref().GetMouseButton())
+		if(!needsClick && !ui::Engine::Ref().GetMouseButton())
 			v->c->SetActiveMenu(menu);
 	}
 	void ActionCallback(ui::Button * sender)
 	{
-		MouseEnterCallback(sender);
+		if (needsClick)
+			v->c->SetActiveMenu(menu);
+		else
+			MouseEnterCallback(sender);
 	}
 };
 
@@ -557,6 +578,11 @@ void GameView::SetSample(SimulationSample sample)
 	this->sample = sample;
 }
 
+void GameView::SetHudEnable(bool hudState)
+{
+	showHud = hudState;
+}
+
 ui::Point GameView::GetMousePosition()
 {
 	return mousePosition;
@@ -570,14 +596,17 @@ void GameView::NotifyActiveToolsChanged(GameModel * sender)
 		if(sender->GetActiveTool(0) == tool)
 		{
 			toolButtons[i]->SetSelectionState(0);	//Primary
+			c->ActiveToolChanged(0, tool);
 		}
 		else if(sender->GetActiveTool(1) == tool)
 		{
 			toolButtons[i]->SetSelectionState(1);	//Secondary
+			c->ActiveToolChanged(1, tool);
 		}
 		else if(sender->GetActiveTool(2) == tool)
 		{
 			toolButtons[i]->SetSelectionState(2);	//Tertiary
+			c->ActiveToolChanged(2, tool);
 		}
 		else
 		{
@@ -661,7 +690,8 @@ void GameView::NotifyToolListChanged(GameModel * sender)
 		AddComponent(tempButton);
 		toolButtons.push_back(tempButton);
 	}
-
+	if (sender->GetActiveMenu() != sender->GetMenuList()[SC_DECO])
+		lastMenu = sender->GetActiveMenu();
 }
 
 void GameView::NotifyColourSelectorVisibilityChanged(GameModel * sender)
@@ -812,15 +842,26 @@ void GameView::NotifySaveChanged(GameModel * sender)
 		reloadButton->Enabled = true;
 		upVoteButton->Enabled = (sender->GetSave()->GetID() && sender->GetUser().ID && sender->GetSave()->GetVote()==0);
 		if(sender->GetSave()->GetID() && sender->GetUser().ID && sender->GetSave()->GetVote()==1)
-			upVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 200, 40, 100));
+			upVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 108, 10, 255));
 		else
 			upVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 0, 0));
 
 		downVoteButton->Enabled = upVoteButton->Enabled;
 		if(sender->GetSave()->GetID() && sender->GetUser().ID && sender->GetSave()->GetVote()==-1)
-			downVoteButton->Appearance.BackgroundDisabled = (ui::Colour(200, 40, 40, 100));
+			downVoteButton->Appearance.BackgroundDisabled = (ui::Colour(108, 0, 10, 255));
 		else
 			downVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 0, 0));
+
+		if (sender->GetUser().ID)
+		{
+			upVoteButton->Appearance.BorderDisabled = upVoteButton->Appearance.BorderInactive;
+			downVoteButton->Appearance.BorderDisabled = downVoteButton->Appearance.BorderInactive;
+		}
+		else
+		{
+			upVoteButton->Appearance.BorderDisabled = ui::Colour(100, 100, 100);
+			downVoteButton->Appearance.BorderDisabled = ui::Colour(100, 100, 100);
+		}
 
 		tagSimulationButton->Enabled = (sender->GetSave()->GetID() && sender->GetUser().ID);
 		if(sender->GetSave()->GetID())
@@ -846,6 +887,25 @@ void GameView::NotifySaveChanged(GameModel * sender)
 		{
 			tagSimulationButton->SetText("[no tags set]");
 		}
+		currentSaveType = 1;
+	}
+	else if (sender->GetSaveFile())
+	{
+		if (ctrlBehaviour)
+			((SplitButton*)saveSimulationButton)->SetShowSplit(true);
+		else
+			((SplitButton*)saveSimulationButton)->SetShowSplit(false);
+		saveSimulationButton->SetText(sender->GetSaveFile()->GetDisplayName());
+		reloadButton->Enabled = true;
+		upVoteButton->Enabled = false;
+		upVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 0, 0));
+		upVoteButton->Appearance.BorderDisabled = ui::Colour(100, 100, 100);
+		downVoteButton->Enabled = false;
+		upVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 0, 0));
+		downVoteButton->Appearance.BorderDisabled = ui::Colour(100, 100, 100);
+		tagSimulationButton->Enabled = false;
+		tagSimulationButton->SetText("[no tags set]");
+		currentSaveType = 2;
 	}
 	else
 	{
@@ -853,11 +913,14 @@ void GameView::NotifySaveChanged(GameModel * sender)
 		saveSimulationButton->SetText("[untitled simulation]");
 		reloadButton->Enabled = false;
 		upVoteButton->Enabled = false;
-		upVoteButton->Appearance.BackgroundInactive = (ui::Colour(0, 0, 0));
+		upVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 0, 0));
+		upVoteButton->Appearance.BorderDisabled = ui::Colour(100, 100, 100),
 		downVoteButton->Enabled = false;
-		upVoteButton->Appearance.BackgroundInactive = (ui::Colour(0, 0, 0));
+		upVoteButton->Appearance.BackgroundDisabled = (ui::Colour(0, 0, 0));
+		downVoteButton->Appearance.BorderDisabled = ui::Colour(100, 100, 100),
 		tagSimulationButton->Enabled = false;
 		tagSimulationButton->SetText("[no tags set]");
+		currentSaveType = 0;
 	}
 }
 
@@ -919,9 +982,9 @@ void GameView::OnMouseMove(int x, int y, int dx, int dy)
 	if(selectMode!=SelectNone)
 	{
 		if(selectMode==PlaceSave)
-			selectPoint1 = c->NormaliseBlockCoord(c->PointTranslate(ui::Point(x, y)));
+			selectPoint1 = c->PointTranslate(ui::Point(x, y));
 		if(selectPoint1.X!=-1)
-			selectPoint2 = c->NormaliseBlockCoord(c->PointTranslate(ui::Point(x, y)));
+			selectPoint2 = c->PointTranslate(ui::Point(x, y));
 		return;
 	}
 	currentMouse = ui::Point(x, y);
@@ -934,13 +997,13 @@ void GameView::OnMouseMove(int x, int y, int dx, int dy)
 
 void GameView::OnMouseDown(int x, int y, unsigned button)
 {
-	if(altBehaviour && !shiftBehaviour)
+	if(altBehaviour && !shiftBehaviour && !ctrlBehaviour)
 		button = BUTTON_MIDDLE;
 	if(selectMode!=SelectNone)
 	{
 		if(button==BUTTON_LEFT)
 		{
-			selectPoint1 = c->NormaliseBlockCoord(c->PointTranslate(ui::Point(x, y)));
+			selectPoint1 = c->PointTranslate(ui::Point(x, y));
 			selectPoint2 = selectPoint1;
 		}
 		return;
@@ -958,7 +1021,7 @@ void GameView::OnMouseDown(int x, int y, unsigned button)
 			c->HistorySnapshot();
 		if(drawMode == DrawRect || drawMode == DrawLine)
 		{
-			drawPoint1 = ui::Point(x, y);
+			drawPoint1 = c->PointTranslate(ui::Point(x, y));
 		}
 		if(drawMode == DrawPoints)
 		{
@@ -1000,15 +1063,12 @@ void GameView::OnMouseUp(int x, int y, unsigned button)
 				int y2 = (selectPoint1.Y>selectPoint2.Y)?selectPoint1.Y:selectPoint2.Y;
 				int x1 = (selectPoint2.X<selectPoint1.X)?selectPoint2.X:selectPoint1.X;
 				int y1 = (selectPoint2.Y<selectPoint1.Y)?selectPoint2.Y:selectPoint1.Y;
-				if(x2-x1>0 && y2-y1>0)
-				{
-					if(selectMode==SelectCopy)
-						c->CopyRegion(ui::Point(x1, y1), ui::Point(x2, y2));
-					else if(selectMode==SelectCut)
-						c->CutRegion(ui::Point(x1, y1), ui::Point(x2, y2));
-					else if(selectMode==SelectStamp)
-						c->StampRegion(ui::Point(x1, y1), ui::Point(x2, y2));
-				}
+				if(selectMode==SelectCopy)
+					c->CopyRegion(ui::Point(x1, y1), ui::Point(x2, y2));
+				else if(selectMode==SelectCut)
+					c->CutRegion(ui::Point(x1, y1), ui::Point(x2, y2));
+				else if(selectMode==SelectStamp)
+					c->StampRegion(ui::Point(x1, y1), ui::Point(x2, y2));
 			}
 		}
 		currentMouse = ui::Point(x, y);
@@ -1231,7 +1291,8 @@ void GameView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 		}
 		else
 		{
-			isMouseDown = false;
+			if (drawMode != DrawLine)
+				isMouseDown = false;
 			zoomCursorFixed = false;
 			c->SetZoomEnabled(true);
 		}
@@ -1252,7 +1313,9 @@ void GameView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 		c->FrameStep();
 		break;
 	case 'g':
-		if(shift)
+		if (ctrl)
+			c->ShowGravityGrid();
+		else if(shift)
 			c->AdjustGridSize(-1);
 		else
 			c->AdjustGridSize(1);
@@ -1277,6 +1340,15 @@ void GameView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 	case 'b':
 		if(ctrl)
 			c->SetDecoration();
+		else
+			if (colourPicker->GetParentWindow())
+				c->SetActiveMenu(lastMenu);
+			else
+			{
+				c->SetDecoration(true);
+				c->SetPaused(true);
+				c->SetActiveMenu(c->GetMenuList()[SC_DECO]);
+			}
 		break;
 	case 'y':
 		c->SwitchAir();
@@ -1362,7 +1434,13 @@ void GameView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 
 void GameView::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
 {
-	if(!isMouseDown)
+	if(ctrl && shift)
+		drawMode = DrawFill;
+	else if (ctrl)
+		drawMode = DrawRect;
+	else if (shift)
+		drawMode = DrawLine;
+	else if(!isMouseDown)
 		drawMode = DrawPoints;
 	else
 		drawModeReset = true;
@@ -1400,7 +1478,7 @@ void GameView::OnBlur()
 void GameView::OnTick(float dt)
 {
 	if(selectMode==PlaceSave && !placeSaveThumb)
-			selectMode = SelectNone;
+		selectMode = SelectNone;
 	if(zoomEnabled && !zoomCursorFixed)
 		c->SetZoomPosition(currentMouse);
 	if(drawMode == DrawPoints)
@@ -1434,7 +1512,7 @@ void GameView::OnTick(float dt)
 	{
 		buttonTipShow -= int(dt)>0?int(dt):1;
 		if(buttonTipShow<0)
-			buttonTipShow = 0;	
+			buttonTipShow = 0;
 	}
 	if(toolTipPresence>0)
 	{
@@ -1464,12 +1542,12 @@ void GameView::DoMouseMove(int x, int y, int dx, int dy)
 			int mouseX = x;
 			if(mouseX > XRES)
 				mouseX = XRES;
-				
+
 			scrollBar->Position.X = (int)(((float)mouseX/((float)XRES-15))*(float)(XRES-scrollSize));
-					
+
 			float overflow = totalWidth-(XRES-15), mouseLocation = float(XRES)/float(mouseX-(XRES));
 			setToolButtonOffset(overflow/mouseLocation);
-			
+
 			//Ensure that mouseLeave events are make their way to the buttons should they move from underneith the mouse pointer
 			if(toolButtons[0]->Position.Y < y && toolButtons[0]->Position.Y+toolButtons[0]->Size.Y > y)
 			{
@@ -1552,6 +1630,10 @@ void GameView::NotifyNotificationsChanged(GameModel * sender)
         void ActionCallback(ui::Button * sender)
         {
             v->c->RemoveNotification(notification);
+        }
+		void AltActionCallback(ui::Button * sender)
+        {
+        	v->c->RemoveNotification(notification);
         }
     };
 
@@ -1673,6 +1755,8 @@ void GameView::enableCtrlBehaviour()
 		saveSimulationButton->Appearance.TextInactive = saveSimulationButton->Appearance.TextHover = ui::Colour(0, 0, 0);
 		searchButton->Appearance.BackgroundInactive = searchButton->Appearance.BackgroundHover = ui::Colour(255, 255, 255);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(0, 0, 0);
+		if (currentSaveType == 2)
+			((SplitButton*)saveSimulationButton)->SetShowSplit(true);
 		if(isMouseDown)
 		{
 			if(!shiftBehaviour)
@@ -1696,6 +1780,8 @@ void GameView::disableCtrlBehaviour()
 		searchButton->Appearance.BackgroundInactive = ui::Colour(0, 0, 0);
 		searchButton->Appearance.BackgroundHover = ui::Colour(20, 20, 20);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(255, 255, 255);
+		if (currentSaveType == 2)
+			((SplitButton*)saveSimulationButton)->SetShowSplit(false);
 		if(!shiftBehaviour)
 			c->SetToolStrength(1.0f);
 		else
@@ -1710,6 +1796,7 @@ void GameView::OnDraw()
 	{
 		ren->clearScreen(1.0f);
 		ren->RenderBegin();
+		ren->SetSample(c->PointTranslate(currentMouse).X, c->PointTranslate(currentMouse).Y);
 		if(selectMode == SelectNone && (!zoomEnabled || zoomCursorFixed) && activeBrush && currentMouse.X >= 0 && currentMouse.X < XRES && currentMouse.Y >= 0 && currentMouse.Y < YRES)
 		{
 			ui::Point finalCurrentMouse = c->PointTranslate(currentMouse);
@@ -1737,18 +1824,18 @@ void GameView::OnDraw()
 				}
 				activeBrush->RenderLine(ren, c->PointTranslate(initialDrawPoint), finalCurrentMouse);
 			}
-			else if(drawMode==DrawFill)
+			else if(drawMode==DrawFill)// || altBehaviour)
 			{
 				activeBrush->RenderFill(ren, finalCurrentMouse);
 			}
-			else
+			if(drawMode == DrawPoints || drawMode==DrawLine || (drawMode == DrawRect && !isMouseDown))
 			{
 				if(wallBrush)
 				{
 					ui::Point finalBrushRadius = c->NormaliseBlockCoord(activeBrush->GetRadius());
 					ren->xor_line(finalCurrentMouse.X-finalBrushRadius.X, finalCurrentMouse.Y-finalBrushRadius.Y, finalCurrentMouse.X+finalBrushRadius.X+CELL-1, finalCurrentMouse.Y-finalBrushRadius.Y);
 					ren->xor_line(finalCurrentMouse.X-finalBrushRadius.X, finalCurrentMouse.Y+finalBrushRadius.Y+CELL-1, finalCurrentMouse.X+finalBrushRadius.X+CELL-1, finalCurrentMouse.Y+finalBrushRadius.Y+CELL-1);
-				
+
 					ren->xor_line(finalCurrentMouse.X-finalBrushRadius.X, finalCurrentMouse.Y-finalBrushRadius.Y+1, finalCurrentMouse.X-finalBrushRadius.X, finalCurrentMouse.Y+finalBrushRadius.Y+CELL-2);
 					ren->xor_line(finalCurrentMouse.X+finalBrushRadius.X+CELL-1, finalCurrentMouse.Y-finalBrushRadius.Y+1, finalCurrentMouse.X+finalBrushRadius.X+CELL-1, finalCurrentMouse.Y+finalBrushRadius.Y+CELL-2);
 				}
@@ -1805,10 +1892,10 @@ void GameView::OnDraw()
 						y2 = YRES-1;
 
 					ren->fillrect(0, 0, XRES, y1, 0, 0, 0, 100);
-					ren->fillrect(0, y2, XRES, YRES-y2, 0, 0, 0, 100);
+					ren->fillrect(0, y2+1, XRES, YRES-y2-1, 0, 0, 0, 100);
 
-					ren->fillrect(0, y1, x1, (y2-y1), 0, 0, 0, 100);
-					ren->fillrect(x2, y1, XRES-x2, (y2-y1), 0, 0, 0, 100);
+					ren->fillrect(0, y1, x1, (y2-y1)+1, 0, 0, 0, 100);
+					ren->fillrect(x2+1, y1, XRES-x2-1, (y2-y1)+1, 0, 0, 0, 100);
 
 					ren->xor_rect(x1, y1, (x2-x1)+1, (y2-y1)+1);
 				}
@@ -1963,7 +2050,7 @@ void GameView::OnDraw()
 					cb *= tmp;
 					for (j=0; j<h; j++)
 						g->blendpixel(x+29-i,y+j,cr>255?255:cr,cg>255?255:cg,cb>255?255:cb,255);
-				}	
+				}
 			}
 		}
 #endif
@@ -1977,7 +2064,7 @@ void GameView::OnDraw()
 				sampleInfo << "#" << sample.ParticleID << ", ";
 			}
 			sampleInfo << "X:" << sample.PositionX << " Y:" << sample.PositionY;
-			if (std::abs(sample.Gravity) > 0.1f)
+			if (sample.Gravity)
 				sampleInfo << " GX: " << sample.GravityVelocityX << " GY: " << sample.GravityVelocityY;
 
 			textWidth = Graphics::textwidth((char*)sampleInfo.str().c_str());

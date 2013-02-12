@@ -11,21 +11,23 @@
 
 #ifdef WIN
 #define PATH_SEP "\\"
+#define PATH_SEP_CHAR '\\'
 #else
 #define PATH_SEP "/"
+#define PATH_SEP_CHAR '/'
 #endif
 
 //VersionInfoStart
 #ifndef SAVE_VERSION
-#define SAVE_VERSION 83
+#define SAVE_VERSION 85
 #endif
 
 #ifndef MINOR_VERSION
-#define MINOR_VERSION 9
+#define MINOR_VERSION 0
 #endif
 
 #ifndef BUILD_NUM
-#define BUILD_NUM 232
+#define BUILD_NUM 255
 #endif
 
 #ifndef SNAPSHOT_ID
@@ -39,6 +41,12 @@
 #endif
 #endif
 //VersionInfoEnd
+
+//#define IGNORE_UPDATES //uncomment this for mods, to not get any update notifications
+
+#if defined(DEBUG) || defined(RENDERER) || defined(X86_SSE2)
+#define HIGH_QUALITY_RESAMPLE			//High quality image resampling, slower but much higher quality than my terribad linear interpolation
+#endif
 
 #if defined(SNAPSHOT)
 #define IDENT_RELTYPE "S"
@@ -88,6 +96,8 @@
 #define LOCAL_SAVE_DIR "Saves"
 
 #define STAMPS_DIR "stamps"
+
+#define BRUSH_DIR "Brushes"
 
 #define APPDATA_SUBDIR "\\HardWIRED"
 

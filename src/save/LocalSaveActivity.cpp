@@ -1,8 +1,3 @@
-#ifdef WIN
-#include <direct.h>
-#else
-#include <sys/stat.h>
-#endif
 #include "LocalSaveActivity.h"
 #include "interface/Label.h"
 #include "interface/Textbox.h"
@@ -37,10 +32,11 @@ public:
 	}
 };
 
-LocalSaveActivity::LocalSaveActivity(SaveFile save) :
+LocalSaveActivity::LocalSaveActivity(SaveFile save, FileSavedCallback * callback) :
 	WindowActivity(ui::Point(-1, -1), ui::Point(220, 200)),
 	thumbnail(NULL),
-	save(save)
+	save(save),
+	callback(callback)
 {
 	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 16), "Save to computer:");
 	titleLabel->SetTextColour(style::Colour::InformationTitle);
@@ -52,6 +48,7 @@ LocalSaveActivity::LocalSaveActivity(SaveFile save) :
 	filenameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	filenameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(filenameField);
+	FocusComponent(filenameField);
 
 	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X-75, 16), "Cancel");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
@@ -93,6 +90,8 @@ void LocalSaveActivity::Save()
 	if(filenameField->GetText().length())
 	{
 		std::string finalFilename = std::string(LOCAL_SAVE_DIR) + std::string(PATH_SEP) + filenameField->GetText() + ".cps";
+		save.SetDisplayName(filenameField->GetText());
+		save.SetFileName(finalFilename);
 		if(Client::Ref().FileExists(finalFilename))
 		{
 			new ConfirmPrompt("Overwrite file", "Are you sure you wish to overwrite\n"+finalFilename, new FileOverwriteConfirmation(this, finalFilename));
@@ -111,12 +110,9 @@ void LocalSaveActivity::Save()
 
 void LocalSaveActivity::saveWrite(std::string finalFilename)
 {
-#ifdef WIN
-	_mkdir(LOCAL_SAVE_DIR);
-#else
-	mkdir(LOCAL_SAVE_DIR, 0755);
-#endif
+	Client::Ref().MakeDirectory(LOCAL_SAVE_DIR);
 	Client::Ref().WriteFile(save.GetGameSave()->Serialise(), finalFilename);
+	callback->FileSaved(&save);
 }
 
 void LocalSaveActivity::OnDraw()

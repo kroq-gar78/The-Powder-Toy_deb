@@ -12,15 +12,10 @@
 #include "dialogues/ErrorMessage.h"
 #include "dialogues/InformationMessage.h"
 #include "dialogues/TextPrompt.h"
-#include "dialogues/ConfirmPrompt.h" 
+#include "dialogues/ConfirmPrompt.h"
 #include "simulation/Simulation.h"
 #include "game/GameModel.h"
 
-#ifdef WIN
-#include <direct.h>
-#else
-#include <sys/stat.h>
-#endif
 #include <time.h>
 
 #ifndef FFI
@@ -467,7 +462,7 @@ int luacon_elementwrite(lua_State* l){
 				free(key);
 				return luaL_error(l, "Name too long");
 			}
-			if(luacon_ci->GetParticleType(tempstring) == -1)
+			if(luacon_ci->GetParticleType(tempstring) != -1)
 			{
 				free(tempstring);
 				free(key);
@@ -493,6 +488,7 @@ int luacon_elementwrite(lua_State* l){
 	free(key);
 	return 0;
 }
+bool shortcuts = true;
 int luacon_keyevent(int key, int modifier, int event){
 	int i = 0, kpcontinue = 1, callret;
 	char tempkey[] = {key, 0};
@@ -514,7 +510,7 @@ int luacon_keyevent(int key, int modifier, int event){
 			lua_pop(luacon_ci->l, 1);
 		}
 	}
-	return kpcontinue;
+	return kpcontinue && shortcuts;
 }
 int luacon_mouseevent(int mx, int my, int mb, int event, int mouse_wheel){
 	int i = 0, mpcontinue = 1, callret;
@@ -540,18 +536,20 @@ int luacon_mouseevent(int mx, int my, int mb, int event, int mouse_wheel){
 	return mpcontinue;
 }
 
-int luacon_step(int mx, int my, int selectl, int selectr, int bsx, int bsy){
+int luacon_step(int mx, int my, std::string selectl, std::string selectr, std::string selectalt, int bsx, int bsy){
 	int tempret = 0, tempb, i, callret;
 	lua_pushinteger(luacon_ci->l, bsy);
 	lua_pushinteger(luacon_ci->l, bsx);
-	lua_pushinteger(luacon_ci->l, selectr);
-	lua_pushinteger(luacon_ci->l, selectl);
+	lua_pushstring(luacon_ci->l, selectalt.c_str());
+	lua_pushstring(luacon_ci->l, selectr.c_str());
+	lua_pushstring(luacon_ci->l, selectl.c_str());
 	lua_pushinteger(luacon_ci->l, my);
 	lua_pushinteger(luacon_ci->l, mx);
 	lua_setfield(luacon_ci->l, tptProperties, "mousex");
 	lua_setfield(luacon_ci->l, tptProperties, "mousey");
 	lua_setfield(luacon_ci->l, tptProperties, "selectedl");
 	lua_setfield(luacon_ci->l, tptProperties, "selectedr");
+	lua_setfield(luacon_ci->l, tptProperties, "selecteda");
 	lua_setfield(luacon_ci->l, tptProperties, "brushx");
 	lua_setfield(luacon_ci->l, tptProperties, "brushy");
 	for(i = 0; i<6; i++){
@@ -631,7 +629,7 @@ int luatpt_getelement(lua_State *l)
 
 int luacon_elementReplacement(UPDATE_FUNC_ARGS)
 {
-	int retval = 0;
+	int retval = 0, callret;
 	if(lua_el_func[parts[i].type]){
 		lua_rawgeti(luacon_ci->l, LUA_REGISTRYINDEX, lua_el_func[parts[i].type]);
 		lua_pushinteger(luacon_ci->l, i);
@@ -639,7 +637,9 @@ int luacon_elementReplacement(UPDATE_FUNC_ARGS)
 		lua_pushinteger(luacon_ci->l, y);
 		lua_pushinteger(luacon_ci->l, surround_space);
 		lua_pushinteger(luacon_ci->l, nt);
-		lua_pcall(luacon_ci->l, 5, 1, 0);
+		callret = lua_pcall(luacon_ci->l, 5, 1, 0);
+		if (callret)
+			luacon_ci->Log(CommandInterface::LogError, luacon_geterror());
 		if(lua_isboolean(luacon_ci->l, -1)){
 			retval = lua_toboolean(luacon_ci->l, -1);
 		}
@@ -653,14 +653,31 @@ int luatpt_element_func(lua_State *l)
 	if(lua_isfunction(l, 1))
 	{
 		int element = luaL_optint(l, 2, 0);
+		int replace = luaL_optint(l, 3, 0);
 		int function;
 		lua_pushvalue(l, 1);
 		function = luaL_ref(l, LUA_REGISTRYINDEX);
 		if(element > 0 && element < PT_NUM)
 		{
 			lua_el_func[element] = function;
-			luacon_sim->elements[element].Update = &luacon_elementReplacement;
+			if(replace)
+				lua_el_mode[element] = 2;
+			else
+				lua_el_mode[element] = 1;
 			return 0;
+		}
+		else
+		{
+			return luaL_error(l, "Invalid element");
+		}
+	}
+	else if(lua_isnil(l, 1))
+	{
+		int element = luaL_optint(l, 2, 0);
+		if(element > 0 && element < PT_NUM)
+		{
+			lua_el_func[element] = 0;
+			lua_el_mode[element] = 0;
 		}
 		else
 		{
@@ -672,15 +689,17 @@ int luatpt_element_func(lua_State *l)
 	return 0;
 }
 
-int luacon_graphicsReplacement(GRAPHICS_FUNC_ARGS)
+int luacon_graphicsReplacement(GRAPHICS_FUNC_ARGS, int i)
 {
-	int cache = 0;
+	int cache = 0, callret;
 	lua_rawgeti(luacon_ci->l, LUA_REGISTRYINDEX, lua_gr_func[cpart->type]);
-	lua_pushinteger(luacon_ci->l, 0);
+	lua_pushinteger(luacon_ci->l, i);
 	lua_pushinteger(luacon_ci->l, *colr);
 	lua_pushinteger(luacon_ci->l, *colg);
 	lua_pushinteger(luacon_ci->l, *colb);
-	lua_pcall(luacon_ci->l, 4, 10, 0);
+	callret = lua_pcall(luacon_ci->l, 4, 10, 0);
+	if (callret)
+		luacon_ci->Log(CommandInterface::LogError, luacon_geterror());
 
 	cache = luaL_optint(luacon_ci->l, -10, 0);
 	*pixel_mode = luaL_optint(luacon_ci->l, -9, *pixel_mode);
@@ -693,6 +712,7 @@ int luacon_graphicsReplacement(GRAPHICS_FUNC_ARGS)
 	*fireg = luaL_optint(luacon_ci->l, -2, *fireg);
 	*fireb = luaL_optint(luacon_ci->l, -1, *fireb);
 	lua_pop(luacon_ci->l, 10);
+
 	return cache;
 }
 
@@ -708,7 +728,20 @@ int luatpt_graphics_func(lua_State *l)
 		{
 			lua_gr_func[element] = function;
 			luacon_ren->graphicscache[element].isready = 0;
-			luacon_sim->elements[element].Graphics = &luacon_graphicsReplacement;
+			return 0;
+		}
+		else
+		{
+			return luaL_error(l, "Invalid element");
+		}
+	}
+	else if (lua_isnil(l, 1))
+	{
+		int element = luaL_optint(l, 2, 0);
+		if(element > 0 && element < PT_NUM)
+		{
+			lua_gr_func[element] = 0;
+			luacon_ren->graphicscache[element].isready = 0;
 			return 0;
 		}
 		else
@@ -802,11 +835,12 @@ int luatpt_togglewater(lua_State* l)
 
 int luatpt_setconsole(lua_State* l)
 {
-	/*int consolestate;
+	int consolestate;
 	consolestate = luaL_optint(l, 1, 0);
-	console_mode = (consolestate==0?0:1);
-	return 0;*/
-	//TODO IMPLEMENT
+	if (consolestate)
+		luacon_controller->ShowConsole();
+	else
+		luacon_controller->HideConsole();
 	return 0;
 }
 
@@ -1002,12 +1036,10 @@ int luatpt_set_property(lua_State* l)
 		} else {
 			t = luaL_optint(l, 2, 0);
 		}
-		//TODO Element ID check
-		//if (format == 3 && (t<0 || t>=PT_NUM))
-		//	return luaL_error(l, "Unrecognised element number '%d'", t);
+		if (!strcmp(prop,"type") && (t<0 || t>=PT_NUM || !luacon_sim->elements[t].Enabled))
+			return luaL_error(l, "Unrecognised element number '%d'", t);
 	} else {
 		name = (char*)luaL_optstring(l, 2, "dust");
-		//if (!console_parse_type(name, &t, NULL))
 		if((t = luacon_ci->GetParticleType(std::string(name)))==-1)
 			return luaL_error(l, "Unrecognised element '%s'", name);
 	}
@@ -1332,8 +1364,8 @@ int luatpt_fillrect(lua_State* l)
 	int x,y,w,h,r,g,b,a;
 	x = luaL_optint(l, 1, 0)+1;
 	y = luaL_optint(l, 2, 0)+1;
-	w = luaL_optint(l, 3, 10)+1;
-	h = luaL_optint(l, 4, 10)+1;
+	w = luaL_optint(l, 3, 10)-1;
+	h = luaL_optint(l, 4, 10)-1;
 	r = luaL_optint(l, 5, 255);
 	g = luaL_optint(l, 6, 255);
 	b = luaL_optint(l, 7, 255);
@@ -1404,7 +1436,12 @@ int luatpt_get_name(lua_State* l)
 
 int luatpt_set_shortcuts(lua_State* l)
 {
-	return luaL_error(l, "set_shortcuts: deprecated");
+	int shortcut = luaL_optint(l, 1, 0);
+	if (shortcut)
+		shortcuts = true;
+	else
+		shortcuts = false;
+	return 0;
 }
 
 int luatpt_delete(lua_State* l)
@@ -1639,12 +1676,12 @@ int luatpt_getPartIndex(lua_State* l)
 }
 int luatpt_hud(lua_State* l)
 {
-    /*int hudstate;
-    hudstate = luaL_optint(l, 1, 0);
-    hud_enable = (hudstate==0?0:1);
-    return 0;*/
-	//TODO IMPLEMENT
-	return 0;
+    int hudstate = luaL_optint(l, 1, 0);
+	if (hudstate)
+		luacon_controller->SetHudEnable(1);
+	else
+		luacon_controller->SetHudEnable(0);
+    return 0;
 }
 int luatpt_gravity(lua_State* l)
 {
@@ -1688,11 +1725,17 @@ int luatpt_heat(lua_State* l)
 	luacon_sim->legacy_enable = (heatstate==1?0:1);
 	return 0;
 }
+
 int luatpt_cmode_set(lua_State* l)
 {
-	//TODO IMPLEMENT
-    return luaL_error(l, "cmode_set: Deprecated");
+	int cmode = luaL_optint(l, 1, 0)+1;
+	if (cmode >= 0 && cmode <= 10)
+		luacon_controller->LoadRenderPreset(cmode);
+	else
+		return luaL_error(l, "Invalid display mode");
+	return 0;
 }
+
 int luatpt_setfire(lua_State* l)
 {
 	int firesize = luaL_optint(l, 2, 4);
@@ -1702,7 +1745,7 @@ int luatpt_setfire(lua_State* l)
 }
 int luatpt_setdebug(lua_State* l)
 {
-	return luaL_error(l, "setdebug: Deprecated");
+	return luaL_error(l, "setdebug: Deprecated"); //TODO: maybe use the debugInfo thing in GameController to implement this
 }
 int luatpt_setfpscap(lua_State* l)
 {
@@ -1723,7 +1766,10 @@ int luatpt_getscript(lua_State* l)
 	fileid = std::string(luaL_optstring(l, 2, ""));
 	run_script = luaL_optint(l, 3, 0);
 	if(!fileauthor.length() || !fileid.length())
+	{
+		lastError = "Script Author or ID not given";
 		goto fin;
+	}
 	if(!ConfirmPrompt::Blocking("Do you want to install script?", fileid, "Install"))
 		goto fin;
 
@@ -1747,11 +1793,7 @@ int luatpt_getscript(lua_State* l)
 	filename = new char[fileauthor.length()+fileid.length()+strlen(PATH_SEP)+strlen(LOCAL_LUA_DIR)+6];
 	sprintf(filename, LOCAL_LUA_DIR PATH_SEP "%s_%s.lua", fileauthor.c_str(), fileid.c_str());
 
-#ifdef WIN
-	_mkdir(LOCAL_LUA_DIR);
-#else
-	mkdir(LOCAL_LUA_DIR, 0755);
-#endif
+	Client::Ref().MakeDirectory(LOCAL_LUA_DIR);
 
 	outputfile = fopen(filename, "r");
 	if(outputfile)
@@ -1814,7 +1856,6 @@ int screenshotIndex = 0;
 
 int luatpt_screenshot(lua_State* l)
 {
-	//TODO Implement
 	int captureUI = luaL_optint(l, 1, 0);
 	std::vector<char> data;
 	if(captureUI)

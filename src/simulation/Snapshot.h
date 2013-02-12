@@ -28,6 +28,9 @@ public:
 	std::vector<float> FanVelocityX;
 	std::vector<float> FanVelocityY;
 
+	std::vector<playerst> stickmen;
+	std::vector<sign> signs;
+
 	Snapshot() :
 		AirPressure(),
 		AirVelocityX(),
@@ -43,7 +46,9 @@ public:
 		BlockMap(),
 		ElecMap(),
 		FanVelocityX(),
-		FanVelocityY()
+		FanVelocityY(),
+		stickmen(),
+		signs()
 	{
 
 	}

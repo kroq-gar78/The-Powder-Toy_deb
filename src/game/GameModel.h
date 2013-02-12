@@ -57,6 +57,7 @@ private:
 	int currentBrush;
 	vector<Brush *> brushList;
 	SaveInfo * currentSave;
+	SaveFile * currentFile;
 	Simulation * sim;
 	Renderer * ren;
 	Tool * lastTool;
@@ -143,6 +144,7 @@ public:
 
 	void SetVote(int direction);
 	SaveInfo * GetSave();
+	SaveFile * GetSaveFile();
 	Brush * GetBrush();
 	void SetSave(SaveInfo * newSave);
 	void SetSaveFile(SaveFile * newSave);
@@ -160,6 +162,8 @@ public:
 	void SetDecoration(bool decorationState);
 	bool GetAHeatEnable();
 	void SetAHeatEnable(bool aHeat);
+	bool GetGravityGrid();
+	void ShowGravityGrid(bool showGrid);
 	void ClearSimulation();
 	vector<Menu*> GetMenuList();
 	vector<Tool*> GetUnlistedTools();
