@@ -22,6 +22,7 @@
 
 using namespace std;
 
+class DebugInfo;
 class Notification;
 class GameModel;
 class GameView;
@@ -44,9 +45,9 @@ private:
 	LocalBrowserController * localBrowser;
 	OptionsController * options;
 	CommandInterface * commandInterface;
+	vector<DebugInfo*> debugInfo;
 public:
 	bool HasDone;
-	class LoginCallback;
 	class SearchCallback;
 	class RenderCallback;
 	class SSaveCallback;
@@ -95,7 +96,9 @@ public:
 	void SetDecoration(bool decorationState);
 	void SetDecoration();
 	void ShowGravityGrid();
+	void SetHudEnable(bool hudState);
 	void SetActiveMenu(Menu * menu);
+	std::vector<Menu*> GetMenuList();
 	void SetActiveTool(int toolSelection, Tool * tool);
 	void SetActiveColourPreset(int preset);
 	void SetColour(ui::Colour colour);
@@ -106,6 +109,7 @@ public:
 	void OpenLogin();
 	void OpenTags();
 	void OpenSavePreview(int saveID, int saveDate);
+	void OpenSavePreview();
 	void OpenLocalSaveWindow(bool asCurrent);
 	void OpenLocalBrowse();
 	void OpenOptions();
@@ -121,6 +125,7 @@ public:
 	void Vote(int direction);
 	void ChangeBrush();
 	void ShowConsole();
+	void HideConsole();
 	void FrameStep();
 	void TranslateSave(ui::Point point);
 	void TransformSave(matrix2d transform);
@@ -141,6 +146,8 @@ public:
 	void RemoveNotification(Notification * notification);
 
 	virtual void NotifyUpdateAvailable(Client * sender);
+	virtual void NotifyAuthUserChanged(Client * sender);
+	virtual void NotifyNewNotification(Client * sender, std::pair<std::string, std::string> notification);
 	void RunUpdater();
 };
 

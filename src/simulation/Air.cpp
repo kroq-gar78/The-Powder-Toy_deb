@@ -41,10 +41,14 @@ void Air::make_kernel(void) //used for velocity
 
 void Air::Clear()
 {
-	std::fill(&hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)), 273.15f + 22.0f);
 	std::fill(&pv[0][0], &pv[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
 	std::fill(&vy[0][0], &vy[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
 	std::fill(&vx[0][0], &vx[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+}
+
+void Air::ClearAirH()
+{
+	std::fill(&hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)), 273.15f + 22.0f);
 }
 
 void Air::update_airh(void)
@@ -316,6 +320,14 @@ Air::Air(Simulation & simulation):
 {
 	//Simulation should do this.
 	make_kernel();
-
-
+	std::fill(&bmap_blockair[0][0], &bmap_blockairh[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
+	std::fill(&bmap_blockairh[0][0], &bmap_blockair[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
+	std::fill(&vx[0][0], &vx[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&ovx[0][0], &ovx[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&vy[0][0], &vy[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&ovy[0][0], &ovy[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&ohv[0][0], &ohv[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&pv[0][0], &pv[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&opv[0][0], &opv[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
 }

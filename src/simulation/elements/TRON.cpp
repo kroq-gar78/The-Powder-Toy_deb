@@ -48,11 +48,30 @@ Element_TRON::Element_TRON()
     Element_TRON::init_graphics();
 }
 
+/* TRON element is meant to resemble a tron bike (or worm) moving around and trying to avoid obstacles itself.
+ * It has four direction each turn to choose from, 0 (left) 1 (up) 2 (right) 3 (down).
+ * Each turn has a small random chance to randomly turn one way (so it doesn't do the exact same thing in a large room)
+ * If the place it wants to move isn't a barrier, it will try and 'see' in front of itself to determine its safety.
+ * For now the tron can only see its own body length in pixels ahead of itself (and around corners)
+ *  - - - - - - - - - -
+ *  - - - - + - - - - -
+ *  - - - + + + - - - -
+ *  - - +<--+-->+ - - -
+ *  - +<----+---->+ - -
+ *  - - - - H - - - - -
+ * Where H is the head with tail length 4, it checks the + area to see if it can hit any of the edges, then it is called safe, or picks the biggest area if none safe.
+ * .tmp bit values: 1st head, 2nd no tail growth, 3rd wait flag, 4th Nodie, 5th Dying, 6th & 7th is direction, 8th - 16th hue, 17th Norandom
+ * .tmp2 is tail length (gets longer every few hundred frames)
+ * .life is the timer that kills the end of the tail (the head uses life for how often it grows longer)
+ * .ctype Contains the colour, lost on save, regenerated using hue tmp (bits 7 - 16)
+ */
+
 #define TRON_HEAD 1
 #define TRON_NOGROW 2
 #define TRON_WAIT 4 //it was just created, so WAIT a frame
 #define TRON_NODIE 8
 #define TRON_DEATH 16 //Crashed, now dying
+#define TRON_NORANDOM 65536
 int tron_rx[4] = {-1, 0, 1, 0};
 int tron_ry[4] = { 0,-1, 0, 1};
 unsigned int tron_colours[32];
@@ -86,18 +105,23 @@ int Element_TRON::update(UPDATE_FUNC_ARGS)
 
 		//random turn
 		int random = rand()%340;
-		if (random==1 || random==3)
+		if ((random==1 || random==3) && !(parts[i].tmp & TRON_NORANDOM))
 		{
 			//randomly turn left(3) or right(1)
 			direction = (direction + random)%4;
 		}
 
-		//check infront
+		//check in front
 		//do sight check
 		firstdircheck = Element_TRON::trymovetron(sim,x,y,direction,i,parts[i].tmp2);
 		if (firstdircheck < parts[i].tmp2)
 		{
-			if (originaldir != direction) //if we just tried a random turn, don't pick random again
+			if (parts[i].tmp & TRON_NORANDOM)
+			{
+				seconddir = (direction + 1)%4;
+				lastdir = (direction + 3)%4;
+			}
+			else if (originaldir != direction) //if we just tried a random turn, don't pick random again
 			{
 				seconddir = originaldir;
 				lastdir = (direction + 2)%4;
@@ -127,7 +151,7 @@ int Element_TRON::update(UPDATE_FUNC_ARGS)
 		parts[i].life = parts[i].tmp2;
 		parts[i].tmp &= parts[i].tmp&0xF818;
 	}
-	else // fade tail deco, or prevent tail from dieing
+	else // fade tail deco, or prevent tail from dying
 	{
 		if (parts[i].tmp&TRON_NODIE)
 			parts[i].life++;
@@ -177,7 +201,7 @@ int Element_TRON::new_tronhead(Simulation * sim, int x, int y, int i, int direct
 		sim->parts[i].life = 5;
 	}
 	//give new head our properties
-	sim->parts[np].tmp = 1 | direction<<5 | sim->parts[i].tmp&(TRON_NOGROW|TRON_NODIE) | (sim->parts[i].tmp&0xF800);
+	sim->parts[np].tmp = 1 | direction<<5 | sim->parts[i].tmp&(TRON_NOGROW|TRON_NODIE|TRON_NORANDOM) | (sim->parts[i].tmp&0xF800);
 	if (np > i)
 		sim->parts[np].tmp |= TRON_WAIT;
 	
@@ -199,13 +223,13 @@ int Element_TRON::trymovetron(Simulation * sim, int x, int y, int dir, int i, in
 		rx += tron_rx[dir];
 		ry += tron_ry[dir];
 		r = sim->pmap[ry][rx];
-		if (!r && !sim->bmap[(ry)/CELL][(rx)/CELL] && ry > CELL && rx > CELL && ry < YRES-CELL && rx < XRES-CELL)
+		if (canmovetron(sim, r, k-1) && !sim->bmap[(ry)/CELL][(rx)/CELL] && ry > CELL && rx > CELL && ry < YRES-CELL && rx < XRES-CELL)
 		{
 			count++;
 			for (tx = rx - tron_ry[dir] , ty = ry - tron_rx[dir], j=1; abs(tx-rx) < (len-k) && abs(ty-ry) < (len-k); tx-=tron_ry[dir],ty-=tron_rx[dir],j++)
 			{
 				r = sim->pmap[ty][tx];
-				if (!r && !sim->bmap[(ty)/CELL][(tx)/CELL] && ty > CELL && tx > CELL && ty < YRES-CELL && tx < XRES-CELL)
+				if (canmovetron(sim, r, j+k-1) && !sim->bmap[(ty)/CELL][(tx)/CELL] && ty > CELL && tx > CELL && ty < YRES-CELL && tx < XRES-CELL)
 				{
 					if (j == (len-k))//there is a safe path, so we can break out
 						return len+1;
@@ -217,7 +241,7 @@ int Element_TRON::trymovetron(Simulation * sim, int x, int y, int dir, int i, in
 			for (tx = rx + tron_ry[dir] , ty = ry + tron_rx[dir], j=1; abs(tx-rx) < (len-k) && abs(ty-ry) < (len-k); tx+=tron_ry[dir],ty+=tron_rx[dir],j++)
 			{
 				r = sim->pmap[ty][tx];
-				if (!r && !sim->bmap[(ty)/CELL][(tx)/CELL] && ty > CELL && tx > CELL && ty < YRES-CELL && tx < XRES-CELL)
+				if (canmovetron(sim, r, j+k-1) && !sim->bmap[(ty)/CELL][(tx)/CELL] && ty > CELL && tx > CELL && ty < YRES-CELL && tx < XRES-CELL)
 				{
 					if (j == (len-k))
 						return len+1;
@@ -231,6 +255,16 @@ int Element_TRON::trymovetron(Simulation * sim, int x, int y, int dir, int i, in
 			break;
 	}
 	return count;
+}
+
+//#TPT-Directive ElementHeader Element_TRON static bool canmovetron(Simulation * sim, int r, int len)
+bool Element_TRON::canmovetron(Simulation * sim, int r, int len)
+{
+	if (!r || ((r&0xFF) == PT_SWCH && sim->parts[r>>8].life >= 10) || ((r&0xFF) == PT_INVIS && sim->parts[r>>8].tmp == 1))
+		return true;
+	if ((((sim->elements[r&0xFF].Properties & PROP_LIFE_KILL_DEC) && sim->parts[r>>8].life > 0)|| ((sim->elements[r&0xFF].Properties & PROP_LIFE_KILL) && (sim->elements[r&0xFF].Properties & PROP_LIFE_DEC))) && sim->parts[r>>8].life < len)
+		return true;
+	return false;
 }
 
 Element_TRON::~Element_TRON() {}

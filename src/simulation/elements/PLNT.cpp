@@ -99,7 +99,7 @@ int Element_PLNT::update(UPDATE_FUNC_ARGS)
 				}
 		parts[i].life = 0;
 	}
-	if (parts[i].temp > 400 && parts[i].temp > parts[i].tmp2)
+	if (parts[i].temp > 350 && parts[i].temp > parts[i].tmp2)
 		parts[i].tmp2 = (int)parts[i].temp;
 	return 0;
 }
@@ -107,7 +107,7 @@ int Element_PLNT::update(UPDATE_FUNC_ARGS)
 //#TPT-Directive ElementHeader Element_PLNT static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_PLNT::graphics(GRAPHICS_FUNC_ARGS)
 {
-	float maxtemp = fmax(cpart->tmp2, cpart->temp);
+	float maxtemp = std::max((float)cpart->tmp2, cpart->temp);
 	if (maxtemp > 300)
 	{
 		*colr += (int)restrict_flt((maxtemp-300)/5,0,58);

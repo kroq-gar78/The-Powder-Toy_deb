@@ -9,6 +9,7 @@
 #include "Brush.h"
 #include "EllipseBrush.h"
 #include "TriangleBrush.h"
+#include "BitmapBrush.h"
 #include "client/Client.h"
 #include "client/GameSave.h"
 #include "game/DecorationTool.h"
@@ -99,6 +100,30 @@ GameModel::GameModel():
 	}
 
 	BuildMenus();
+
+	//Set default brush palette
+	brushList.push_back(new EllipseBrush(ui::Point(4, 4)));
+	brushList.push_back(new Brush(ui::Point(4, 4)));
+	brushList.push_back(new TriangleBrush(ui::Point(4, 4)));
+
+	//Load more from brushes folder
+	std::vector<string> brushFiles = Client::Ref().DirectorySearch(BRUSH_DIR, "", ".ptb");
+	for(int i = 0; i < brushFiles.size(); i++)
+	{
+		std::vector<unsigned char> brushData = Client::Ref().ReadFile(brushFiles[i]);
+		if(!brushData.size())
+		{
+			std::cout << "Brushes: Skipping " << brushFiles[i] << ". Could not open" << std::endl;
+			continue;
+		}
+		int dimension = std::sqrt((float)brushData.size());
+		if(dimension * dimension != brushData.size())
+		{
+			std::cout << "Brushes: Skipping " << brushFiles[i] << ". Invalid bitmap size" << std::endl;
+			continue;
+		}
+		brushList.push_back(new BitmapBrush(brushData, ui::Point(dimension, dimension)));
+	}
 
 	//Set default decoration colour
 	unsigned char colourR = min(Client::Ref().GetPrefInteger("Decoration.Red", 200), 255);
@@ -252,7 +277,7 @@ void GameModel::BuildMenus()
 				tempTool = new ElementTool(i, sim->elements[i].Name, sim->elements[i].Description, PIXR(sim->elements[i].Colour), PIXG(sim->elements[i].Colour), PIXB(sim->elements[i].Colour), sim->elements[i].Identifier, sim->elements[i].IconGenerator);
 			}
 
-			if(sim->elements[i].MenuSection < 12 && sim->elements[i].MenuVisible)
+			if(sim->elements[i].MenuSection < SC_TOTAL && sim->elements[i].MenuVisible)
 			{
 				menuList[sim->elements[i].MenuSection]->AddTool(tempTool);
 			}
@@ -304,11 +329,6 @@ void GameModel::BuildMenus()
 	decoToolset[0] = GetToolFromIdentifier("DEFAULT_DECOR_SET");
 	decoToolset[1] = GetToolFromIdentifier("DEFAULT_DECOR_CLR");
 	decoToolset[2] = GetToolFromIdentifier("DEFAULT_UI_SAMPLE");
-
-	//Set default brush palette
-	brushList.push_back(new EllipseBrush(ui::Point(4, 4)));
-	brushList.push_back(new Brush(ui::Point(4, 4)));
-	brushList.push_back(new TriangleBrush(ui::Point(4, 4)));
 
 	//Set default tools
 	regularToolset[0] = GetToolFromIdentifier("DEFAULT_PT_DUST");
@@ -587,7 +607,7 @@ void GameModel::SetSaveFile(SaveFile * newSave)
 	if(newSave && newSave->GetGameSave())
 	{
 		GameSave * saveData = newSave->GetGameSave();
-		SetPaused(saveData->paused & GetPaused());
+		SetPaused(saveData->paused | GetPaused());
 		sim->gravityMode = saveData->gravityMode;
 		sim->air->airMode = saveData->airMode;
 		sim->legacy_enable = saveData->legacyEnable;
@@ -756,7 +776,7 @@ ui::Colour GameModel::GetColourSelectorColour()
 void GameModel::SetUser(User user)
 {
 	currentUser = user;
-	Client::Ref().SetAuthUser(user);
+	//Client::Ref().SetAuthUser(user);
 	notifyUserChanged();
 }
 
@@ -823,17 +843,15 @@ void GameModel::FrameStep(int frames)
 
 void GameModel::ClearSimulation()
 {
-	sim->clear_sim();
-	ren->ClearAccumulation();
 
 	//Load defaults
-	SetPaused(false);
 	sim->gravityMode = 0;
 	sim->air->airMode = 0;
 	sim->legacy_enable = false;
 	sim->water_equal_test = false;
 	sim->grav->stop_grav_async();
 	sim->SetEdgeMode(edgeMode);
+
 	sim->clear_sim();
 	ren->ClearAccumulation();
 

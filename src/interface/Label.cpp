@@ -96,22 +96,29 @@ void Label::updateMultiline()
 					lines++;
 					break;
 				default:
-					if(pc == ' ')
-					{
-						wordStart = &rawText[charIndex-2];
-					}
 					wordWidth += Graphics::CharWidth(c);
-					if(lineWidth + wordWidth >= Size.X-(Appearance.Margin.Left+Appearance.Margin.Right))
-					{
-						if(wordStart && *wordStart)
-							*wordStart = '\n';
-						else if(!wordStart)
-							rawText[charIndex-1] = '\n';
-						lineWidth = wordWidth;
-						wordWidth = 0;
-						lines++;
-					}
 					break;
+			}
+			if(pc == ' ')
+			{
+				wordStart = &rawText[charIndex-2];
+			}
+			if ((c != ' ' || pc == ' ') && lineWidth + wordWidth >= Size.X-(Appearance.Margin.Left+Appearance.Margin.Right))
+			{
+				if(wordStart && *wordStart)
+				{
+					*wordStart = '\n';
+					if (lineWidth != 0)
+						lineWidth = wordWidth;
+				}
+				else if(!wordStart)
+				{
+					rawText[charIndex-1] = '\n';
+					lineWidth = 0;
+				}
+				wordWidth = 0;
+				wordStart = 0;
+				lines++;
 			}
 			pc = c;
 		}
@@ -201,19 +208,14 @@ void Label::OnMouseClick(int x, int y, unsigned button)
 
 void Label::copySelection()
 {
-	std::string currentText;
-
-	if(multiline)
-		currentText = textLines;
-	else
-		currentText = text;
+	std::string currentText = text;
 
 	if(selectionIndex1 > selectionIndex0) {
-		clipboard_push_text((char*)currentText.substr(selectionIndex0, selectionIndex1-selectionIndex0).c_str());
+		ClipboardPush((char*)currentText.substr(selectionIndex0, selectionIndex1-selectionIndex0).c_str());
 	} else if(selectionIndex0 > selectionIndex1) {
-		clipboard_push_text((char*)currentText.substr(selectionIndex1, selectionIndex0-selectionIndex1).c_str());
+		ClipboardPush((char*)currentText.substr(selectionIndex1, selectionIndex0-selectionIndex1).c_str());
 	} else {
-		clipboard_push_text((char*)currentText.c_str());
+		ClipboardPush((char*)currentText.c_str());
 	}
 }
 
