@@ -1,8 +1,9 @@
 the-powder-toy (85.0-0~ppa1) precise; urgency=low
 
   * New upstream release
+  * debian/patches/remove-updater.patch: refreshed for new release
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Mon, 11 Feb 2013 20:04:45 -0600
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 15 Feb 2013 18:21:47 -0600
 
 the-powder-toy (84.2-0~ppa5) precise; urgency=low
 
