@@ -1,3 +1,9 @@
+the-powder-toy (85.0-0~ppa2) precise; urgency=low
+
+  * debian/scripts/the-powder-toy: major simplifications
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 16 Feb 2013 12:12:51 -0600
+
 the-powder-toy (85.0-0~ppa1) precise; urgency=low
 
   * New upstream release

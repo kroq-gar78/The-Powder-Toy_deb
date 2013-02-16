@@ -4,12 +4,4 @@ if [ ! -d $HOME/.config/the-powder-toy ] ; then
 	mkdir -p $HOME/.config/the-powder-toy
 fi
 
-cd $HOME/.config/the-powder-toy
-
-# Executable was named powder-sse before.
-# So be sure the link exists.
-if [ ! -e ./powder ] ; then
-	ln -s /usr/lib/games/the-powder-toy/powder
-fi
-
-./powder $@
+/usr/lib/games/the-powder-toy/powder ddir $HOME/.config/the-powder-toy $@
