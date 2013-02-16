@@ -2,8 +2,9 @@ the-powder-toy (85.0-0~ppa1) precise; urgency=low
 
   * New upstream release
   * debian/patches/remove-updater.patch: refreshed for new release
+  * debian/patches/upstream-readme.patch: no longer needed
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 15 Feb 2013 18:21:47 -0600
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 15 Feb 2013 18:24:42 -0600
 
 the-powder-toy (84.2-0~ppa5) precise; urgency=low
 
