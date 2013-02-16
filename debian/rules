@@ -6,8 +6,17 @@ DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 SCONS_OPTS := --lin --sse2 --release
 
+# use the flag "--64bit" if we're targetting "amd64"
 ifeq ($(DEB_HOST_ARCH),amd64)
 	SCONS_OPTS += --64bit
+endif
+
+# if the flag "parallel=n" is defined in the environment variable "DEB_BUILD_OPTIONS",
+# then append the flag "-j=n" to scons, where "n" is the number of jobs
+# See section 4.9.1 of the Debian Policy Manual
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    SCONS_OPTS += -j$(NUMJOBS)
 endif
 
 override_dh_auto_build:
