@@ -3,20 +3,20 @@ Description: Remove the mimetype registration in-game
  there should be no way to redo the process in-game.
 Forwarded: not-needed
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Last-Update: 2012-12-21
---- a/src/game/GameView.cpp
-+++ b/src/game/GameView.cpp
-@@ -1414,10 +1414,10 @@
- 			c->AdjustBrushSize(-1, !alt, shiftBehaviour, ctrlBehaviour);
- 		break;
- 	case 'i':
--		if(ctrl)
-+		/*if(ctrl)
- 			c->Install();
--		else
--			c->InvertAirSim();
-+		else*/
-+		c->InvertAirSim();
- 		break;
+Last-Update: 2013-02-15
+--- a/src/game/GameController.cpp
++++ b/src/game/GameController.cpp
+@@ -686,11 +686,11 @@
+ 	if(firstTick)
+ 	{
+ 		((LuaScriptInterface*)commandInterface)->Init();
+-		if(!Client::Ref().GetPrefBool("InstallCheck", false))
++		/*if(!Client::Ref().GetPrefBool("InstallCheck", false))
+ 		{
+ 			Client::Ref().SetPref("InstallCheck", true);
+ 			Install();
+-		}
++		}*/
+ 		firstTick = false;
  	}
- 
+ 	for(std::vector<DebugInfo*>::iterator iter = debugInfo.begin(), end = debugInfo.end(); iter != end; iter++)
