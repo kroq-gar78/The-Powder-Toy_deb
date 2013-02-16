@@ -6,7 +6,7 @@ Author: Aditya Vaidya <kroq.gar78@gmail.com>
 Last-Update: 2013-02-15
 --- a/src/client/Client.cpp
 +++ b/src/client/Client.cpp
-@@ -660,7 +660,7 @@ void Client::Tick()
+@@ -660,7 +660,7 @@
  				notifyMessageOfTheDay();
  
  				//Check for updates
@@ -15,7 +15,7 @@ Last-Update: 2013-02-15
  				
  				json::Object stableVersion = versions["Stable"];
  				json::Object betaVersion = versions["Beta"];
-@@ -707,6 +707,7 @@ void Client::Tick()
+@@ -707,6 +707,7 @@
  					notifyUpdateAvailable();
  				}
  #endif
