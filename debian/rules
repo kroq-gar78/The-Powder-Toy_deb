@@ -18,6 +18,7 @@ endif
 	cp Changelog.txt changelog
 
 override_dh_auto_clean:
+	scons --lin --clean
 	rm -rf build/ changelog .sconf_temp/ .sconsign.dblite config.log
 
 override_dh_strip:
