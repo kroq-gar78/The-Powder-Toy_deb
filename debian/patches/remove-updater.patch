@@ -1,0 +1,25 @@
+Description: Remove the builtin updater
+ The patch removes the builtin updater because program updates
+ should be taken care of by the Debian package maintainer.
+Forwarded: not-needed
+Author: Aditya Vaidya <kroq.gar78@gmail.com>
+Last-Update: 2013-02-15
+--- a/src/client/Client.cpp
++++ b/src/client/Client.cpp
+@@ -660,7 +660,7 @@
+ 				notifyMessageOfTheDay();
+ 
+ 				//Check for updates
+-				json::Object versions = objDocument["Updates"];
++				/*json::Object versions = objDocument["Updates"];
+ 				
+ 				json::Object stableVersion = versions["Stable"];
+ 				json::Object betaVersion = versions["Beta"];
+@@ -707,6 +707,7 @@
+ 					notifyUpdateAvailable();
+ 				}
+ #endif
++*/
+ 			}
+ 			catch (json::Exception &e)
+ 			{

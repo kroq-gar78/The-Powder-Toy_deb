@@ -1,0 +1,436 @@
+the-powder-toy (85.0-0~ppa1) precise; urgency=low
+
+  * New upstream release
+  * debian/patches/remove-updater.patch: refreshed for new release
+  * debian/patches/upstream-readme.patch: no longer needed
+  * dch/rules: added parallel building support
+  * debian/patches/remove-installer.patch: refreshed for new release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 15 Feb 2013 23:11:47 -0600
+
+the-powder-toy (84.2-0~ppa5) precise; urgency=low
+
+  * debian/patches/remove-installer.patch: remove the builtin mimetype
+    installer because it's handled by the package
+  * debian/changelog: updated for new codebase
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 21 Dec 2012 21:17:52 -0600
+
+the-powder-toy (84.2-0~ppa4) precise; urgency=low
+
+  * debian/patches/upstream-readme.patch: backport the new 'README' file
+    from upstream
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 20 Dec 2012 17:05:47 -0600
+
+the-powder-toy (84.2-0~ppa3) precise; urgency=low
+
+  * debian/rules: lower dependency for 'scons' from 2.1.0 to 2.0.0
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 09 Dec 2012 01:06:16 -0600
+
+the-powder-toy (84.2-0~ppa2) precise; urgency=low
+
+  * debian/rules: fixed FTBFS on non-amd64 systems because
+    of renaming
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 24 Nov 2012 01:36:53 -0600
+
+the-powder-toy (84.2-0~ppa1) precise; urgency=low
+
+  * New upstream release (beta)
+  * Removed old patches
+  * debian/patches/remove-updater.patch: remove the update checking
+    process
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 22 Nov 2012 21:57:57 -0600
+
+the-powder-toy (83.9-0~ppa1) precise; urgency=low
+
+  * New upstream release
+    - Codebase switched from C to C++
+  * debian/control:
+    - bumped Standards-Version to 3.9.4
+    - added 'scons' to Build-Depends
+  * debian/rules: updated for use with scons
+  * Added 256x256 PNG mimetype icon
+  * debian/patches/gcc4.7-fix-compile.patch: fix compile for amd64
+    machines
+  * debian/patches/remove-updater.patch: remove the built-in updater
+  * debian/patches/scons-fixes-f1ffe50.patch: more scons fixes from
+    commit f1ffe50a6a of upstream
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 20 Oct 2012 23:19:25 -0500
+
+the-powder-toy (83.0-0~ppa1) precise; urgency=low
+
+  * New upstream release
+  * Added a new -dbg package containing all debugging symbols
+  * debian/patches/makefile-remove-strip.patch: move the removal of
+    debugging symbols to 'debian/rules'
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Mon, 03 Sep 2012 00:04:51 -0500
+
+the-powder-toy (82.0-0~ppa1) precise; urgency=low
+
+  * New upstream release
+  * debian/patches/remove-installer.patch: remove mimetype registration
+    in-game
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Mon, 20 Aug 2012 14:12:35 -0500
+
+the-powder-toy (81.7-0~ppa2) precise; urgency=low
+
+  * debian/docs: added upstream changelog
+  * debian/changelog: removed stray tab
+  * debian/the-powder-toy.xpm: downsized from 48x48 to 32x32
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 17 Aug 2012 18:21:39 -0500
+
+the-powder-toy (81.7-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 15 Aug 2012 10:05:52 -0500
+
+the-powder-toy (81.6-0~ppa1) precise; urgency=low
+
+  * New upstream release
+  * debian/patches/upstream-readme.patch: updated for new releases
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 02 Aug 2012 13:07:52 -0500
+
+the-powder-toy (81.4-0~ppa1) precise; urgency=low
+
+  * New upstream release
+  * debian/patches/upstream-readme.patch: updated for new releases
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Wed, 01 Aug 2012 19:37:21 -0500
+
+the-powder-toy (81.3.186-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 19 Jul 2012 14:34:42 -0500
+
+the-powder-toy (81.3-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Mon, 09 Jul 2012 23:17:01 -0500
+
+the-powder-toy (81.2-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 06 Jul 2012 14:46:27 -0500
+
+the-powder-toy (81.1-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 03 Jul 2012 15:29:01 -0500
+
+the-powder-toy (81.0-0~ppa2) quantal; urgency=low
+
+  * debian/control: removed Vcs-* as per suggestion in RFS for Debian,
+    as it refers to the Ubuntu package and not Debian
+  * debian/the-powder-toy.post*: removed maintainer scripts for
+    simplicity
+  * debian/patches/upstream-readme.patch: added description,
+    updated for new releases
+  * debian/copyright: added info about src/md5.c
+  * Added debian/the-powder-toy.xpm in place of
+    src/Resources/icon/powder-48.png
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 28 Jun 2012 15:02:48 -0500
+
+the-powder-toy (81.0-0~ppa1) quantal; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Mon, 25 Jun 2012 02:28:18 -0500
+
+the-powder-toy (80.4-0~ppa1) quantal; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 15 Jun 2012 21:25:23 -0500
+
+the-powder-toy (80.3.178-0~ppa1) quantal; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 08 Jun 2012 21:37:38 -0500
+
+the-powder-toy (80.3-0~ppa1) quantal; urgency=low
+
+  * New upstream release (stable)
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 07 Jun 2012 18:21:40 -0500
+
+the-powder-toy (79.6-0~ppa1) quantal; urgency=low
+
+  * New upstream release (beta)
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 05 Jun 2012 22:29:31 -0500
+
+the-powder-toy (79.4-0~ppa1) quantal; urgency=low
+
+  * New upstream relase (beta)
+    - No rounding errors with triangle brush
+    - Fix SLTW boiling temperature typo
+    - Don't show disabled elements in element search
+    - Soap bubbles are easily formed now. Also they inherit soap's
+      decoration color
+    - Download progress bar for save opening
+    - Fix bug that causes ptsave URL parsing to fail if there is no '#'
+  * debian/changelog: corrected changelog for 79.3
+  * debian/patches/upstream-readme.patch: update README file
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 29 May 2012 18:34:42 -0500
+
+the-powder-toy (79.3-0~ppa1) quantal; urgency=low
+
+  * New upstream release (beta)
+    - Add DISPLAY_EFFE back
+    - Element search interface by pressing 'e'
+    - VOID & PVOD can be set to only eat/not eat certain things
+    - Energy type particles automatically go into photons, not pmap
+    - Finish custom lua graphics functions
+    - Disable another way to create invalid elements
+    - Fix crash, spark reset set type without checking if it was a valid number.
+    - Fix lua console compiling with visual studio
+    - Fix lua console freeze/bugs
+    - Fix alt select being off by one every time
+    - Turn on deco before entering the deco editor (not after)
+    - Limit amount of ELEC produced to prevent infinite reactions
+    - Console doesn't enable hud
+    - OXYG fusion
+    - Fix small bugs
+    - Prevent accidental infinite loops in lua
+    - Fusion changes
+    - Register ptsave protocol in Windows installation
+    - Fix the bug with stickman standing on the screen edge
+    - Fix the bug where gel didn't transfer water from sponge
+    - Update gravity mask when loading OPS saves
+    - Fix infinite loop when trying to detach soap with extra ctype bits set
+    - Change order of bomb loops
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 26 May 2012 01:06:01 -0500
+
+the-powder-toy (78.1-0~ppa2) quantal; urgency=low
+
+  * debian/control:
+    - added Vcs-Git and Vcs-Browser URL's
+    - put back ${shlibs:Depends}
+    - added libx11-6 to Depends
+  * debian/copyright:
+    - added licenses for the files who don't use GPL
+    (includes/BSON.h, includes/cJSON.h, src/BSON.c, src/cJSON.c,
+    src/md5.c)
+    - add upstream contact Simon Robertshaw
+  * Added 'debian/the-powder-toy.menu' menu file
+  * debian/rules: use powder-sse2 instead of powder-sse3
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 12 May 2012 15:29:11 -0500
+
+the-powder-toy (78.1-0~ppa1) quantal; urgency=low
+
+  * New upstream release
+    - Fix bug that created "weaponised explosive GEL"
+    - Changes to License (GPLv2 to GPLv3)
+    - Fix bug that caused thumbnail caching to not work
+    - Remove unused debug output of thumbnail cache
+    - New save format: OPS, allows saving of almost all data
+      within the simulation
+    - Plasma can now travel through portals and PIPE
+    - Changes to GEL, will no longer absorb water when saturated
+    - Fix bugs when moving signs
+    - Fix file opening on Mac OS X
+    - Line snapping in the decoration editor
+    - Changes to SING to prevent it from exploding through walls
+    - Code cleanup for mouse scaling
+  * debian/the-powder-toy.install:
+    - rename powder-48.png to powdertoy-48.png so it's not confused
+      with unrelated package 'powder'
+    - moved destination of powdertoy-48.png to /usr/share/pixmaps
+    - install icon-document-32.png to /usr/share/pixmaps/the-powder-toy
+  * debian/the-powder-toy.postinst and debian/the-powder-toy.postrm:
+    added 'update-mime'
+  * Added mimetype support
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 11 May 2012 16:13:26 -0500
+
+the-powder-toy (77.0-0~ppa4) quantal; urgency=low
+
+  * Added manpage for binary 'the-powder-toy'
+  * debian/scripts/the-powder-toy: simplified the script
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 08 May 2012 22:48:23 -0500
+
+the-powder-toy (77.0-0~ppa3) precise; urgency=low
+
+  * debian/control:
+    - made it replace all 'the-powder-toy-beta' versions
+    - typo fix in the description
+    - removed Build-Depends on 'libarchive-dev'
+  * debian/copyright: 
+    - changed from 'GPL-2' to 'GPL-3+'
+    - added all authors from src/main.c header
+  * debian/docs: install 'README' to /usr/share/docs/the-powder-toy
+  * debian/rules: fixed amd64-specific building
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 06 May 2012 16:25:24 -0500
+
+the-powder-toy (77.0-0~ppa2) precise; urgency=low
+
+  * debian/copyright: made it machine-readable
+  * debian/control: bumped up Standards-Version to 3.9.3
+  * debian/rules: build separate target for amd64 processors
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 04 May 2012 23:22:18 -0500
+
+the-powder-toy (77.0-0~ppa1) precise; urgency=low
+
+  * New upstream release
+    - tmp2 support for old console
+    - save tmp2 for TRON
+  * debian/patches/makefile_remove_powder: remove build/powder* in
+    target 'clean'
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 28 Apr 2012 12:41:48 -0500
+
+the-powder-toy (74.2-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+    - Walls don't trigger automatic pipe pattern generation
+    - BCOL uses COAL's graphics function
+    - Report icon
+    - Fix unmeltable ice
+  * debian/control: remove shlibs depends; don't know if it will work
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 14 Apr 2012 17:41:35 -0500
+
+the-powder-toy (74.1.152-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+    - Fix ice with ctype of 0
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 07 Apr 2012 23:16:35 -0500
+
+the-powder-toy (74.1.151-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+    - BRAY glows in fancy display mode
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 06 Apr 2012 23:34:39 -0500
+
+the-powder-toy (74.1-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+    - Icon for Force Elements
+    - Allow DEST to be used with clone elements
+  * debian/the-powder-toy.desktop: updated icon path to use larger icon
+  * debian/the-powder-toy.install: change icon from 32x32 to 48x48
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 03 Apr 2012 18:54:58 -0500
+
+the-powder-toy (74.0-0ubuntu1) precise; urgency=low
+
+  * New upstream release
+    - Fixes for Triangle brush and minor electron bug
+    - Debug lines for WiFi, Portal and Soap
+    - Fusion for H2 at high temperature+high pressure
+    - Ambient heat and Newtonian Gravity in Quick Options menu.
+    - Smudge tool
+    - Speed improvements for particle drawing
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Tue, 27 Mar 2012 17:06:01 -0500
+
+the-powder-toy (71.3-0~ubuntu2) precise; urgency=low
+
+  * debian/control: changed architecture from 'all' to 'any'
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 22 Mar 2012 20:41:11 -0500
+
+the-powder-toy (71.3-0~ubuntu1ppa3) precise; urgency=low
+
+  * debian/copyright: fixed license of original program
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 16 Mar 2012 15:26:45 -0500
+
+the-powder-toy (71.3-0~ubuntu1ppa2) oneiric; urgency=low
+
+  * Fix to dependencies
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 10 Feb 2012 22:27:22 -0600
+
+the-powder-toy (71.3-0~ubuntu1ppa1) oneiric; urgency=low
+
+  * New upstream version
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 10 Feb 2012 14:17:50 -0600
+
+the-powder-toy (52.0-1~getdeb2) lucid; urgency=low
+
+  * Remove debian/watch file
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Sun, 27 Nov 2011 15:47:13 +0100
+
+the-powder-toy (52.0-1~getdeb1) lucid; urgency=low
+
+  * New upstream version
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Wed, 13 Jul 2011 19:06:11 +0200
+
+the-powder-toy (50.6-1~getdeb1) lucid; urgency=low
+
+  * New upstream version
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Thu, 16 Jun 2011 15:30:48 +0200
+
+the-powder-toy (50.5-1~getdeb1) lucid; urgency=low
+
+  * New upstream version
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Wed, 15 Jun 2011 16:07:11 +0200
+
+the-powder-toy (47.4-1~getdeb1) lucid; urgency=low
+
+  * New upstream version
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Mon, 18 Apr 2011 18:00:14 +0200
+
+the-powder-toy (47.3-1~getdeb1) lucid; urgency=low
+
+  * New upstream version
+    o Enhanced visual effects for Portals
+    o Glow now has more stimuli (Green: Pressure, Blue: Movement, Red: Heat)
+    o Python console (Unavailable in current beta)
+    o Fixed issue where you appear to be logged in but aren't.
+    o Changes to Quartz (Grows like crystal when exposed to salt water)
+    o Singularity explodes upon death
+    o Save ID shown after saving and on Open Dialog
+    o Rearrangement of some elements
+      (Photons in Radioactive, Thunder in Explosive, etc)
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Sun, 10 Apr 2011 14:50:20 +0200
+
+the-powder-toy (46.4-1~getdeb1) lucid; urgency=low
+
+  * New upstream version
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Sun, 06 Mar 2011 12:14:27 +0100
+
+the-powder-toy (45.2-1~getdeb1) lucid; urgency=low
+
+  * New upstream version
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Thu, 17 Feb 2011 16:05:07 +0100
+
+the-powder-toy (44.7-1~getdeb1) lucid; urgency=low
+
+  * Initial release (LP: #621777)
+
+ -- Christoph Korn <christoph.korn@getdeb.net>  Sun, 19 Dec 2010 14:38:46 +0100

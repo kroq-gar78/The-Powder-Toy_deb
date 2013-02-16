@@ -1,0 +1,4 @@
+Lintian:
+W: the-powder-toy source: newer-standards-version 3.9.4 (current is 3.9.3)
+
+Use the 'ddir' command line option of TPT instead of nasty symlink

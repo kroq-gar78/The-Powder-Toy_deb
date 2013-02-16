@@ -1,0 +1,48 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: The Powder Toy
+Upstream-Contact: Simon Robertshaw <simon@hardwired.org.uk>
+Source: http://powdertoy.co.uk/
+
+Files: *
+Copyright: 2008 - 2011, Stanislaw Skowronek
+           2010 - 2011, Simon Robertshaw
+           2010 - 2011, Skresanov Savely
+           2010 - 2011, Bryan Hoyle
+           2010 - 2011, Nathan Cousins
+           2010 - 2011, cracker64
+           2011, jacksonmj
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License with
+ the Debian GNU/Linux distribution in file /usr/share/common-licenses/GPL-3.
+ If not, see <http://www.gnu.org/licenses/>.
+
+Files: src/cajun/*
+Copyright: 2009 - 2010, Terry Caton
+License: BSD-3-clause
+
+Files: src/cat/LuaBit.cpp
+       src/cat/LuaBit.h
+Copyright: 2008 - 2012, Mike Pall
+License: Expat
+
+Files: src/bson/BSON.cpp
+       src/bson/BSON.h
+Copyright: 2009 - 2011, 10gen Inc.
+License: Apache
+
+Files: debian/*
+Copyright: 2012, Aditya Vaidya <kroq.gar78@gmail.com>
+           2010, Christoph Korn <christoph.korn@getdeb.net>
+License: GPL-3+
+ On Debian/Ubuntu systems, the complete text of the GNU General
+ Public License can be found in '/usr/share/common-licenses/GPL-3'.

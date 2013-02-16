@@ -1,0 +1,5 @@
+debian/scripts/the-powder-toy		usr/games
+debian/the-powder-toy.desktop		usr/share/applications
+build/powder				usr/lib/games/the-powder-toy
+debian/the-powder-toy.xpm		usr/share/pixmaps/
+debian/powdertoy-icon-document.png	usr/share/pixmaps/
