@@ -6,9 +6,9 @@ Author: Aditya Vaidya <kroq.gar78@gmail.com>
 Last-Update: 2013-02-15
 --- a/src/client/Client.cpp
 +++ b/src/client/Client.cpp
-@@ -660,7 +660,7 @@
- 				notifyMessageOfTheDay();
+@@ -661,7 +661,7 @@
  
+ #ifndef IGNORE_UPDATES
  				//Check for updates
 -				json::Object versions = objDocument["Updates"];
 +				/*json::Object versions = objDocument["Updates"];
