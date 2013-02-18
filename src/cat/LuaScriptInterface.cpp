@@ -25,6 +25,7 @@
 #include "game/Tool.h"
 #include "LuaScriptHelper.h"
 #include "client/HTTP.h"
+#include "PowderToy.h"
 
 //#include "virtualmachine/VirtualMachine.h"
 #include "pim/Parser.h"
@@ -315,6 +316,7 @@ tpt.partsdata = nil");
 	for(i = 0; i < PT_NUM; i++)
 	{
 		lua_el_mode[i] = 0;
+		lua_gr_func[i] = 0;
 	}
 
 }
@@ -339,6 +341,7 @@ void LuaScriptInterface::initInterfaceAPI()
 		{"showWindow", interface_showWindow},
 		{"closeWindow", interface_closeWindow},
 		{"addComponent", interface_addComponent},
+		{"removeComponent", interface_addComponent},
 		{NULL, NULL}
 	};
 	luaL_register(l, "interface", interfaceAPIMethods);
@@ -376,6 +379,29 @@ int LuaScriptInterface::interface_addComponent(lua_State * l)
 		luaL_typerror(l, 1, "Component");
 	if(luacon_ci->Window && component)
 		luacon_ci->Window->AddComponent(component);
+	return 0;
+}
+
+int LuaScriptInterface::interface_removeComponent(lua_State * l)
+{
+	void * luaComponent = NULL;
+	ui::Component * component = NULL;
+	if(luaComponent = Luna<LuaButton>::tryGet(l, 1))
+		component = Luna<LuaButton>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaLabel>::tryGet(l, 1))
+		component = Luna<LuaLabel>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaTextbox>::tryGet(l, 1))
+		component = Luna<LuaTextbox>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaCheckbox>::tryGet(l, 1))
+		component = Luna<LuaCheckbox>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaSlider>::tryGet(l, 1))
+		component = Luna<LuaSlider>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaProgressBar>::tryGet(l, 1))
+		component = Luna<LuaProgressBar>::get(luaComponent)->GetComponent();
+	else
+		luaL_typerror(l, 1, "Component");
+	if(luacon_ci->Window && component)
+		luacon_ci->Window->RemoveComponent(component);
 	return 0;
 }
 
@@ -714,7 +740,7 @@ void LuaScriptInterface::initRendererAPI()
 		{"renderModes", renderer_renderModes},
 		{"displayModes", renderer_displayModes},
 		{"colourMode", renderer_colourMode},
-		{"colorMode", renderer_colourMode}, //Duplicate of above to make americans happy
+		{"colorMode", renderer_colourMode}, //Duplicate of above to make Americans happy
 		{"decorations", renderer_decorations},
 		{NULL, NULL}
 	};
@@ -1163,7 +1189,6 @@ int LuaScriptInterface::elements_element(lua_State * l)
 		if(lua_type(l, -1) == LUA_TFUNCTION)
 		{
 			lua_gr_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
-			luacon_sim->elements[id].Graphics = &luacon_graphicsReplacement;
 		}
 		else if(lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
@@ -1175,7 +1200,7 @@ int LuaScriptInterface::elements_element(lua_State * l)
 
 		luacon_model->BuildMenus();
 		luacon_sim->init_can_move();
-		std::fill(luacon_ren->graphicscache, luacon_ren->graphicscache+PT_NUM, gcache_item());
+		luacon_ren->graphicscache[id].isready = 0;
 
 		lua_pop(l, 1);
 		return 0;
@@ -1238,8 +1263,6 @@ int LuaScriptInterface::elements_property(lua_State * l)
 	if(id < 0 || id >= PT_NUM || !luacon_sim->elements[id].Enabled)
 		return luaL_error(l, "Invalid element");
 
-
-
 	if(args > 2)
 	{
 		StructProperty property;
@@ -1294,7 +1317,7 @@ int LuaScriptInterface::elements_property(lua_State * l)
 
 			luacon_model->BuildMenus();
 			luacon_sim->init_can_move();
-			std::fill(luacon_ren->graphicscache, luacon_ren->graphicscache+PT_NUM, gcache_item());
+			luacon_ren->graphicscache[id].isready = 0;
 
 			return 0;
 		}
@@ -1334,14 +1357,13 @@ int LuaScriptInterface::elements_property(lua_State * l)
 			{
 				lua_pushvalue(l, 3);
 				lua_gr_func[id] = luaL_ref(l, LUA_REGISTRYINDEX);
-				luacon_sim->elements[id].Graphics = &luacon_graphicsReplacement;
 			}
 			else if(lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 			{
 				lua_gr_func[id] = 0;
 				luacon_sim->elements[id].Graphics = NULL;
 			}
-			std::fill(luacon_ren->graphicscache, luacon_ren->graphicscache+PT_NUM, gcache_item());
+			luacon_ren->graphicscache[id].isready = 0;
 		}
 		else
 			return luaL_error(l, "Invalid element property");
@@ -1700,7 +1722,7 @@ int LuaScriptInterface::fileSystem_isFile(lua_State * l)
 {
 	const char * filename = lua_tostring(l, 1);
 
-	bool exists = false;
+	bool isFile = false;
 #ifdef WIN
 	struct _stat s;
 	if(_stat(filename, &s) == 0)
@@ -1709,25 +1731,21 @@ int LuaScriptInterface::fileSystem_isFile(lua_State * l)
 	if(stat(filename, &s) == 0)
 #endif
 	{
-		if(s.st_mode & S_IFDIR)
+		if(s.st_mode & S_IFREG)
 		{
-			exists = true;
-		}
-		else if(s.st_mode & S_IFREG)
-		{
-			exists = false;
+			isFile = true; //Is file
 		}
 		else
 		{
-			exists = false;
+			isFile = false; //Is directory or something else
 		}
 	}
 	else
 	{
-		exists = false;
+		isFile = false; //Doesn't exist
 	}
 
-	lua_pushboolean(l, exists);
+	lua_pushboolean(l, isFile);
 	return 1;
 }
 
@@ -1735,7 +1753,7 @@ int LuaScriptInterface::fileSystem_isDirectory(lua_State * l)
 {
 	const char * filename = lua_tostring(l, 1);
 
-	bool exists = false;
+	bool isDir = false;
 #ifdef WIN
 	struct _stat s;
 	if(_stat(filename, &s) == 0)
@@ -1746,23 +1764,19 @@ int LuaScriptInterface::fileSystem_isDirectory(lua_State * l)
 	{
 		if(s.st_mode & S_IFDIR)
 		{
-			exists = false;
-		}
-		else if(s.st_mode & S_IFREG)
-		{
-			exists = true;
+			isDir = true; //Is directory
 		}
 		else
 		{
-			exists = false;
+			isDir = false; //Is file or something else
 		}
 	}
 	else
 	{
-		exists = false;
+		isDir = false; //Doesn't exist
 	}
 
-	lua_pushboolean(l, exists);
+	lua_pushboolean(l, isDir);
 	return 1;
 }
 
@@ -1898,14 +1912,7 @@ bool LuaScriptInterface::OnMouseWheel(int x, int y, int d)
 
 bool LuaScriptInterface::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
 {
-	int modifiers = 0;
-	if(shift)
-		modifiers |= 0x001;
-	if(ctrl)
-		modifiers |= 0x040;
-	if(alt)
-		modifiers |= 0x100;
-	return luacon_keyevent(key, modifiers, LUACON_KDOWN);
+	return luacon_keyevent(key, GetModifiers(), LUACON_KDOWN);
 }
 
 bool LuaScriptInterface::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)

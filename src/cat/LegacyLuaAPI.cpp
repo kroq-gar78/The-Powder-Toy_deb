@@ -671,16 +671,29 @@ int luatpt_element_func(lua_State *l)
 			return luaL_error(l, "Invalid element");
 		}
 	}
+	else if(lua_isnil(l, 1))
+	{
+		int element = luaL_optint(l, 2, 0);
+		if(element > 0 && element < PT_NUM)
+		{
+			lua_el_func[element] = 0;
+			lua_el_mode[element] = 0;
+		}
+		else
+		{
+			return luaL_error(l, "Invalid element");
+		}
+	}
 	else
 		return luaL_error(l, "Not a function");
 	return 0;
 }
 
-int luacon_graphicsReplacement(GRAPHICS_FUNC_ARGS)
+int luacon_graphicsReplacement(GRAPHICS_FUNC_ARGS, int i)
 {
 	int cache = 0, callret;
 	lua_rawgeti(luacon_ci->l, LUA_REGISTRYINDEX, lua_gr_func[cpart->type]);
-	lua_pushinteger(luacon_ci->l, 0);
+	lua_pushinteger(luacon_ci->l, i);
 	lua_pushinteger(luacon_ci->l, *colr);
 	lua_pushinteger(luacon_ci->l, *colg);
 	lua_pushinteger(luacon_ci->l, *colb);
@@ -715,7 +728,20 @@ int luatpt_graphics_func(lua_State *l)
 		{
 			lua_gr_func[element] = function;
 			luacon_ren->graphicscache[element].isready = 0;
-			luacon_sim->elements[element].Graphics = &luacon_graphicsReplacement;
+			return 0;
+		}
+		else
+		{
+			return luaL_error(l, "Invalid element");
+		}
+	}
+	else if (lua_isnil(l, 1))
+	{
+		int element = luaL_optint(l, 2, 0);
+		if(element > 0 && element < PT_NUM)
+		{
+			lua_gr_func[element] = 0;
+			luacon_ren->graphicscache[element].isready = 0;
 			return 0;
 		}
 		else
@@ -1010,7 +1036,7 @@ int luatpt_set_property(lua_State* l)
 		} else {
 			t = luaL_optint(l, 2, 0);
 		}
-		if (format == CommandInterface::FormatInt && (t<0 || t>=PT_NUM || !luacon_sim->elements[t].Enabled))
+		if (!strcmp(prop,"type") && (t<0 || t>=PT_NUM || !luacon_sim->elements[t].Enabled))
 			return luaL_error(l, "Unrecognised element number '%d'", t);
 	} else {
 		name = (char*)luaL_optstring(l, 2, "dust");
@@ -1702,7 +1728,7 @@ int luatpt_heat(lua_State* l)
 
 int luatpt_cmode_set(lua_State* l)
 {
-	int cmode = luaL_optint(l, 1, 0);
+	int cmode = luaL_optint(l, 1, 0)+1;
 	if (cmode >= 0 && cmode <= 10)
 		luacon_controller->LoadRenderPreset(cmode);
 	else
