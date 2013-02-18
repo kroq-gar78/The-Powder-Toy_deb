@@ -25,6 +25,7 @@
 #include "game/Tool.h"
 #include "LuaScriptHelper.h"
 #include "client/HTTP.h"
+#include "PowderToy.h"
 
 //#include "virtualmachine/VirtualMachine.h"
 #include "pim/Parser.h"
@@ -43,7 +44,6 @@
 #ifndef WIN
 #include <unistd.h>
 #endif
-#include "SDL.h"
 
 extern "C"
 {
@@ -341,6 +341,7 @@ void LuaScriptInterface::initInterfaceAPI()
 		{"showWindow", interface_showWindow},
 		{"closeWindow", interface_closeWindow},
 		{"addComponent", interface_addComponent},
+		{"removeComponent", interface_addComponent},
 		{NULL, NULL}
 	};
 	luaL_register(l, "interface", interfaceAPIMethods);
@@ -378,6 +379,29 @@ int LuaScriptInterface::interface_addComponent(lua_State * l)
 		luaL_typerror(l, 1, "Component");
 	if(luacon_ci->Window && component)
 		luacon_ci->Window->AddComponent(component);
+	return 0;
+}
+
+int LuaScriptInterface::interface_removeComponent(lua_State * l)
+{
+	void * luaComponent = NULL;
+	ui::Component * component = NULL;
+	if(luaComponent = Luna<LuaButton>::tryGet(l, 1))
+		component = Luna<LuaButton>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaLabel>::tryGet(l, 1))
+		component = Luna<LuaLabel>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaTextbox>::tryGet(l, 1))
+		component = Luna<LuaTextbox>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaCheckbox>::tryGet(l, 1))
+		component = Luna<LuaCheckbox>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaSlider>::tryGet(l, 1))
+		component = Luna<LuaSlider>::get(luaComponent)->GetComponent();
+	else if(luaComponent = Luna<LuaProgressBar>::tryGet(l, 1))
+		component = Luna<LuaProgressBar>::get(luaComponent)->GetComponent();
+	else
+		luaL_typerror(l, 1, "Component");
+	if(luacon_ci->Window && component)
+		luacon_ci->Window->RemoveComponent(component);
 	return 0;
 }
 
@@ -1888,7 +1912,7 @@ bool LuaScriptInterface::OnMouseWheel(int x, int y, int d)
 
 bool LuaScriptInterface::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
 {
-	return luacon_keyevent(key, SDL_GetModState(), LUACON_KDOWN);
+	return luacon_keyevent(key, GetModifiers(), LUACON_KDOWN);
 }
 
 bool LuaScriptInterface::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
