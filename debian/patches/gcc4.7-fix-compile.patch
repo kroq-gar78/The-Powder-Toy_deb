@@ -1,0 +1,101 @@
+--- a/SConscript
++++ b/SConscript
+@@ -122,7 +122,7 @@
+ 	env.Append(LIBS=['z', 'bz2', 'fftw3f'])
+ 
+ env.Append(CPPPATH=['src/', 'data/', 'generated/'])
+-env.Append(CCFLAGS=['-w', '-std=c99', '-fkeep-inline-functions'])
++env.Append(CCFLAGS=['-w', '-std=c++98', '-fkeep-inline-functions'])
+ env.Append(LIBS=['pthread', 'm'])
+ env.Append(CPPDEFINES=["USE_SDL", "LUACONSOLE", "GRAVFFT", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L"])
+ 
+@@ -237,8 +237,6 @@
+ sources+=Glob("src/*/*.cpp")
+ sources+=Glob("src/simulation/elements/*.cpp")
+ sources+=Glob("src/simulation/tools/*.cpp")
+-sources+=Glob("generated/ToolClasses.cpp")
+-sources+=Glob("generated/ElementClasses.cpp")
+ 
+ if(GetOption('win')):
+ 	sources = filter(lambda source: str(source) != 'src/simulation/Gravity.cpp', sources)
+@@ -273,8 +271,12 @@
+ 	envCopy.Append(CCFLAGS=['-mincoming-stack-boundary=2'])
+ 	sources+=envCopy.Object('src/simulation/Gravity.cpp')
+ 
+-env.Command(['generated/ElementClasses.cpp', 'generated/ElementClasses.h'], Glob('src/simulation/elements/*.cpp'), "python generator.py elements $TARGETS $SOURCES")
+-env.Command(['generated/ToolClasses.cpp', 'generated/ToolClasses.h'], Glob('src/simulation/tools/*.cpp'), "python generator.py tools $TARGETS $SOURCES")
++env.Command(['generated/ElementClasses.cpp', 'generated/ElementClasses.h'], Glob('src/simulation/elements/*.cpp'), "python2 generator.py elements $TARGETS $SOURCES")
++sources+=Glob("generated/ElementClasses.cpp")
++
++env.Command(['generated/ToolClasses.cpp', 'generated/ToolClasses.h'], Glob('src/simulation/tools/*.cpp'), "python2 generator.py tools $TARGETS $SOURCES")
++sources+=Glob("generated/ToolClasses.cpp")
++
+ env.Decider('MD5')
+ t=env.Program(target=programName, source=sources)
+-Default(t)
+\ No newline at end of file
++Default(t)
+--- a/src/cat/LuaScriptInterface.cpp
++++ b/src/cat/LuaScriptInterface.cpp
+@@ -39,6 +39,10 @@
+ #include "LuaSlider.h"
+ #include "LuaProgressBar.h"
+ 
++#ifdef __unix__
++#include <unistd.h>
++#endif
++
+ extern "C"
+ {
+ #ifdef WIN
+@@ -1703,4 +1707,4 @@
+ 
+ LuaScriptInterface::~LuaScriptInterface() {
+ 	delete legacy;
+-}
+\ No newline at end of file
++}
+--- a/src/pim/Machine.cpp
++++ b/src/pim/Machine.cpp
+@@ -424,20 +424,20 @@
+ 
+ 				//Load value at base stack + offset into eax
+ 				emit("8B 85");	//mov eax [ebp+ram+offset]
+-				emit((int) (ram - argument.Integer));
++				emit((intptr_t) (ram - argument.Integer));
+ 				
+ 				//Store value in eax onto top of program stack
+ 				emit("89 07");	//mov [edi], eax
+-				emit((int) (ram));
++				emit((intptr_t) (ram));
+ 				break;
+ 			case Opcode::Store:
+ 				//Load value on top of the program stack into eax
+ 				emit("8B 07");	//mov eax [edi]
+-				emit((int) (ram));
++				emit((intptr_t) (ram));
+ 
+ 				//Load value in eax onto top of program stack
+ 				emit("89 85");	//mov [ebp+ram+offset], eax
+-				emit((int) (ram - argument.Integer));
++				emit((intptr_t) (ram - argument.Integer));
+ 
+ 				emit("83 C7 04"); //add edi 4
+ 				break;
+@@ -634,4 +634,4 @@
+ 		programCounter = entryPoint;
+ 		Run();
+ 	}
+-}
+\ No newline at end of file
++}
+--- a/src/simulation/StructProperty.h
++++ b/src/simulation/StructProperty.h
+@@ -10,6 +10,7 @@
+ #define The_Powder_Toy_StructProperty_h
+ 
+ #include <string>
++#include <stdint.h>
+ 
+ struct StructProperty
+ {

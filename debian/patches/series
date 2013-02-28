@@ -1,3 +1,2 @@
+remove-updater.patch
 raspi-fix-compile.patch
-remove-installer.patch
-makefile-remove-strip.patch

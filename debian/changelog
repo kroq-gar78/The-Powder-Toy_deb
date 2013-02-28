@@ -1,3 +1,43 @@
+the-powder-toy (84.2-0~ppa2+raspi1) wheezy; urgency=low
+
+  * debian/patches/raspi-fix-compile.patch: fix FTBFS on the
+    Raspberry Pi
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 25 Nov 2012 01:31:16 -0600
+
+the-powder-toy (84.2-0~ppa2) precise; urgency=low
+
+  * debian/rules: fixed FTBFS on non-amd64 systems because
+    of renaming
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 24 Nov 2012 01:36:53 -0600
+
+the-powder-toy (84.2-0~ppa1) precise; urgency=low
+
+  * New upstream release (beta)
+  * Removed old patches
+  * debian/patches/remove-updater.patch: remove the update checking
+    process
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 22 Nov 2012 21:57:57 -0600
+
+the-powder-toy (83.9-0~ppa1) precise; urgency=low
+
+  * New upstream release
+    - Codebase switched from C to C++
+  * debian/control:
+    - bumped Standards-Version to 3.9.4
+    - added 'scons' to Build-Depends
+  * debian/rules: updated for use with scons
+  * Added 256x256 PNG mimetype icon
+  * debian/patches/gcc4.7-fix-compile.patch: fix compile for amd64
+    machines
+  * debian/patches/remove-updater.patch: remove the built-in updater
+  * debian/patches/scons-fixes-f1ffe50.patch: more scons fixes from
+    commit f1ffe50a6a of upstream
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 20 Oct 2012 23:19:25 -0500
+
 the-powder-toy (83.0-0~ppa1) precise; urgency=low
 
   * New upstream release

@@ -7,12 +7,13 @@ Build-Depends: debhelper (>= 7.0.50),
                liblua5.1-0-dev (>= 5.1),
                libfftw3-dev (>= 3.2.2),
                libbz2-dev (>= 1.0.5),
-               gcc (>= 4.4)
-Standards-Version: 3.9.3
+               gcc (>= 4.4),
+               scons (>= 2.1.0)
+Standards-Version: 3.9.4
 Homepage: http://powdertoy.co.uk
 
 Package: the-powder-toy
-Architecture: armhf
+Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, libx11-6
 Conflicts: the-powder-toy-beta
 Replaces: the-powder-toy-beta
@@ -22,7 +23,9 @@ Description: Physics sandbox game
  air pressure and velocity as well as heat!
 
 Package: the-powder-toy-dbg
-Architecture: armhf
+Section: debug
+Priority: extra
+Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, the-powder-toy (= ${binary:Version})
 Description: Physics sandbox game (debug)
  The Powder Toy is a desktop version of the classic
@@ -30,4 +33,4 @@ Description: Physics sandbox game (debug)
  air pressure and velocity as well as heat!
  .
  This package contains debugging symbols useful for tracking bugs in
- applications with the-powder-toy.
+ the-powder-toy.
