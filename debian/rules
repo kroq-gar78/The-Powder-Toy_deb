@@ -22,7 +22,9 @@ endif
 override_dh_auto_build:
 	scons $(SCONS_OPTS)
 ifeq ($(DEB_HOST_ARCH),amd64)
-	cp -f build/powder64 build/powder
+	cp -f build/powder64 build/powdertoy
+else
+	cp -f build/powder build/powdertoy
 endif
 	cp Changelog.txt changelog
 
