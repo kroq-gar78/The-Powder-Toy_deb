@@ -1,3 +1,9 @@
+powdertoy (86.1-0~ppa2) precise; urgency=low
+
+  * Changing package name
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 07 Mar 2013 22:41:59 -0600
+
 the-powder-toy (86.1-0~ppa1) precise; urgency=low
 
   * New upstream release
