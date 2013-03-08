@@ -33,7 +33,7 @@ Description: Physics sandbox game (debug)
  air pressure and velocity as well as heat!
  .
  This package contains debugging symbols useful for tracking bugs in
- the-powder-toy.
+ powdertoy.
 
 Package: the-powder-toy
 Architecture: all

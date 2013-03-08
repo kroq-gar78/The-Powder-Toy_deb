@@ -1,8 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Name=The Powder Toy
-Exec=the-powder-toy open %f
-Icon=the-powder-toy
+Exec=powdertoy open %f
+Icon=powdertoy
 Terminal=False
 Type=Application
 MimeType=application/vnd.powdertoy.save;
