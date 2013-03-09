@@ -27,6 +27,8 @@ Section: debug
 Priority: extra
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, powdertoy (= ${binary:Version})
+Replaces: the-powder-toy-dbg (<< 86.1-0~ppa1~)
+Breaks: the-powder-toy-dbg (<< 86.1-0~ppa1~)
 Description: Physics sandbox game (debug)
  The Powder Toy is a desktop version of the classic
  'falling sand' physics sandbox game. It simulates
@@ -43,3 +45,12 @@ Description: Physics sandbox game - transitional dummy package
  This is a transitional dummy package. It may be safely removed.
  .
  The correct package to use is "powdertoy".
+
+Package: the-powder-toy-dbg
+Architecture: all
+Section: oldlibs
+Depends: ${misc:Depends}
+Description: Physics sandbox game (debug) - transitional dummy package
+ This is a transitional dummy package. It may be safely removed.
+ .
+ The correct package to use is "powdertoy-dbg".

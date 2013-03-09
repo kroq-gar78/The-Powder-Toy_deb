@@ -1,3 +1,9 @@
+powdertoy (86.1-0~ppa3) precise; urgency=low
+
+  * debian/control: made 'powdertoy-dbg' replace 'the-powder-toy-dbg'
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 09 Mar 2013 13:26:39 -0600
+
 powdertoy (86.1-0~ppa2) precise; urgency=low
 
   * Changing package name
