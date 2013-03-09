@@ -26,7 +26,7 @@ Package: powdertoy-dbg
 Section: debug
 Priority: extra
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, the-powder-toy (= ${binary:Version})
+Depends: ${misc:Depends}, ${shlibs:Depends}, powdertoy (= ${binary:Version})
 Description: Physics sandbox game (debug)
  The Powder Toy is a desktop version of the classic
  'falling sand' physics sandbox game. It simulates
