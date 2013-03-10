@@ -1,4 +1,4 @@
-Source: the-powder-toy
+Source: powdertoy
 Section: games
 Priority: optional
 Maintainer: Aditya Vaidya <kroq.gar78@gmail.com>
@@ -12,23 +12,45 @@ Build-Depends: debhelper (>= 7.0.50),
 Standards-Version: 3.9.4
 Homepage: http://powdertoy.co.uk
 
-Package: the-powder-toy
+Package: powdertoy
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, libx11-6
+Replaces: the-powder-toy (<< 86.1-0~ppa1~)
+Breaks: the-powder-toy (<< 86.1-0~ppa1~)
 Description: Physics sandbox game
  The Powder Toy is a desktop version of the classic
  'falling sand' physics sandbox game. It simulates
  air pressure and velocity as well as heat!
 
-Package: the-powder-toy-dbg
+Package: powdertoy-dbg
 Section: debug
 Priority: extra
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, the-powder-toy (= ${binary:Version})
+Depends: ${misc:Depends}, ${shlibs:Depends}, powdertoy (= ${binary:Version})
+Replaces: the-powder-toy-dbg (<< 86.1-0~ppa1~)
+Breaks: the-powder-toy-dbg (<< 86.1-0~ppa1~)
 Description: Physics sandbox game (debug)
  The Powder Toy is a desktop version of the classic
  'falling sand' physics sandbox game. It simulates
  air pressure and velocity as well as heat!
  .
  This package contains debugging symbols useful for tracking bugs in
- the-powder-toy.
+ powdertoy.
+
+Package: the-powder-toy
+Architecture: all
+Section: oldlibs
+Depends: ${misc:Depends}
+Description: Physics sandbox game - transitional dummy package
+ This is a transitional dummy package. It may be safely removed.
+ .
+ The correct package to use is "powdertoy".
+
+Package: the-powder-toy-dbg
+Architecture: all
+Section: oldlibs
+Depends: ${misc:Depends}
+Description: Physics sandbox game (debug) - transitional dummy package
+ This is a transitional dummy package. It may be safely removed.
+ .
+ The correct package to use is "powdertoy-dbg".

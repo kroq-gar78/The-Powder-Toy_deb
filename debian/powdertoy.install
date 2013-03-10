@@ -1,0 +1,5 @@
+debian/scripts/powdertoy		usr/games
+debian/powdertoy.desktop		usr/share/applications
+build/powdertoy				usr/lib/games/powdertoy
+debian/powdertoy.xpm		usr/share/pixmaps/
+debian/powdertoy-icon-document.png	usr/share/pixmaps/

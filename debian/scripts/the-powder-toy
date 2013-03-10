@@ -1,7 +1,0 @@
-#!/bin/sh
-
-if [ ! -d $HOME/.config/the-powder-toy ] ; then
-	mkdir -p $HOME/.config/the-powder-toy
-fi
-
-/usr/lib/games/the-powder-toy/powder ddir $HOME/.config/the-powder-toy $@

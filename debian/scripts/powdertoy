@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ ! -d $HOME/.config/powdertoy ] ; then
+	mkdir -p $HOME/.config/powdertoy
+fi
+
+/usr/lib/games/powdertoy/powdertoy ddir $HOME/.config/powdertoy $@

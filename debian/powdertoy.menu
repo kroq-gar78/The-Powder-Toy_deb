@@ -1,7 +1,7 @@
-?package(the-powder-toy):\
+?package(powdertoy):\
     needs="X11"\
     section="Games/Simulation"\
     title="The Powder Toy"\
     longtitle="Physics sandbox game"\
-    command="the-powder-toy"\
-    icon="/usr/share/pixmaps/the-powder-toy.xpm"
+    command="powdertoy"\
+    icon="/usr/share/pixmaps/powdertoy.xpm"
