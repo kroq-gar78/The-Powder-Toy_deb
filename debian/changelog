@@ -1,6 +1,6 @@
 powdertoy (86.1-0~ppa4) precise; urgency=low
 
-  * debian/rules: fixed FTBFS on Oneiric by specifying python executable
+  * debian/rules: fixed FTBFS by specifying python executable
 
  -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 09 Mar 2013 18:21:23 -0600
 
