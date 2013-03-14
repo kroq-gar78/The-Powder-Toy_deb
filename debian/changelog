@@ -1,3 +1,12 @@
+powdertoy (86.1-0~ppa5) precise; urgency=low
+
+  * debian/control:
+    - Fixed dependencies for old package names
+    - Added Vcs-* fields for Alioth
+  * debian/copyright: added long descriptions
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Thu, 14 Mar 2013 00:43:24 -0500
+
 powdertoy (86.1-0~ppa4) precise; urgency=low
 
   * debian/rules: fixed FTBFS by specifying python executable

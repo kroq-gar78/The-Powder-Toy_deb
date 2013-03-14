@@ -42,7 +42,7 @@ Description: Physics sandbox game (debug)
 Package: the-powder-toy
 Architecture: all
 Section: oldlibs
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, powdertoy
 Description: Physics sandbox game - transitional dummy package
  This is a transitional dummy package. It may be safely removed.
  .
@@ -51,7 +51,7 @@ Description: Physics sandbox game - transitional dummy package
 Package: the-powder-toy-dbg
 Architecture: all
 Section: oldlibs
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, powdertoy-dbg
 Description: Physics sandbox game (debug) - transitional dummy package
  This is a transitional dummy package. It may be safely removed.
  .
