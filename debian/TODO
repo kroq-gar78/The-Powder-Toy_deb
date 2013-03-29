@@ -1,2 +1,4 @@
 Lintian:
 W: the-powder-toy source: newer-standards-version 3.9.4 (current is 3.9.3)
+
+Add an opt-in switch for internet access (will likely be taken care of by jacob1 from upstream)
