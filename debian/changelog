@@ -1,3 +1,10 @@
+powdertoy (86.2-0~ppa1) precise; urgency=low
+
+  * New upstream release
+  * Removed all instances of upstream changelog from the Debian files
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 29 Mar 2013 13:56:02 -0500
+
 powdertoy (86.1-0~ppa5) precise; urgency=low
 
   * debian/control:

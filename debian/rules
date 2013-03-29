@@ -26,11 +26,10 @@ ifeq ($(DEB_HOST_ARCH),amd64)
 else
 	cp -f build/powder build/powdertoy
 endif
-	cp Changelog.txt changelog
 
 override_dh_auto_clean:
 	scons --lin --clean
-	rm -rf build/ changelog .sconf_temp/ .sconsign.dblite config.log
+	rm -rf build/ .sconf_temp/ .sconsign.dblite config.log
 
 override_dh_strip:
 	dh_strip --dbg-package=powdertoy-dbg
