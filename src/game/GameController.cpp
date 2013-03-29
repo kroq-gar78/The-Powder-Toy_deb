@@ -17,6 +17,7 @@
 #include "GameModelException.h"
 #include "simulation/Air.h"
 #include "elementsearch/ElementSearchActivity.h"
+#include "profile/ProfileActivity.h"
 #include "colourpicker/ColourPickerActivity.h"
 #include "update/UpdateActivity.h"
 #include "Notification.h"
@@ -188,9 +189,29 @@ GameController::~GameController()
 	{
 		delete localBrowser;
 	}
+	if (options)
+	{
+		delete options;
+	}
 	if(ui::Engine::Ref().GetWindow() == gameView)
 	{
 		ui::Engine::Ref().CloseWindow();
+	}
+	//deleted here because it refuses to be deleted when deleted from gameModel even with the same code
+	std::deque<Snapshot*> history = gameModel->GetHistory();
+	for(std::deque<Snapshot*>::iterator iter = history.begin(), end = history.end(); iter != end; ++iter)
+	{
+		delete *iter;
+	}
+	std::vector<QuickOption*> quickOptions = gameModel->GetQuickOptions();
+	for(std::vector<QuickOption*>::iterator iter = quickOptions.begin(), end = quickOptions.end(); iter != end; ++iter)
+	{
+		delete *iter;
+	}
+	std::vector<Notification*> notifications = gameModel->GetNotifications();
+	for(std::vector<Notification*>::iterator iter = notifications.begin(); iter != notifications.end(); ++iter)
+	{
+		delete *iter;
 	}
 	delete gameModel;
 	delete gameView;
@@ -247,7 +268,7 @@ void GameController::PlaceSave(ui::Point position)
 void GameController::Install()
 {
 #if defined(MACOSX)
-	new InformationMessage("No Installation necessary", "You don't need to install The Powder Toy on Mac OS X");
+	new InformationMessage("No Installation necessary", "You don't need to install The Powder Toy on Mac OS X", false);
 #elif defined(WIN) || defined(LIN)
 	class InstallConfirmation: public ConfirmDialogueCallback {
 	public:
@@ -258,7 +279,7 @@ void GameController::Install()
 			{
 				if(Client::Ref().DoInstallation())
 				{
-					new InformationMessage("Install Success", "The installation completed!");
+					new InformationMessage("Install Success", "The installation completed!", false);
 				}
 				else
 				{
@@ -1047,8 +1068,15 @@ void GameController::OpenLocalBrowse()
 
 void GameController::OpenLogin()
 {
-	loginWindow = new LoginController();
-	ui::Engine::Ref().ShowWindow(loginWindow->GetView());
+	if(Client::Ref().GetAuthUser().ID)
+	{
+		new ProfileActivity(Client::Ref().GetAuthUser().Username);
+	}
+	else
+	{
+		loginWindow = new LoginController();
+		ui::Engine::Ref().ShowWindow(loginWindow->GetView());
+	}
 }
 
 void GameController::OpenElementSearch()
@@ -1298,7 +1326,7 @@ std::string GameController::ElementResolve(int type)
 
 std::string GameController::WallName(int type)
 {
-	if(gameModel && gameModel->GetSimulation() && gameModel->GetSimulation()->wtypes && type >= 0)
+	if(gameModel && gameModel->GetSimulation() && gameModel->GetSimulation()->wtypes && type >= 0 && type < UI_WALLCOUNT)
 		return std::string(gameModel->GetSimulation()->wtypes[type].name);
 	else
 		return "";
