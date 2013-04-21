@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "TPTScriptInterface.h"
-#include "game/GameModel.h"
+#include "gui/game/GameModel.h"
 #include "simulation/Air.h"
 
 TPTScriptInterface::TPTScriptInterface(GameController * c, GameModel * m): CommandInterface(c, m)
@@ -146,14 +146,7 @@ int TPTScriptInterface::parseNumber(char * stringData)
 	}
 	else
 	{
-		while(cc = *(stringData++))
-		{
-			currentNumber *= base;
-			if(cc >= '0' && cc <= '9')
-				currentNumber += cc - '0';
-			else
-				break;
-		}
+		return atoi(stringData);
 	}
 	return currentNumber;
 }
