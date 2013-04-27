@@ -3,10 +3,10 @@ Description: Remove the mimetype registration in-game
  there should be no way to redo the process in-game.
 Forwarded: not-needed
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Last-Update: 2013-02-15
---- a/src/game/GameController.cpp
-+++ b/src/game/GameController.cpp
-@@ -686,11 +686,11 @@
+Last-Update: 2013-04-26
+--- a/src/gui/game/GameController.cpp
++++ b/src/gui/game/GameController.cpp
+@@ -707,11 +707,11 @@ void GameController::Tick()
  	if(firstTick)
  	{
  		((LuaScriptInterface*)commandInterface)->Init();

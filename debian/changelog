@@ -2,8 +2,9 @@ powdertoy (87.0-0~ppa1) precise; urgency=low
 
   * New upstream release
   * debian/patches/remove-updater.patch: updated
+  * debian/patches/remove-installer.patch: updated
 
- -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 26 Apr 2013 20:41:00 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Fri, 26 Apr 2013 20:43:07 -0500
 
 powdertoy (86.2-0~ppa1) precise; urgency=low
 
