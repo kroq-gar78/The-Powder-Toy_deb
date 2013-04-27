@@ -3,15 +3,15 @@ Description: Remove the builtin updater
  should be taken care of by the Debian package maintainer.
 Forwarded: not-needed
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Last-Update: 2013-02-24
+Last-Update: 2013-04-26
 --- a/SConscript
 +++ b/SConscript
-@@ -132,7 +132,7 @@
+@@ -135,7 +135,7 @@
  env.Append(CPPPATH=['src/', 'data/', 'generated/'])
  env.Append(CCFLAGS=['-w', '-std=c++98', '-fkeep-inline-functions'])
  env.Append(LIBS=['pthread', 'm'])
--env.Append(CPPDEFINES=["LUACONSOLE", "GRAVFFT", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L"])
-+env.Append(CPPDEFINES=["LUACONSOLE", "GRAVFFT", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L", "IGNORE_UPDATES"])
- 
+-env.Append(CPPDEFINES=["LUACONSOLE", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L"])
++env.Append(CPPDEFINES=["LUACONSOLE", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L", "IGNORE_UPDATES"])
+ if not GetOption('nofft'):
+ 	env.Append(CPPDEFINES=["GRAVFFT"])
  if GetOption("ptw32-static"):
- 	env.Append(CPPDEFINES=['PTW32_STATIC_LIB']);
