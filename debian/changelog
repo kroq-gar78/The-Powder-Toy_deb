@@ -1,3 +1,9 @@
+powdertoy (87.0-0~ppa1) precise; urgency=low
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sun, 21 Apr 2013 15:28:01 -0500
+
 powdertoy (86.2-0~ppa1) precise; urgency=low
 
   * New upstream release
