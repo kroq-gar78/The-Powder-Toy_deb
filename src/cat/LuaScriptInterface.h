@@ -1,10 +1,3 @@
-/*
- * LuaScriptInterface.h
- *
- *  Created on: Feb 11, 2012
- *      Author: Simon
- */
-
 #ifndef LUASCRIPTINTERFACE_H_
 #define LUASCRIPTINTERFACE_H_
 
@@ -54,11 +47,17 @@ class LuaScriptInterface: public CommandInterface
 	TPTScriptInterface * legacy;
 
 	//Simulation
+	static StructProperty * particleProperties;
+	static int particlePropertiesCount;
+	//
 	void initSimulationAPI();
 	static void set_map(int x, int y, int width, int height, float value, int mapType);
 	static int simulation_partNeighbours(lua_State * l);
 	static int simulation_partChangeType(lua_State * l);
 	static int simulation_partCreate(lua_State * l);
+	static int simulation_partProperty(lua_State * l);
+	static int simulation_partPosition(lua_State * l);
+	static int simulation_partID(lua_State * l);
 	static int simulation_partKill(lua_State * l);
 	static int simulation_pressure(lua_State * l);
 	static int simulation_velocityX(lua_State * l);
@@ -89,6 +88,7 @@ class LuaScriptInterface: public CommandInterface
 	static int interface_showWindow(lua_State * l);
 	static int interface_closeWindow(lua_State * l);
 	static int interface_addComponent(lua_State * l);
+	static int interface_removeComponent(lua_State * l);
 
 	//VM
 	void initVirtualMachineAPI();

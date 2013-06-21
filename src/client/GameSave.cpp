@@ -366,7 +366,7 @@ void GameSave::Transform(matrix2d transform, vector2d translate)
 		signs[i].x = nx;
 		signs[i].y = ny;
 	}
-	for (i=0; i<NPART; i++)
+	for (i=0; i<particlesCount; i++)
 	{
 		if (!particles[i].type) continue;
 		pos = v2d_new(particles[i].x, particles[i].y);
@@ -410,13 +410,13 @@ void GameSave::Transform(matrix2d transform, vector2d translate)
 	blockWidth = newBlockWidth;
 	blockHeight = newBlockHeight;
 
-	delete blockMap;
-	delete fanVelX;
-	delete fanVelY;
+	delete[] blockMap;
+	delete[] fanVelX;
+	delete[] fanVelY;
 
-	delete blockMapPtr;
-	delete fanVelXPtr;
-	delete fanVelYPtr;
+	delete[] blockMapPtr;
+	delete[] fanVelXPtr;
+	delete[] fanVelYPtr;
 
 	blockMap = blockMapNew;
 	fanVelX = fanVelXNew;
@@ -740,6 +740,9 @@ void GameSave::readOPS(char * data, int dataLength)
 					fanVelX[blockY+y][blockX+x] = (fanData[j++]-127.0f)/64.0f;
 					fanVelY[blockY+y][blockX+x] = (fanData[j++]-127.0f)/64.0f;
 				}
+
+				if (blockMap[y][x] < 0 || blockMap[y][x] >= UI_WALLCOUNT)
+					blockMap[y][x] = 0;
 			}
 		}
 	}
@@ -941,6 +944,9 @@ void GameSave::readOPS(char * data, int dataLength)
 							particles[newIndex].ctype = (((unsigned char)(firw_data[caddress]))<<16) | (((unsigned char)(firw_data[caddress+1]))<<8) | ((unsigned char)(firw_data[caddress+2]));
 						}
 						break;
+					case PT_PSTN:
+						if (savedVersion < 87 && particles[newIndex].ctype)
+							particles[newIndex].life = 1;
 					}
 					newIndex++;
 				}
@@ -1195,6 +1201,9 @@ void GameSave::readPSv(char * data, int dataLength)
 					blockMap[y][x]=WL_GRAV;
 				else if (blockMap[y][x]==O_WL_ALLOWENERGY)
 					blockMap[y][x]=WL_ALLOWENERGY;
+
+				if (blockMap[y][x] < 0 || blockMap[y][x] >= UI_WALLCOUNT)
+					blockMap[y][x] = 0;
 			}
 
 			p++;
@@ -1309,7 +1318,7 @@ void GameSave::readPSv(char * data, int dataLength)
 					ttv |= (d[p++]);
 					particles[i-1].tmp = ttv;
 					if (ver<53 && !particles[i-1].tmp)
-						for (q = 1; q<=NGOLALT; q++) {
+						for (q = 1; q<=NGOL; q++) {
 							if (particles[i-1].type==goltype[q-1] && grule[q][9]==2)
 								particles[i-1].tmp = grule[q][9]-1;
 						}
@@ -1491,7 +1500,7 @@ void GameSave::readPSv(char * data, int dataLength)
 			if(ver<51 && ((ty>=78 && ty<=89) || (ty>=134 && ty<=146 && ty!=141))){
 				//Replace old GOL
 				particles[i-1].type = PT_LIFE;
-				for (gnum = 0; gnum<NGOLALT; gnum++){
+				for (gnum = 0; gnum<NGOL; gnum++){
 					if (ty==goltype[gnum])
 						particles[i-1].ctype = gnum;
 				}
@@ -1499,7 +1508,7 @@ void GameSave::readPSv(char * data, int dataLength)
 			}
 			if(ver<52 && (ty==PT_CLNE || ty==PT_PCLN || ty==PT_BCLN)){
 				//Replace old GOL ctypes in clone
-				for (gnum = 0; gnum<NGOLALT; gnum++){
+				for (gnum = 0; gnum<NGOL; gnum++){
 					if (particles[i-1].ctype==goltype[gnum])
 					{
 						particles[i-1].ctype = PT_LIFE;
@@ -1942,6 +1951,17 @@ char * GameSave::serialiseOPS(int & dataLength)
 	}
 
 	bson_init(&b);
+	bson_append_start_object(&b, "origin");
+	bson_append_int(&b, "majorVersion", SAVE_VERSION);
+	bson_append_int(&b, "minorVersion", MINOR_VERSION);
+	bson_append_int(&b, "buildNum", MINOR_VERSION);
+	bson_append_int(&b, "snapshotId", MINOR_VERSION);
+	bson_append_string(&b, "releaseType", IDENT_RELTYPE);
+	bson_append_string(&b, "platform", IDENT_PLATFORM);
+	bson_append_string(&b, "builtType", IDENT_BUILD);
+	bson_append_finish_object(&b);
+	
+
 	bson_append_bool(&b, "waterEEnabled", waterEEnabled);
 	bson_append_bool(&b, "legacyEnable", legacyEnable);
 	bson_append_bool(&b, "gravityEnable", gravityEnable);
@@ -2047,6 +2067,16 @@ fin:
 		free(partsSaveIndex);
 	if (soapLinkData)
 		free(soapLinkData);
+	if (partsPosData)
+		free(partsPosData);
+	if (partsPosFirstMap)
+		free(partsPosFirstMap);
+	if (partsPosLastMap)
+		free(partsPosLastMap);
+	if (partsPosCount)
+		free(partsPosCount);
+	if (partsPosLink)
+		free(partsPosLink);
 
 	return (char*)outputData;
 }

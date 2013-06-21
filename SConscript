@@ -43,6 +43,7 @@ AddOption('--sse',dest="sse",action='store_true',default=False,help="Enable SSE 
 AddOption('--sse2',dest="sse2",action='store_true',default=False,help="Enable SSE2 optimisations")
 AddOption('--sse3',dest="sse3",action='store_true',default=False,help="Enable SSE3 optimisations")
 AddOption('--x86',dest="x86",action='store_true',default=True,help="Target Intel x86 platform")
+AddOption('--nofft',dest="nofft", action='store_true',default=False,help="Do not use fftw3f for gravity.")
 
 AddOption('--debugging', dest="debug", action="store_true", default=False, help="Enable debug options")
 AddOption('--beta',dest="beta",action='store_true',default=False,help="Beta build.")
@@ -52,7 +53,6 @@ AddOption('--build-number',dest="build-number",default=False,help="Build number.
 AddOption('--snapshot',dest="snapshot",action='store_true',default=False,help="Snapshot build.")
 AddOption('--snapshot-id',dest="snapshot-id",default=False,help="Snapshot build ID.")
 AddOption('--stable',dest="stable",default=True,help="Non snapshot build")
-
 AddOption('--aao', dest="everythingAtOnce", action='store_true', default=False, help="Compile the whole game without generating intermediate objects (very slow), enable this when using compilers like clang or mscc that don't support -fkeep-inline-functions")
 
 if((not GetOption('lin')) and (not GetOption('win')) and (not GetOption('rpi')) and (not GetOption('macosx'))):
@@ -78,13 +78,16 @@ if not GetOption("macosx"):
 		env.ParseConfig('sdl-config --cflags')
 		env.ParseConfig('sdl-config --libs')
 	except:
-		conf.CheckLib("SDL")
+		if not conf.CheckLib("SDL"):
+			print "libSDL not found or not installed"
+			raise SystemExit(1)
+			
 		if(GetOption("sdl-dir")):
 			if not conf.CheckCHeader(GetOption("sdl-dir") + '/SDL.h'):
 				print "sdl headers not found or not installed"
 				raise SystemExit(1)
 			else:
-				env.Append(CPPPATH=GetOption("sdl-dir"))
+				env.Append(CPPPATH=[GetOption("sdl-dir")])
 
 	#Find correct lua include dir
 	try:
@@ -95,12 +98,13 @@ if not GetOption("macosx"):
 				print "lua5.1 headers not found or not installed"
 				raise SystemExit(1)
 			else:
-				env.Append(CPPPATH=GetOption("lua-dir"))
+				env.Append(CPPPATH=[GetOption("lua-dir")])
 
-	#Check for FFT lib
-	if not conf.CheckLib('fftw3f') and not conf.CheckLib('fftw3f-3'):
-		print "libfftw3f not found or not installed"
-		raise SystemExit(1)
+	if not GetOption('nofft'):
+		#Check for FFT lib
+		if not conf.CheckLib('fftw3f') and not conf.CheckLib('fftw3f-3'):
+			print "libfftw3f not found or not installed"
+			raise SystemExit(1)
 
 	#Check for Bzip lib
 	if not conf.CheckLib('bz2'):
@@ -124,13 +128,16 @@ if not GetOption("macosx"):
 
 	env = conf.Finish();
 else:
-	env.Append(LIBS=['z', 'bz2', 'fftw3f'])
+	env.Append(LIBS=['z', 'bz2'])
+	if not GetOption('nofft'):
+		env.Append(LIBS=['fftw3f'])
 
 env.Append(CPPPATH=['src/', 'data/', 'generated/'])
 env.Append(CCFLAGS=['-w', '-std=c++98', '-fkeep-inline-functions'])
 env.Append(LIBS=['pthread', 'm'])
-env.Append(CPPDEFINES=["LUACONSOLE", "GRAVFFT", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L"])
-
+env.Append(CPPDEFINES=["LUACONSOLE", "_GNU_SOURCE", "USE_STDINT", "_POSIX_C_SOURCE=200112L"])
+if not GetOption('nofft'):
+	env.Append(CPPDEFINES=["GRAVFFT"])
 if GetOption("ptw32-static"):
 	env.Append(CPPDEFINES=['PTW32_STATIC_LIB']);
 
@@ -175,7 +182,8 @@ if(GetOption('macosx')):
 	env.Append(CPPDEFINES=["MACOSX"])
 	env.Append(CCFLAGS=['-I/Library/Frameworks/SDL.framework/Headers'])
 	env.Append(CCFLAGS=['-I/Library/Frameworks/Lua.framework/Headers'])
-	env.Append(LINKFLAGS=['-lfftw3f'])
+	if not GetOption('nofft'):
+		env.Append(LINKFLAGS=['-lfftw3f'])
 	env.Append(LINKFLAGS=['-framework'])
 	env.Append(LINKFLAGS=['SDL'])
 	env.Append(LINKFLAGS=['-framework'])
@@ -255,12 +263,17 @@ if(GetOption('macosx')):
 if(GetOption('win')):
 	sources += env.RES('resources/powder-res.rc')
 sources+=Glob("src/*/*.cpp")
+sources+=Glob("src/gui/*/*.cpp")
 sources+=Glob("src/simulation/elements/*.cpp")
 sources+=Glob("src/simulation/tools/*.cpp")
+sources+=Glob("src/client/requestbroker/*.cpp")
+
+#for source in sources:
+#	print str(source)
 
 if(GetOption('win')):
-	sources = filter(lambda source: str(source) != 'src\\simulation\\Gravity.cpp', sources)
-	sources = filter(lambda source: str(source) != 'src/simulation/Gravity.cpp', sources)
+	sources = filter(lambda source: not 'src\\simulation\\Gravity.cpp' in str(source), sources)
+	sources = filter(lambda source: not 'src/simulation/Gravity.cpp' in str(source), sources)
 
 SetupSpawn(env)
 

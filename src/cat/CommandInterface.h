@@ -1,15 +1,8 @@
-/*
- * Kitty.h
- *
- *  Created on: Feb 2, 2012
- *      Author: Simon
- */
-
-#ifndef KITTY_H_
-#define KITTY_H_
+#ifndef COMMANDINTERFACE_H_
+#define COMMANDINTERFACE_H_
 
 #include <string>
-#include "interface/Engine.h"
+#include "gui/interface/Engine.h"
 //#include "game/GameModel.h"
 
 class GameModel;
@@ -43,4 +36,4 @@ public:
 	virtual ~CommandInterface();
 };
 
-#endif /* KITTY_H_ */
+#endif /* COMMANDINTERFACE_H_ */

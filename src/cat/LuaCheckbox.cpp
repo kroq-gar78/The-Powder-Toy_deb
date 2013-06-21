@@ -8,7 +8,7 @@ extern "C"
 #include <iostream>
 #include "LuaCheckbox.h"
 #include "LuaScriptInterface.h"
-#include "interface/Checkbox.h"
+#include "gui/interface/Checkbox.h"
 
 const char LuaCheckbox::className[] = "Checkbox";
 
@@ -53,7 +53,6 @@ int LuaCheckbox::checked(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		luaL_checktype(l, 1, LUA_TBOOLEAN);
 		checkbox->SetChecked(lua_toboolean(l, 1));
 		return 0;
 	}
@@ -84,7 +83,6 @@ int LuaCheckbox::text(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		luaL_checktype(l, 1, LUA_TSTRING);
 		checkbox->SetText(lua_tostring(l, 1));
 		return 0;
 	}

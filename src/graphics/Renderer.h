@@ -9,8 +9,8 @@
 #include "Config.h"
 #include "client/Client.h"
 #include "Graphics.h"
-#include "interface/Point.h"
-#include "game/RenderPreset.h"
+#include "gui/interface/Point.h"
+#include "gui/game/RenderPreset.h"
 
 class Simulation;
 
@@ -63,6 +63,7 @@ public:
 	Simulation * sim;
 	Graphics * g;
 	gcache_item *graphicscache;
+	pixel sampleColor;
 
 	//Mouse position for debug information
 	int mousePosX, mousePosY;
@@ -79,6 +80,7 @@ public:
 	void RenderEnd();
 
 	void RenderZoom();
+	void DrawBlob(int x, int y, unsigned char cr, unsigned char cg, unsigned char cb);
 	void DrawWalls();
 	void DrawSigns();
 	void render_gravlensing(pixel * source);
@@ -93,8 +95,7 @@ public:
 
 	void ClearAccumulation();
 	void clearScreen(float alpha);
-
-	//class SolidsRenderer;
+	void SetSample(int x, int y);
 
 #ifdef OGLR
 	void checkShader(GLuint shader, char * shname);
@@ -128,6 +129,8 @@ public:
 	void gradientrect(int x, int y, int width, int height, int r, int g, int b, int a, int r2, int g2, int b2, int a2);
 
 	void draw_image(pixel *img, int x, int y, int w, int h, int a);
+	void draw_image(const VideoBuffer & vidBuf, int w, int h, int a);
+	void draw_image(VideoBuffer * vidBuf, int w, int h, int a);
 
 	VideoBuffer DumpFrame();
 

@@ -1,16 +1,9 @@
-/*
- * TaskWindow.h
- *
- *  Created on: Apr 6, 2012
- *      Author: Simon
- */
-
 #ifndef TASKWINDOW_H_
 #define TASKWINDOW_H_
 
 #include <string>
-#include "interface/Label.h"
-#include "interface/Window.h"
+#include "gui/interface/Label.h"
+#include "gui/interface/Window.h"
 #include "tasks/TaskListener.h"
 
 class Task;

@@ -8,7 +8,7 @@ extern "C"
 #include <iostream>
 #include "LuaScriptInterface.h"
 #include "LuaLabel.h"
-#include "interface/Label.h"
+#include "gui/interface/Label.h"
 
 const char LuaLabel::className[] = "Label";
 
@@ -40,8 +40,7 @@ int LuaLabel::text(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		luaL_checktype(l, 1, LUA_TSTRING);
-		label->SetText(lua_tostring(l, 1));
+		label->SetText(std::string(lua_tostring(l, 1)));
 		return 0;
 	}
 	else

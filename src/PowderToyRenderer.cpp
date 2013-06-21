@@ -9,7 +9,7 @@
 
 #include "Config.h"
 #include "Format.h"
-#include "interface/Engine.h"
+#include "gui/interface/Engine.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 
@@ -20,6 +20,7 @@
 void EngineProcess() {}
 void ClipboardPush(char * text) {}
 char * ClipboardPull() {}
+int GetModifiers() { return 0; }
 
 void readFile(std::string filename, std::vector<char> & storage)
 {
