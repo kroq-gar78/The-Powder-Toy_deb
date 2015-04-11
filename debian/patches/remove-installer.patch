@@ -3,13 +3,13 @@ Description: Remove the mimetype registration in-game
  there should be no way to redo the process in-game.
 Forwarded: not-needed
 Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Last-Update: 2013-04-26
---- a/src/gui/game/GameController.cpp
-+++ b/src/gui/game/GameController.cpp
-@@ -707,11 +707,11 @@ void GameController::Tick()
- 	if(firstTick)
- 	{
+Last-Update: 2015-04-11
+--- b/src/gui/game/GameController.cpp
++++ a/src/gui/game/GameController.cpp
+@@ -731,11 +731,11 @@ void GameController::Tick()
  		((LuaScriptInterface*)commandInterface)->Init();
+ #endif
+ #if !defined(MACOSX) && !defined(NO_INSTALL_CHECK)
 -		if(!Client::Ref().GetPrefBool("InstallCheck", false))
 +		/*if(!Client::Ref().GetPrefBool("InstallCheck", false))
  		{
@@ -17,6 +17,6 @@ Last-Update: 2013-04-26
  			Install();
 -		}
 +		}*/
+ #endif
  		firstTick = false;
  	}
- 	for(std::vector<DebugInfo*>::iterator iter = debugInfo.begin(), end = debugInfo.end(); iter != end; iter++)

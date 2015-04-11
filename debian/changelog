@@ -1,3 +1,9 @@
+powdertoy (90.2.322-0~ppa1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Aditya Vaidya <kroq-gar78@av4-ubu64>  Sat, 11 Apr 2015 01:41:16 -0500
+
 powdertoy (87.0-0~ppa1) precise; urgency=low
 
   * New upstream release
