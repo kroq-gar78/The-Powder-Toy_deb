@@ -1,11 +1,15 @@
-Description: Remove the builtin updater
- The patch removes the builtin updater because program updates
- should be taken care of by the Debian package maintainer.
-Forwarded: not-needed
-Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Last-Update: 2015-04-11
---- b/src/Config.h
-+++ a/src/Config.h
+From: Aditya Vaidya <kroq.gar78@gmail.com>
+Date: Sat, 11 Apr 2015 02:16:53 -0500
+Subject: remove-updater
+
+---
+ src/Config.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/Config.h b/src/Config.h
+index 239d1be..448cfe4 100644
+--- a/src/Config.h
++++ b/src/Config.h
 @@ -28,7 +28,7 @@
  #endif
  //VersionInfoEnd

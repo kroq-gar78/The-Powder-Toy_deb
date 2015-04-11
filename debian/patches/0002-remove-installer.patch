@@ -1,11 +1,15 @@
-Description: Remove the mimetype registration in-game
- Because the package does mimetype registration already,
- there should be no way to redo the process in-game.
-Forwarded: not-needed
-Author: Aditya Vaidya <kroq.gar78@gmail.com>
-Last-Update: 2015-04-11
---- b/src/gui/game/GameController.cpp
-+++ a/src/gui/game/GameController.cpp
+From: Aditya Vaidya <kroq.gar78@gmail.com>
+Date: Sat, 11 Apr 2015 02:16:53 -0500
+Subject: remove-installer
+
+---
+ src/gui/game/GameController.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/gui/game/GameController.cpp b/src/gui/game/GameController.cpp
+index 43f0396..e6f20fc 100644
+--- a/src/gui/game/GameController.cpp
++++ b/src/gui/game/GameController.cpp
 @@ -731,11 +731,11 @@ void GameController::Tick()
  		((LuaScriptInterface*)commandInterface)->Init();
  #endif
