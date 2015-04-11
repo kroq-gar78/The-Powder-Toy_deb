@@ -10,7 +10,7 @@
 #include "Misc.h"
 
 SearchView::SearchView():
-	ui::Window(ui::Point(0, 0), ui::Point(XRES+BARSIZE, YRES+MENUSIZE)),
+	ui::Window(ui::Point(0, 0), ui::Point(WINDOWW, WINDOWH)),
 	saveButtons(vector<ui::SaveButton*>()),
 	errorLabel(NULL),
 	c(NULL)
@@ -18,11 +18,11 @@ SearchView::SearchView():
 
 	Client::Ref().AddListener(this);
 
-	nextButton = new ui::Button(ui::Point(XRES+BARSIZE-52, YRES+MENUSIZE-18), ui::Point(50, 16), "Next \x95");
-	previousButton = new ui::Button(ui::Point(1, YRES+MENUSIZE-18), ui::Point(50, 16), "\x96 Prev");
-	infoLabel  = new ui::Label(ui::Point(260, YRES+MENUSIZE-18), ui::Point(XRES+BARSIZE-520, 16), "Page 1 of 1");
-	tagsLabel  = new ui::Label(ui::Point(270, YRES+MENUSIZE-18), ui::Point(XRES+BARSIZE-540, 16), "\boPopular Tags:");
-	motdLabel  = new ui::RichLabel(ui::Point(51, YRES+MENUSIZE-18), ui::Point(XRES+BARSIZE-102, 16), Client::Ref().GetMessageOfTheDay());
+	nextButton = new ui::Button(ui::Point(WINDOWW-52, WINDOWH-18), ui::Point(50, 16), "Next \x95");
+	previousButton = new ui::Button(ui::Point(1, WINDOWH-18), ui::Point(50, 16), "\x96 Prev");
+	infoLabel  = new ui::Label(ui::Point(260, WINDOWH-18), ui::Point(WINDOWW-520, 16), "Page 1 of 1");
+	tagsLabel  = new ui::Label(ui::Point(270, WINDOWH-18), ui::Point(WINDOWW-540, 16), "\boPopular Tags:");
+	motdLabel  = new ui::RichLabel(ui::Point(51, WINDOWH-18), ui::Point(WINDOWW-102, 16), Client::Ref().GetMessageOfTheDay());
 
 	class SearchAction : public ui::TextboxAction
 	{
@@ -34,11 +34,12 @@ SearchView::SearchView():
 			v->doSearch();
 		}
 	};
-	searchField = new ui::Textbox(ui::Point(60, 10), ui::Point((XRES+BARSIZE)-238, 17), "", "[search]");
+	searchField = new ui::Textbox(ui::Point(60, 10), ui::Point(WINDOWW-238, 17), "", "[search]");
 	searchField->Appearance.icon = IconSearch;
 	searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	searchField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	searchField->SetActionCallback(new SearchAction(this));
+	FocusComponent(searchField);
 
 
 	class SortAction : public ui::ButtonAction
@@ -51,7 +52,7 @@ SearchView::SearchView():
 			v->c->ChangeSort();
 		}
 	};
-	sortButton = new ui::Button(ui::Point(XRES+BARSIZE-140, 10), ui::Point(61, 17), "Sort");
+	sortButton = new ui::Button(ui::Point(WINDOWW-140, 10), ui::Point(61, 17), "Sort");
 	sortButton->SetIcon(IconVoteSort);
 	sortButton->SetTogglable(true);
 	sortButton->SetActionCallback(new SortAction(this));
@@ -69,7 +70,7 @@ SearchView::SearchView():
 			v->c->ShowOwn(sender->GetToggleState());
 		}
 	};
-	ownButton = new ui::Button(ui::Point(XRES+BARSIZE-70, 10), ui::Point(61, 17), "My Own");
+	ownButton = new ui::Button(ui::Point(WINDOWW-70, 10), ui::Point(61, 17), "My Own");
 	ownButton->SetIcon(IconMyOwn);
 	ownButton->SetTogglable(true);
 	ownButton->SetActionCallback(new MyOwnAction(this));
@@ -148,7 +149,7 @@ SearchView::SearchView():
 	AddComponent(searchField);
 	AddComponent(infoLabel);
 
-	loadingSpinner = new ui::Spinner(ui::Point(((XRES+BARSIZE)/2)-12, ((YRES+MENUSIZE)/2)+12), ui::Point(24, 24));
+	loadingSpinner = new ui::Spinner(ui::Point((WINDOWW/2)-12, (WINDOWH/2)+12), ui::Point(24, 24));
 	AddComponent(loadingSpinner);
 
 	ui::Label * searchPrompt = new ui::Label(ui::Point(10, 10), ui::Point(50, 16), "Search:");
@@ -200,22 +201,22 @@ SearchView::SearchView():
 		}
 	};
 
-	removeSelected = new ui::Button(ui::Point((((XRES+BARSIZE)-415)/2), YRES+MENUSIZE-18), ui::Point(100, 16), "Delete");
+	removeSelected = new ui::Button(ui::Point(((WINDOWW-415)/2), WINDOWH-18), ui::Point(100, 16), "Delete");
 	removeSelected->Visible = false;
 	removeSelected->SetActionCallback(new RemoveSelectedAction(this));
 	AddComponent(removeSelected);
 
-	unpublishSelected = new ui::Button(ui::Point((((XRES+BARSIZE)-415)/2)+105, YRES+MENUSIZE-18), ui::Point(100, 16), "Unpublish");
+	unpublishSelected = new ui::Button(ui::Point(((WINDOWW-415)/2)+105, WINDOWH-18), ui::Point(100, 16), "Unpublish");
 	unpublishSelected->Visible = false;
 	unpublishSelected->SetActionCallback(new UnpublishSelectedAction(this));
 	AddComponent(unpublishSelected);
 
-	favouriteSelected = new ui::Button(ui::Point((((XRES+BARSIZE)-415)/2)+210, YRES+MENUSIZE-18), ui::Point(100, 16), "Favourite");
+	favouriteSelected = new ui::Button(ui::Point(((WINDOWW-415)/2)+210, WINDOWH-18), ui::Point(100, 16), "Favourite");
 	favouriteSelected->Visible = false;
 	favouriteSelected->SetActionCallback(new FavouriteSelectedAction(this));
 	AddComponent(favouriteSelected);
 
-	clearSelection = new ui::Button(ui::Point((((XRES+BARSIZE)-415)/2)+315, YRES+MENUSIZE-18), ui::Point(100, 16), "Clear selection");
+	clearSelection = new ui::Button(ui::Point(((WINDOWW-415)/2)+315, WINDOWH-18), ui::Point(100, 16), "Clear selection");
 	clearSelection->Visible = false;
 	clearSelection->SetActionCallback(new ClearSelectionAction(this));
 	AddComponent(clearSelection);
@@ -340,7 +341,7 @@ void SearchView::NotifyPageChanged(SearchModel * sender)
 	{
 		previousButton->Visible = true;
 	}
-	if(sender->GetPageNum() == sender->GetPageCount())
+	if(sender->GetPageNum() >= sender->GetPageCount())
 	{
 		nextButton->Visible = false;
 	}
@@ -558,7 +559,7 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 		loadingSpinner->Visible = false;
 		if(!errorLabel)
 		{
-			errorLabel = new ui::Label(ui::Point(((XRES+BARSIZE)/2)-100, ((YRES+MENUSIZE)/2)-6), ui::Point(200, 12), "Error");
+			errorLabel = new ui::Label(ui::Point((WINDOWW/2)-100, (WINDOWH/2)-6), ui::Point(200, 12), "Error");
 			AddComponent(errorLabel);
 		}
 		if(!sender->GetSavesLoaded())
@@ -712,7 +713,14 @@ void SearchView::OnMouseWheel(int x, int y, int d)
 }
 void SearchView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
 {
-	if(key==KEY_ESCAPE)
+	if (key == KEY_ESCAPE)
 		c->Exit();
+	else if (key == KEY_LCTRL || key == KEY_RCTRL)
+		c->InstantOpen(true);
 }
 
+void SearchView::OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt)
+{
+	if (key == KEY_LCTRL || key == KEY_RCTRL)
+		c->InstantOpen(false);
+}

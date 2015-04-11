@@ -8,7 +8,7 @@
 #include "gui/login/LoginController.h"
 #include "Controller.h"
 
-PreviewController::PreviewController(int saveID, int saveDate, ControllerCallback * callback):
+PreviewController::PreviewController(int saveID, int saveDate, bool instant, ControllerCallback * callback):
 	HasExited(false),
 	saveId(saveID),
 	saveDate(saveDate),
@@ -18,6 +18,7 @@ PreviewController::PreviewController(int saveID, int saveDate, ControllerCallbac
 	previewView = new PreviewView();
 	previewModel->AddObserver(previewView);
 	previewView->AttachController(this);
+	previewModel->SetDoOpen(instant);
 
 	previewModel->UpdateSave(saveID, saveDate);
 
@@ -31,7 +32,7 @@ PreviewController::PreviewController(int saveID, int saveDate, ControllerCallbac
 	this->callback = callback;
 }
 
-PreviewController::PreviewController(int saveID, ControllerCallback * callback):
+PreviewController::PreviewController(int saveID, bool instant, ControllerCallback * callback):
 	HasExited(false),
 	saveId(saveID),
 	saveDate(0),
@@ -60,16 +61,6 @@ void PreviewController::Update()
 	{
 		delete loginWindow;
 		loginWindow = NULL;
-	}
-
-	try
-	{
-		previewModel->Update();
-	}
-	catch (PreviewModelException & e)
-	{
-		Exit();
-		new ErrorMessage("Error", e.what());
 	}
 	if(previewModel->GetDoOpen() && previewModel->GetSave() && previewModel->GetSave()->GetGameSave())
 	{
@@ -141,10 +132,17 @@ void PreviewController::FavouriteSave()
 {
 	if(previewModel->GetSave() && Client::Ref().GetAuthUser().ID)
 	{
-		if(previewModel->GetSave()->Favourite)
-			previewModel->SetFavourite(false);
-		else
-			previewModel->SetFavourite(true);
+		try
+		{
+			if(previewModel->GetSave()->Favourite)
+				previewModel->SetFavourite(false);
+			else
+				previewModel->SetFavourite(true);
+		}
+		catch (PreviewModelException & e)
+		{
+			new ErrorMessage("Error", e.what());
+		}
 	}
 }
 
@@ -155,16 +153,24 @@ void PreviewController::OpenInBrowser()
 	OpenURI(uriStream.str());
 }
 
-void PreviewController::NextCommentPage()
+bool PreviewController::NextCommentPage()
 {
-	if(previewModel->GetCommentsPageNum() < previewModel->GetCommentsPageCount() && previewModel->GetCommentsLoaded())
+	if(previewModel->GetCommentsPageNum() < previewModel->GetCommentsPageCount() && previewModel->GetCommentsLoaded() && !previewModel->GetDoOpen())
+	{
 		previewModel->UpdateComments(previewModel->GetCommentsPageNum()+1);
+		return true;
+	}
+	return false;
 }
 
-void PreviewController::PrevCommentPage()
+bool PreviewController::PrevCommentPage()
 {
-	if(previewModel->GetCommentsPageNum()>1 && previewModel->GetCommentsLoaded())
+	if(previewModel->GetCommentsPageNum() > 1 && previewModel->GetCommentsLoaded() && !previewModel->GetDoOpen())
+	{
 		previewModel->UpdateComments(previewModel->GetCommentsPageNum()-1);
+		return true;
+	}
+	return false;
 }
 
 void PreviewController::Exit()

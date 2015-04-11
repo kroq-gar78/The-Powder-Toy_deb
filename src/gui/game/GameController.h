@@ -14,8 +14,6 @@
 #include "gui/console/ConsoleController.h"
 #include "gui/localbrowser/LocalBrowserController.h"
 #include "gui/options/OptionsController.h"
-//#include "cat/TPTScriptInterface.h"
-#include "cat/LuaScriptInterface.h"
 #include "client/ClientListener.h"
 #include "RenderPreset.h"
 #include "Menu.h"
@@ -34,6 +32,8 @@ private:
 	//Simulation * sim;
 	bool firstTick;
 	int screenshotIndex;
+	sign * foundSign;
+
 	PreviewController * activePreview;
 	GameView * gameView;
 	GameModel * gameModel;
@@ -49,7 +49,6 @@ private:
 public:
 	bool HasDone;
 	class SearchCallback;
-	class RenderCallback;
 	class SSaveCallback;
 	class TagsCallback;
 	class StampsCallback;
@@ -59,6 +58,7 @@ public:
 	GameController();
 	~GameController();
 	GameView * GetView();
+	sign * GetSignAt(int x, int y);
 
 	bool BrushChanged(int brushType, int rx, int ry);
 	bool MouseMove(int x, int y, int dx, int dy);
@@ -81,13 +81,14 @@ public:
 	void SetZoomEnabled(bool zoomEnable);
 	void SetZoomPosition(ui::Point position);
 	void AdjustBrushSize(int direction, bool logarithmic = false, bool xAxis = false, bool yAxis = false);
+	void SetBrushSize(ui::Point newSize);
 	void AdjustZoomSize(int direction, bool logarithmic = false);
 	void ToolClick(int toolSelection, ui::Point point);
 	void DrawPoints(int toolSelection, queue<ui::Point> & pointQueue);
 	void DrawRect(int toolSelection, ui::Point point1, ui::Point point2);
 	void DrawLine(int toolSelection, ui::Point point1, ui::Point point2);
 	void DrawFill(int toolSelection, ui::Point point);
-	void StampRegion(ui::Point point1, ui::Point point2);
+	std::string StampRegion(ui::Point point1, ui::Point point2);
 	void CopyRegion(ui::Point point1, ui::Point point2);
 	void CutRegion(ui::Point point1, ui::Point point2);
 	void Update();
@@ -97,9 +98,15 @@ public:
 	void SetDecoration();
 	void ShowGravityGrid();
 	void SetHudEnable(bool hudState);
-	void SetActiveMenu(Menu * menu);
+	bool GetHudEnable();
+	void SetDebugHUD(bool hudState);
+	bool GetDebugHUD();
+	void SetActiveMenu(int menuID);
 	std::vector<Menu*> GetMenuList();
+	Tool * GetActiveTool(int selection);
 	void SetActiveTool(int toolSelection, Tool * tool);
+	int GetReplaceModeFlags();
+	void SetReplaceModeFlags(int flags);
 	void ActiveToolChanged(int toolSelection, Tool *tool);
 	void SetActiveColourPreset(int preset);
 	void SetColour(ui::Colour colour);
@@ -110,7 +117,7 @@ public:
 	void OpenLogin();
 	void OpenProfile();
 	void OpenTags();
-	void OpenSavePreview(int saveID, int saveDate);
+	void OpenSavePreview(int saveID, int saveDate, bool instant);
 	void OpenSavePreview();
 	void OpenLocalSaveWindow(bool asCurrent);
 	void OpenLocalBrowse();
@@ -133,7 +140,8 @@ public:
 	void TransformSave(matrix2d transform);
 	ui::Point PointTranslate(ui::Point point);
 	ui::Point NormaliseBlockCoord(ui::Point point);
-	std::string ElementResolve(int type);
+	std::string ElementResolve(int type, int ctype);
+	bool IsValidElement(int type);
 	std::string WallName(int type);
 
 	void ResetAir();
@@ -141,6 +149,7 @@ public:
 	void SwitchGravity();
 	void SwitchAir();
 	void ToggleAHeat();
+	void ToggleNewtonianGravity();
 
 	void LoadClipboard();
 	void LoadStamp();

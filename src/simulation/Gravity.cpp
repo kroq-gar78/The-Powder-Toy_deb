@@ -55,6 +55,7 @@ void Gravity::gravity_init()
 	gravx = (float *)calloc((XRES/CELL)*(YRES/CELL), sizeof(float));
 	gravp = (float *)calloc((XRES/CELL)*(YRES/CELL), sizeof(float));
 	gravmask = (unsigned int *)calloc((XRES/CELL)*(YRES/CELL), sizeof(unsigned));
+	obmap = (unsigned char (*)[XRES/CELL])calloc((XRES/CELL)*(YRES/CELL), sizeof(unsigned char));
 }
 
 void Gravity::gravity_cleanup()
@@ -73,6 +74,7 @@ void Gravity::gravity_cleanup()
 	free(gravx);
 	free(gravp);
 	free(gravmask);
+	free(obmap);
 }
 
 void Gravity::gravity_update_async()
@@ -125,7 +127,7 @@ void Gravity::gravity_update_async()
 	}
 }
 
-void *Gravity::update_grav_async_helper(void * context)
+TH_ENTRY_POINT void *Gravity::update_grav_async_helper(void * context)
 {
 	((Gravity *)context)->update_grav_async();
 	return NULL;
@@ -143,6 +145,10 @@ void Gravity::update_grav_async()
 	//memset(th_gravy, 0, XRES*YRES*sizeof(float));
 	//memset(th_gravx, 0, XRES*YRES*sizeof(float));
 	//memset(th_gravp, 0, XRES*YRES*sizeof(float));
+#ifdef GRAVFFT
+	if (!grav_fft_status)
+		grav_fft_init();
+#endif
 	while(!thread_done){
 		if(!done){
 			update_grav();
@@ -291,7 +297,7 @@ void Gravity::update_grav()
 			break;
 		for (x=0; x<XRES/CELL; x++)
 		{
-			if(th_ogravmap[y*(XRES/CELL)+x]!=th_gravmap[y*(XRES/CELL)+x]){
+			if(th_ogravmap[y*(XRES/CELL)+x] != th_gravmap[y*(XRES/CELL)+x] || bmap[y][x] != obmap[y][x]){
 				changed = 1;
 				break;
 			}
@@ -300,7 +306,6 @@ void Gravity::update_grav()
 	if(changed)
 	{
 		th_gravchanged = 1;
-		if (!grav_fft_status) grav_fft_init();
 
 		//copy gravmap into padded gravmap array
 		for (y=0; y<YRES/CELL; y++)
@@ -348,6 +353,7 @@ void Gravity::update_grav()
 		th_gravchanged = 0;
 	}
 	memcpy(th_ogravmap, th_gravmap, (XRES/CELL)*(YRES/CELL)*sizeof(float));
+	memcpy(obmap, bmap, (XRES/CELL)*(YRES/CELL)*sizeof(unsigned char));
 }
 
 #else
@@ -407,6 +413,7 @@ void Gravity::update_grav(void)
 	}
 fin:
 	memcpy(th_ogravmap, th_gravmap, (XRES/CELL)*(YRES/CELL)*sizeof(float));
+	memcpy(obmap, bmap, (XRES/CELL)*(YRES/CELL)*sizeof(unsigned char));
 }
 #endif
 
@@ -458,7 +465,7 @@ void Gravity::mask_free(mask_el *c_mask_el){
 void Gravity::gravity_mask()
 {
 	char checkmap[YRES/CELL][XRES/CELL];
-	int x = 0, y = 0, i, j;
+	int x = 0, y = 0;
 	unsigned maskvalue;
 	mask_el *t_mask_el = NULL;
 	mask_el *c_mask_el = NULL;

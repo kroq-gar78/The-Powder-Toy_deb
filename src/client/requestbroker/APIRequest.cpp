@@ -9,8 +9,8 @@
 #include "client/HTTP.h"
 #include "APIResultParser.h"
 
-APIRequest::APIRequest(std::string url, APIResultParser * parser, ListenerHandle listener):
-	RequestBroker::Request(API, listener)
+APIRequest::APIRequest(std::string url, APIResultParser * parser, ListenerHandle listener, int identifier):
+	RequestBroker::Request(API, listener, identifier)
 {
 	Post = false;
 	HTTPContext = NULL;
@@ -18,8 +18,8 @@ APIRequest::APIRequest(std::string url, APIResultParser * parser, ListenerHandle
 	URL = url;
 }
 
-APIRequest::APIRequest(std::string url, std::map<std::string, std::string> postData, APIResultParser * parser, ListenerHandle listener):
-	RequestBroker::Request(API, listener)
+APIRequest::APIRequest(std::string url, std::map<std::string, std::string> postData, APIResultParser * parser, ListenerHandle listener, int identifier):
+	RequestBroker::Request(API, listener, identifier)
 {
 	Post = true;
 	PostData = postData;
@@ -97,7 +97,6 @@ RequestBroker::ProcessResponse APIRequest::Process(RequestBroker & rb)
 
 			if(Client::Ref().GetAuthUser().ID)
 			{
-				std::cout << typeid(*this).name() << " Authenticated " << std::endl;
 				User user = Client::Ref().GetAuthUser();
 				char userName[12];
 				char *userSession = new char[user.SessionID.length() + 1];
@@ -115,6 +114,16 @@ RequestBroker::ProcessResponse APIRequest::Process(RequestBroker & rb)
 		else
 		{
 			HTTPContext = http_async_req_start(NULL, (char *)URL.c_str(), NULL, 0, 0);
+			if(Client::Ref().GetAuthUser().ID)
+			{
+				User user = Client::Ref().GetAuthUser();
+				char userName[12];
+				char *userSession = new char[user.SessionID.length() + 1];
+				std::strcpy(userName, format::NumberToString<int>(user.ID).c_str());
+				std::strcpy(userSession, user.SessionID.c_str());
+				http_auth_headers(HTTPContext, userName, NULL, userSession);
+				delete[] userSession;
+			}
 		}
 		//RequestTime = time(NULL);
 	}

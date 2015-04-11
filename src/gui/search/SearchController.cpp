@@ -1,6 +1,5 @@
 #include <string>
 #include <sstream>
-#include <time.h>
 #include "SearchController.h"
 #include "SearchModel.h"
 #include "SearchView.h"
@@ -9,6 +8,7 @@
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/preview/PreviewController.h"
 #include "client/Client.h"
+#include "Misc.h"
 #include "tasks/Task.h"
 #include "tasks/TaskWindow.h"
 
@@ -36,6 +36,7 @@ SearchController::SearchController(ControllerCallback * callback):
 	HasExited(false),
 	nextQueryTime(0.0f),
 	nextQueryDone(true),
+	instantOpen(false),
 	searchModel(NULL)
 {
 	searchModel = new SearchModel();
@@ -46,9 +47,6 @@ SearchController::SearchController(ControllerCallback * callback):
 	searchModel->UpdateSaveList(1, "");
 
 	this->callback = callback;
-
-	//Set up interface
-	//windowPanel.AddChild();
 }
 
 SaveInfo * SearchController::GetLoadedSave()
@@ -63,7 +61,7 @@ void SearchController::ReleaseLoadedSave()
 
 void SearchController::Update()
 {
-	if(!nextQueryDone && nextQueryTime < clock())
+	if(!nextQueryDone && nextQueryTime < gettime())
 	{
 		nextQueryDone = true;
 		searchModel->UpdateSaveList(1, nextQuery);
@@ -82,6 +80,7 @@ void SearchController::Update()
 
 void SearchController::Exit()
 {
+	InstantOpen(false);
 	if(ui::Engine::Ref().GetWindow() == searchView)
 	{
 		ui::Engine::Ref().CloseWindow();
@@ -109,7 +108,7 @@ void SearchController::DoSearch(std::string query, bool now)
 	nextQuery = query;
 	if(!now)
 	{
-		nextQueryTime = clock()+(0.6 * CLOCKS_PER_SEC);
+		nextQueryTime = gettime()+600;
 		nextQueryDone = false;
 	}
 	else
@@ -128,7 +127,7 @@ void SearchController::PrevPage()
 
 void SearchController::NextPage()
 {
-	if(searchModel->GetPageNum() <= searchModel->GetPageCount())
+	if(searchModel->GetPageNum() < searchModel->GetPageCount())
 		searchModel->UpdateSaveList(searchModel->GetPageNum()+1, searchModel->GetLastQuery());
 }
 
@@ -180,11 +179,18 @@ void SearchController::Selected(int saveID, bool selected)
 		searchModel->DeselectSave(saveID);
 }
 
+void SearchController::InstantOpen(bool instant)
+{
+	instantOpen = instant;
+}
+
 void SearchController::OpenSave(int saveID)
 {
 	if(activePreview)
 		delete activePreview;
-	activePreview = new PreviewController(saveID, new OpenCallback(this));
+	Graphics * g = ui::Engine::Ref().g;
+	g->fillrect(XRES/3, WINDOWH-20, XRES/3, 20, 0, 0, 0, 150); //dim the "Page X of Y" a little to make the CopyTextButton more noticeable
+	activePreview = new PreviewController(saveID, instantOpen, new OpenCallback(this));
 	ui::Engine::Ref().ShowWindow(activePreview->GetView());
 }
 
@@ -192,7 +198,9 @@ void SearchController::OpenSave(int saveID, int saveDate)
 {
 	if(activePreview)
 		delete activePreview;
-	activePreview = new PreviewController(saveID, saveDate, new OpenCallback(this));
+	Graphics * g = ui::Engine::Ref().g;
+	g->fillrect(XRES/3, WINDOWH-20, XRES/3, 20, 0, 0, 0, 150); //dim the "Page X of Y" a little to make the CopyTextButton more noticeable
+	activePreview = new PreviewController(saveID, saveDate, instantOpen, new OpenCallback(this));
 	ui::Engine::Ref().ShowWindow(activePreview->GetView());
 }
 
@@ -218,6 +226,7 @@ void SearchController::RemoveSelected()
 	desc << "Are you sure you want to delete " << searchModel->GetSelected().size() << " save";
 	if(searchModel->GetSelected().size()>1)
 		desc << "s";
+	desc << "?";
 	new ConfirmPrompt("Delete saves", desc.str(), new RemoveSelectedConfirmation(this));
 }
 
@@ -270,6 +279,7 @@ void SearchController::UnpublishSelected()
 	desc << "Are you sure you want to hide " << searchModel->GetSelected().size() << " save";
 	if(searchModel->GetSelected().size()>1)
 		desc << "s";
+	desc << "?";
 	new ConfirmPrompt("Unpublish saves", desc.str(), new UnpublishSelectedConfirmation(this));
 }
 
@@ -285,13 +295,14 @@ void SearchController::unpublishSelectedC()
 			for(int i = 0; i < saves.size(); i++)
 			{
 				std::stringstream saveID;
-				saveID << "Hiding save [" << saves[i] << "] ...";
+				saveID << "Hiding save [" << saves[i] << "]";
  				notifyStatus(saveID.str());
  				if(Client::Ref().UnpublishSave(saves[i])!=RequestOkay)
 				{
  					std::stringstream saveIDF;
- 					saveIDF << "\boFailed to hide [" << saves[i] << "] ...";
-					notifyStatus(saveIDF.str());
+					saveIDF << "\boFailed to hide [" << saves[i] << "], is this save yours?";
+					notifyError(saveIDF.str());
+					return false;
 				}
 				notifyProgress((float(i+1)/float(saves.size())*100));
 			}
@@ -317,13 +328,14 @@ void SearchController::FavouriteSelected()
 			for(int i = 0; i < saves.size(); i++)
 			{
 				std::stringstream saveID;
-				saveID << "Favouring save [" << saves[i] << "] ...";
+				saveID << "Favouring save [" << saves[i] << "]";
 				notifyStatus(saveID.str());
 				if(Client::Ref().FavouriteSave(saves[i], true)!=RequestOkay)
 				{
 					std::stringstream saveIDF;
-					saveIDF << "\boFailed to favourite [" << saves[i] << "] ...";
-					notifyStatus(saveIDF.str());
+					saveIDF << "\boFailed to favourite [" << saves[i] << "], are you logged in?";
+					notifyError(saveIDF.str());
+					return false;
 				}
 				notifyProgress((float(i+1)/float(saves.size())*100));
 			}
@@ -341,13 +353,14 @@ void SearchController::FavouriteSelected()
 			for(int i = 0; i < saves.size(); i++)
 			{
 				std::stringstream saveID;
-				saveID << "Unfavouring save [" << saves[i] << "] ...";
+				saveID << "Unfavouring save [" << saves[i] << "]";
 				notifyStatus(saveID.str());
 				if(Client::Ref().FavouriteSave(saves[i], false)!=RequestOkay)
 				{
 					std::stringstream saveIDF;
-					saveIDF << "\boFailed to remove [" << saves[i] << "] ...";
-					notifyStatus(saveIDF.str());
+					saveIDF << "\boFailed to unfavourite [" << saves[i] << "], are you logged in?";
+					notifyError(saveIDF.str());
+					return false;
 				}
 				notifyProgress((float(i+1)/float(saves.size())*100));
 			}

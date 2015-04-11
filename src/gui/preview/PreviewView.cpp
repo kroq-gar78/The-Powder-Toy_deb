@@ -69,7 +69,8 @@ PreviewView::PreviewView():
 	addCommentBox(NULL),
 	submitCommentButton(NULL),
 	commentBoxHeight(20),
-	showAvatars(true)
+	showAvatars(true),
+	prevPage(false)
 {
 	class FavAction: public ui::ButtonAction
 	{
@@ -189,44 +190,31 @@ PreviewView::PreviewView():
 	viewsLabel->Appearance.HorizontalAlign = ui::Appearance::AlignRight;
 	viewsLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(viewsLabel);
-
-
-	pageInfo = new ui::Label(ui::Point((XRES/2) + 5, Size.Y+1), ui::Point(Size.X-((XRES/2) + 10), 15), "Page 1 of 1");
-	pageInfo->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;	authorDateLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-
-	saveIDTextbox = new ui::Textbox(ui::Point((XRES/2)-55, Size.Y-40), ui::Point(50, 16), "0000000");
-	saveIDTextbox->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
-	saveIDTextbox->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-	saveIDTextbox->ReadOnly = true;
-	AddComponent(saveIDTextbox);
-
-	class CopyIDAction: public ui::ButtonAction
-	{
-		PreviewView * v;
-	public:
-		CopyIDAction(PreviewView * v_){ v = v_; }
-		virtual void ActionCallback(ui::Button * sender)
-		{
-			ClipboardPush((char*)v->saveIDTextbox->GetText().c_str());
-		}
-	};
-
-	ui::Button * tempButton = new ui::Button(ui::Point((XRES/2)-130, Size.Y-40), ui::Point(70, 16), "Copy Save ID");
-	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
-	tempButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-	tempButton->SetActionCallback(new CopyIDAction(this));
-	AddComponent(tempButton);
+	
+	pageInfo = new ui::Label(ui::Point((XRES/2) + 85, Size.Y+1), ui::Point(70, 16), "Page 1 of 1");
+	pageInfo->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
+	AddComponent(pageInfo);
 
 	commentsPanel = new ui::ScrollPanel(ui::Point((XRES/2)+1, 1), ui::Point((Size.X-(XRES/2))-2, Size.Y-commentBoxHeight));
 	AddComponent(commentsPanel);
-
-	AddComponent(pageInfo);
 }
 
 void PreviewView::AttachController(PreviewController * controller)
 {
 	c = controller;
-	saveIDTextbox->SetText(format::NumberToString<int>(c->SaveID()));
+
+	int textWidth = Graphics::textwidth("Click the box below to copy the save ID");
+	saveIDLabel = new ui::Label(ui::Point((Size.X-textWidth-20)/2, Size.Y+5), ui::Point(textWidth+20, 16), "Click the box below to copy the save ID");
+	saveIDLabel->SetTextColour(ui::Colour(150, 150, 150));
+	saveIDLabel->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
+	AddComponent(saveIDLabel);
+
+	textWidth = Graphics::textwidth(format::NumberToString<int>(c->SaveID()).c_str());
+	saveIDLabel2 = new ui::Label(ui::Point((Size.X-textWidth-20)/2-37, Size.Y+22), ui::Point(40, 16), "Save ID:");
+	AddComponent(saveIDLabel2);
+	
+	saveIDButton = new ui::CopyTextButton(ui::Point((Size.X-textWidth-10)/2, Size.Y+20), ui::Point(textWidth+10, 18), format::NumberToString<int>(c->SaveID()), saveIDLabel);
+	AddComponent(saveIDButton);
 }
 
 void PreviewView::commentBoxAutoHeight()
@@ -363,6 +351,8 @@ void PreviewView::OnTick(float dt)
 				xdiff = 1*isign(sizeDiff.X);
 			addCommentBox->Size.X += xdiff;
 			addCommentBox->Invalidate();
+			commentBoxAutoHeight(); //make sure textbox height is correct after resizes
+			addCommentBox->resetCursorPosition(); //make sure cursor is in correct position after resizes
 		}
 		if(sizeDiff.Y!=0)
 		{
@@ -387,8 +377,26 @@ void PreviewView::OnMouseWheel(int x, int y, int d)
 	if(commentsPanel->GetScrollLimit() == 1 && d < 0)
 		c->NextCommentPage();
 	if(commentsPanel->GetScrollLimit() == -1 && d > 0)
-		c->PrevCommentPage();
+	{
+		if (c->PrevCommentPage())
+			prevPage = true;
+	}
 
+}
+
+void PreviewView::OnMouseUp(int x, int y, unsigned int button)
+{
+	//if mouse is on the scrollbar or farther right, and you are at the top of bottom of a page, change pages
+	if (x > Position.X+commentsPanel->Position.X+commentsPanel->Size.X-6)
+	{
+		if (commentsPanel->GetScrollLimit() == 1)
+			c->NextCommentPage();
+		if (commentsPanel->GetScrollLimit() == -1)
+		{
+			if (c->PrevCommentPage())
+				prevPage = true;
+		}
+	}
 }
 
 void PreviewView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
@@ -440,7 +448,6 @@ void PreviewView::NotifySaveChanged(PreviewModel * sender)
 
 			if(savePreview && savePreview->Buffer && !(savePreview->Width == XRES/2 && savePreview->Width == YRES/2))
 			{
-				int newSizeX, newSizeY;
 				pixel * oldData = savePreview->Buffer;
 				float factorX = ((float)XRES/2)/((float)savePreview->Width);
 				float factorY = ((float)YRES/2)/((float)savePreview->Height);
@@ -568,11 +575,15 @@ void PreviewView::NotifyCommentsChanged(PreviewModel * sender)
 			}
 
 			if(showAvatars)
-				tempUsername = new ui::Label(ui::Point(31, currentY+3), ui::Point(Size.X-((XRES/2) + 13), 16), comments->at(i)->authorNameFormatted);
+				tempUsername = new ui::Label(ui::Point(31, currentY+3), ui::Point(Size.X-((XRES/2) + 13 + 26), 16), comments->at(i)->authorNameFormatted);
 			else
 				tempUsername = new ui::Label(ui::Point(5, currentY+3), ui::Point(Size.X-((XRES/2) + 13), 16), comments->at(i)->authorNameFormatted);
 			tempUsername->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 			tempUsername->Appearance.VerticalAlign = ui::Appearance::AlignBottom;
+			if (Client::Ref().GetAuthUser().ID && Client::Ref().GetAuthUser().Username == comments->at(i)->authorName)
+				tempUsername->SetTextColour(ui::Colour(255, 255, 100));
+			else if (sender->GetSave() && sender->GetSave()->GetUserName() == comments->at(i)->authorName)
+				tempUsername->SetTextColour(ui::Colour(255, 100, 100));
 			currentY += 16;
 
 			commentComponents.push_back(tempUsername);
@@ -595,23 +606,13 @@ void PreviewView::NotifyCommentsChanged(PreviewModel * sender)
 		}
 
 		commentsPanel->InnerSize = ui::Point(commentsPanel->Size.X, currentY+4);
+		if (prevPage)
+		{
+			prevPage = false;
+			commentsPanel->SetScrollPosition(currentY);
+		}
 	}
 }
-
-/*void PreviewView::NotifyPreviewChanged(PreviewModel * sender)
-{
-	savePreview = sender->GetGameSave();
-	if(savePreview && savePreview->Data && !(savePreview->Width == XRES/2 && savePreview->Height == YRES/2))
-	{
-		int newSizeX, newSizeY;
-		float factorX = ((float)XRES/2)/((float)savePreview->Width);
-		float factorY = ((float)YRES/2)/((float)savePreview->Height);
-		float scaleFactor = factorY < factorX ? factorY : factorX;
-		savePreview->Data = Graphics::resample_img(savePreview->Data, savePreview->Width, savePreview->Height, savePreview->Width*scaleFactor, savePreview->Height*scaleFactor);
-		savePreview->Width *= scaleFactor;
-		savePreview->Height *= scaleFactor;
-	}
-}*/
 
 PreviewView::~PreviewView()
 {

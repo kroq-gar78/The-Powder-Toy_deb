@@ -1,8 +1,8 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
-#include <time.h>
 #include "Config.h"
+#include "Misc.h"
 #include "gui/interface/Point.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Keys.h"
@@ -122,12 +122,20 @@ void Textbox::OnContextMenuAction(int item)
 	}
 }
 
+void Textbox::resetCursorPosition()
+{
+	Graphics::PositionAtCharIndex(multiline?((char*)textLines.c_str()):((char*)text.c_str()), cursor, cursorPositionX, cursorPositionY);
+}
+
+void Textbox::TabFocus()
+{
+	GetParentWindow()->FocusComponent(this);
+	selectAll();
+}
+
 void Textbox::cutSelection()
 {
-	char * clipboardText;
-	clipboardText = ClipboardPull();
-	std::string newText = std::string(clipboardText);
-	free(clipboardText);
+	std::string newText = ClipboardPull();
 	if(HasSelection())
 	{
 		if(getLowerSelectionBound() < 0 || getHigherSelectionBound() > backingText.length())
@@ -180,10 +188,7 @@ void Textbox::selectAll()
 
 void Textbox::pasteIntoSelection()
 {
-	char * clipboardText;
-	clipboardText = ClipboardPull();
-	std::string newText = std::string(clipboardText);
-	free(clipboardText);
+	std::string newText = ClipboardPull();
 	if(HasSelection())
 	{
 		if(getLowerSelectionBound() < 0 || getHigherSelectionBound() > backingText.length())
@@ -288,10 +293,10 @@ void Textbox::Tick(float dt)
 		keyDown = 0;
 		characterDown = 0;
 	}
-	if((keyDown || characterDown) && repeatTime <= clock())
+	if((keyDown || characterDown) && repeatTime <= gettime())
 	{
 		OnVKeyPress(keyDown, characterDown, false, false, false);
-		repeatTime = clock()+(0.03 * CLOCKS_PER_SEC);
+		repeatTime = gettime()+30;
 	}
 }
 
@@ -305,7 +310,7 @@ void Textbox::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool 
 {
 	characterDown = character;
 	keyDown = key;
-	repeatTime = clock()+(0.3 * CLOCKS_PER_SEC);
+	repeatTime = gettime()+300;
 	OnVKeyPress(key, character, shift, ctrl, alt);
 }
 
@@ -403,36 +408,38 @@ void Textbox::OnVKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 			}
 			ClearSelection();
 			break;
-		}
-		if(CharacterValid(character) && !ReadOnly)
-		{
-			if(HasSelection())
+		default:
+			if(CharacterValid(character) && !ReadOnly)
 			{
-				if(getLowerSelectionBound() < 0 || getHigherSelectionBound() > backingText.length())
-					return;
-				backingText.erase(backingText.begin()+getLowerSelectionBound(), backingText.begin()+getHigherSelectionBound());
-				cursor = getLowerSelectionBound();
-			}
+				if(HasSelection())
+				{
+					if(getLowerSelectionBound() < 0 || getHigherSelectionBound() > backingText.length())
+						return;
+					backingText.erase(backingText.begin()+getLowerSelectionBound(), backingText.begin()+getHigherSelectionBound());
+					cursor = getLowerSelectionBound();
+				}
 
-			int regionWidth = Size.X;
-			if(Appearance.icon)
-				regionWidth -= 13;
-			regionWidth -= Appearance.Margin.Left;
-			regionWidth -= Appearance.Margin.Right;
-			if((limit==std::string::npos || backingText.length() < limit) && (Graphics::textwidth((char*)std::string(backingText+char(character)).c_str()) <= regionWidth || multiline || limit!=std::string::npos))
-			{
-				if(cursor == backingText.length())
+				int regionWidth = Size.X;
+				if(Appearance.icon)
+					regionWidth -= 13;
+				regionWidth -= Appearance.Margin.Left;
+				regionWidth -= Appearance.Margin.Right;
+				if((limit==std::string::npos || backingText.length() < limit) && (Graphics::textwidth((char*)std::string(backingText+char(character)).c_str()) <= regionWidth || multiline || limit!=std::string::npos))
 				{
-					backingText += character;
+					if(cursor == backingText.length())
+					{
+						backingText += character;
+					}
+					else
+					{
+						backingText.insert(cursor, 1, (char)character);
+					}
+					cursor++;
 				}
-				else
-				{
-					backingText.insert(cursor, 1, (char)character);
-				}
-				cursor++;
+				changed = true;
+				ClearSelection();
 			}
-			changed = true;
-			ClearSelection();
+			break;
 		}
 	}
 	catch(std::out_of_range &e)
@@ -695,7 +702,7 @@ void Textbox::Draw(const Point& screenPos)
 	if(IsFocused())
 	{
 		if(border) g->drawrect(screenPos.X, screenPos.Y, Size.X, Size.Y, 255, 255, 255, 255);
-		g->draw_line(screenPos.X+textPosition.X+cursorPosition, screenPos.Y+3, screenPos.X+textPosition.X+cursorPosition, screenPos.Y+12, 255, 255, 255, XRES+BARSIZE);
+		g->draw_line(screenPos.X+textPosition.X+cursorPosition, screenPos.Y+3, screenPos.X+textPosition.X+cursorPosition, screenPos.Y+12, 255, 255, 255, WINDOWW);
 	}
 	else
 	{

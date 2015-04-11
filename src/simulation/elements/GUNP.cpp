@@ -28,7 +28,7 @@ Element_GUNP::Element_GUNP()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 97;
-	Description = "Light dust. Explosive.";
+	Description = "Gunpowder. Light dust, explodes on contact with fire or spark.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_PART;

@@ -32,6 +32,7 @@ public:
 	//virtual void OnMouseUp(int x, int y, unsigned int button);
 
 	virtual void OnMouseEnter(int x, int y);
+	virtual void OnMouseHover(int x, int y);
 	virtual void OnMouseLeave(int x, int y);
 
 	virtual void Draw(const Point& screenPos);
@@ -42,13 +43,14 @@ public:
 	virtual void DoAltAction(); //action of button what ever it may be
 	void SetTogglable(bool isTogglable);
 	bool GetTogglable();
-	TPT_NO_INLINE bool GetToggleState();
-	TPT_NO_INLINE void SetToggleState(bool state);
+	bool GetToggleState();
+	void SetToggleState(bool state);
 	void SetActionCallback(ButtonAction * action);
 	ButtonAction * GetActionCallback() { return actionCallback; }
 	void SetText(std::string buttonText);
 	void SetIcon(Icon icon);
-	inline std::string GetText() { return ButtonText; };
+	inline std::string GetText() { return ButtonText; }
+	void SetToolTip(std::string newToolTip) { toolTip = newToolTip; }
 protected:
 
 	std::string toolTip;

@@ -29,7 +29,7 @@ Element_TTAN::Element_TTAN()
 
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 251;
-	Description = "Titanium, Higher melting temperature than other metals, blocks all air pressure";
+	Description = "Titanium. Higher melting temperature than most other metals, blocks all air pressure.";
 
 	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC;
@@ -67,7 +67,7 @@ int Element_TTAN::update(UPDATE_FUNC_ARGS)
 
 	if(ttan>=2) {
 		sim->air->bmap_blockair[y/CELL][x/CELL] = 1;
-		sim->air->bmap_blockairh[y/CELL][x/CELL] = 1;
+		sim->air->bmap_blockairh[y/CELL][x/CELL] = 0x8;
 	}
 	return 0;
 }

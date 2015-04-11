@@ -28,10 +28,10 @@ Element_FIGH::Element_FIGH()
 	
 	Temperature = R_TEMP+14.6f+273.15f;
 	HeatConduct = 0;
-	Description = "Fighter. Tries to kill stickmen.";
+	Description = "Fighter. Tries to kill stickmen. You must first give it an element to kill him with.";
 	
 	State = ST_NONE;
-	Properties = 0;
+	Properties = PROP_NOCTYPEDRAW;
 	
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -90,26 +90,36 @@ int Element_FIGH::update(UPDATE_FUNC_ARGS)
 		}
 		else if (tarx<x)
 		{
-			if(!(sim->eval_move(PT_FIGH, figh->legs[4]-10, figh->legs[5]+6, NULL)
+			if(figh->rocketBoots || !(sim->eval_move(PT_FIGH, figh->legs[4]-10, figh->legs[5]+6, NULL)
 			     && sim->eval_move(PT_FIGH, figh->legs[4]-10, figh->legs[5]+3, NULL)))
 				figh->comm = 0x01;
 			else
 				figh->comm = 0x02;
 
-			if (!sim->eval_move(PT_FIGH, figh->legs[4]-4, figh->legs[5]-1, NULL)
+			if (figh->rocketBoots)
+			{
+				if (tary<y)
+					figh->comm = (int)figh->comm | 0x04;
+			}
+			else if (!sim->eval_move(PT_FIGH, figh->legs[4]-4, figh->legs[5]-1, NULL)
 			    || !sim->eval_move(PT_FIGH, figh->legs[12]-4, figh->legs[13]-1, NULL)
 			    || sim->eval_move(PT_FIGH, 2*figh->legs[4]-figh->legs[6], figh->legs[5]+5, NULL))
 				figh->comm = (int)figh->comm | 0x04;
 		}
 		else
 		{ 
-			if (!(sim->eval_move(PT_FIGH, figh->legs[12]+10, figh->legs[13]+6, NULL)
+			if (figh->rocketBoots || !(sim->eval_move(PT_FIGH, figh->legs[12]+10, figh->legs[13]+6, NULL)
 			      && sim->eval_move(PT_FIGH, figh->legs[12]+10, figh->legs[13]+3, NULL)))
 				figh->comm = 0x02;
 			else
 				figh->comm = 0x01;
 
-			if (!sim->eval_move(PT_FIGH, figh->legs[4]+4, figh->legs[5]-1, NULL)
+			if (figh->rocketBoots)
+			{
+				if (tary<y)
+					figh->comm = (int)figh->comm | 0x04;
+			}
+			else if (!sim->eval_move(PT_FIGH, figh->legs[4]+4, figh->legs[5]-1, NULL)
 			    || !sim->eval_move(PT_FIGH, figh->legs[4]+4, figh->legs[5]-1, NULL)
 			    || sim->eval_move(PT_FIGH, 2*figh->legs[12]-figh->legs[14], figh->legs[13]+5, NULL))
 				figh->comm = (int)figh->comm | 0x04;

@@ -1,5 +1,5 @@
-#ifndef PREVIEWMODEL_H_
-#define PREVIEWMODEL_H_
+#ifndef PREVIEWMODEL_H
+#define PREVIEWMODEL_H
 
 #include <vector>
 #include <iostream>
@@ -9,22 +9,16 @@
 #include "client/SaveInfo.h"
 #include "gui/preview/Comment.h"
 #include "gui/search/Thumbnail.h"
+#include "client/requestbroker/RequestListener.h"
 
 using namespace std;
 
-struct SaveData
-{
-	unsigned char * data;
-	int length;
-};
-
 class PreviewView;
-class PreviewModel {
+class PreviewModel: RequestListener {
 	bool doOpen;
-	bool commentBoxEnabled;
 	vector<PreviewView*> observers;
 	SaveInfo * save;
-	vector<char> saveDataBuffer;
+	std::vector<unsigned char> * saveData;
 	std::vector<SaveComment*> * saveComments;
 	void notifySaveChanged();
 	void notifySaveCommentsChanged();
@@ -36,30 +30,11 @@ class PreviewModel {
 	int tSaveDate;
 
 	//
+	bool commentBoxEnabled;
 	bool commentsLoaded;
 	int commentsTotal;
 	int commentsPageNumber;
 
-	bool updateSaveDataWorking;
-	volatile bool updateSaveDataFinished;
-	pthread_t updateSaveDataThread;
-	static void * updateSaveDataTHelper(void * obj);
-	static void updateSaveDataTDelete(void * arg);
-	void * updateSaveDataT();
-
-	bool updateSaveInfoWorking;
-	volatile bool updateSaveInfoFinished;
-	pthread_t updateSaveInfoThread;
-	static void * updateSaveInfoTHelper(void * obj);
-	static void updateSaveInfoTDelete(void * arg);
-	void * updateSaveInfoT();
-
-	bool updateSaveCommentsWorking;
-	volatile bool updateSaveCommentsFinished;
-	pthread_t updateSaveCommentsThread;
-	static void * updateSaveCommentsTHelper(void * obj);
-	static void updateSaveCommentsTDelete(void * arg);
-	void * updateSaveCommentsT();
 public:
 	PreviewModel();
 	SaveInfo * GetSave();
@@ -79,7 +54,8 @@ public:
 	bool GetDoOpen();
 	void SetDoOpen(bool doOpen);
 	void Update();
+	virtual void OnResponseReady(void * object, int identifier);
 	virtual ~PreviewModel();
 };
 
-#endif /* PREVIEWMODEL_H_ */
+#endif /* PREVIEWMODEL_H */

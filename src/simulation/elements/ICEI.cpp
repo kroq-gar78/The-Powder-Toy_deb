@@ -28,7 +28,7 @@ Element_ICEI::Element_ICEI()
 	
 	Temperature = R_TEMP-50.0f+273.15f;
 	HeatConduct = 46;
-	Description = "Solid. Freezes water. Crushes under pressure. Cools down air.";
+	Description = "Crushes under pressure. Cools down air.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_NEUTPASS;
@@ -63,14 +63,14 @@ int Element_ICEI::update(UPDATE_FUNC_ARGS)
 					continue;
 				if ((r&0xFF)==PT_SALT || (r&0xFF)==PT_SLTW)
 				{
-					if (parts[i].temp > sim->elements[PT_SLTW].LowTemperature && !(rand()%333))
+					if (parts[i].temp > sim->elements[PT_SLTW].LowTemperature && !(rand()%200))
 					{
 						sim->part_change_type(i,x,y,PT_SLTW);
 						sim->part_change_type(r>>8,x+rx,y+ry,PT_SLTW);
 						return 0;
 					}
 				}
-				else if (((r&0xFF)==PT_FRZZ) && (parts[i].ctype=PT_FRZW) && !(rand()%333))
+				else if (((r&0xFF)==PT_FRZZ) && (parts[i].ctype=PT_FRZW) && !(rand()%200))
 					sim->part_change_type(r>>8,x+rx,y+ry,PT_ICEI);
 			}
 	return 0;

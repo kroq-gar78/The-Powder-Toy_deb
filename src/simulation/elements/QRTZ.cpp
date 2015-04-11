@@ -26,7 +26,7 @@ Element_QRTZ::Element_QRTZ()
 	
 	Weight = 100;
 	
-	Temperature = R_TEMP+0.0f	+273.15f;
+	Temperature = R_TEMP+273.15f;
 	HeatConduct = 3;
 	Description = "Quartz, breakable mineral. Conducts but becomes brittle at lower temperatures.";
 	
@@ -49,34 +49,40 @@ Element_QRTZ::Element_QRTZ()
 //#TPT-Directive ElementHeader Element_QRTZ static int update(UPDATE_FUNC_ARGS)
 int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 {
-	int r, tmp, trade, rx, ry, np;
-	parts[i].pavg[0] = parts[i].pavg[1];
-	parts[i].pavg[1] = sim->pv[y/CELL][x/CELL];
-	if (parts[i].pavg[1]-parts[i].pavg[0] > 0.05*(parts[i].temp/3) || parts[i].pavg[1]-parts[i].pavg[0] < -0.05*(parts[i].temp/3))
+	int r, tmp, trade, rx, ry, np, t = parts[i].type;
+	if (t == PT_QRTZ)
 	{
-		sim->part_change_type(i,x,y,PT_PQRT);
+		parts[i].pavg[0] = parts[i].pavg[1];
+		parts[i].pavg[1] = sim->pv[y/CELL][x/CELL];
+		if (parts[i].pavg[1]-parts[i].pavg[0] > 0.05*(parts[i].temp/3) || parts[i].pavg[1]-parts[i].pavg[0] < -0.05*(parts[i].temp/3))
+		{
+			sim->part_change_type(i,x,y,PT_PQRT);
+			parts[i].life = 5; //timer before it can grow or diffuse again
+		}
 	}
+	if (parts[i].life>5)
+		parts[i].life = 5;
 	// absorb SLTW
-	if (parts[i].ctype!=-1)
-		for (rx=-2; rx<3; rx++)
-			for (ry=-2; ry<3; ry++)
+	if (parts[i].tmp != -1)
+		for (rx=-1; rx<2; rx++)
+			for (ry=-1; ry<2; ry++)
 				if (BOUNDS_CHECK && (rx || ry))
 				{
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					else if ((r&0xFF)==PT_SLTW && !(rand()%2500))
+					else if ((r&0xFF)==PT_SLTW && !(rand()%500))
 					{
 						sim->kill_part(r>>8);
-						parts[i].ctype ++;
+						parts[i].tmp++;
 					}
 				}
 	// grow and diffuse
-	if (parts[i].ctype>0)
+	if (parts[i].tmp > 0 && (parts[i].vx*parts[i].vx + parts[i].vy*parts[i].vy)<0.2f && parts[i].life<=0)
 	{
-		bool stopgrow=false;
+		bool stopgrow = false;
 		int rnd, sry, srx;
-		for ( trade = 0; trade<9; trade ++)
+		for (trade = 0; trade < 9; trade++)
 		{
 			rnd = rand()%0x3FF;
 			rx = (rnd%5)-2;
@@ -88,20 +94,26 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 			{
 				if (!stopgrow)//try to grow
 				{
-					if (!pmap[y+sry][x+srx] && parts[i].ctype!=0)
+					if (!pmap[y+sry][x+srx] && parts[i].tmp!=0)
 					{
 						np = sim->create_part(-1,x+srx,y+sry,PT_QRTZ);
 						if (np>-1)
 						{
-							parts[np].tmp = parts[i].tmp;
-							parts[i].ctype--;
+							parts[np].temp = parts[i].temp;
+							parts[np].tmp2 = parts[i].tmp2;
+							parts[i].tmp--;
+							if (t == PT_PQRT)
+							{
+								// If PQRT is stationary and has started growing particles of QRTZ, the PQRT is basically part of a new QRTZ crystal. So turn it back into QRTZ so that it behaves more like part of the crystal.
+								sim->part_change_type(i,x,y,PT_QRTZ);
+							}
 							if (rand()%2)
 							{
-								parts[np].ctype=-1;//dead qrtz
+								parts[np].tmp=-1;//dead qrtz
 							}
-							else if (!parts[i].ctype && !(rand()%15))
+							else if (!parts[i].tmp && !(rand()%15))
 							{
-								parts[i].ctype=-1;
+								parts[i].tmp=-1;
 							}
 							stopgrow=true;
 						}
@@ -111,19 +123,19 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				else if ((r&0xFF)==PT_QRTZ && (parts[i].ctype>parts[r>>8].ctype) && parts[r>>8].ctype>=0 )
+				else if ((r&0xFF)==PT_QRTZ && (parts[i].tmp>parts[r>>8].tmp) && parts[r>>8].tmp>=0)
 				{
-					tmp = parts[i].ctype - parts[r>>8].ctype;
+					tmp = parts[i].tmp - parts[r>>8].tmp;
 					if (tmp ==1)
 					{
-						parts[r>>8].ctype ++;
-						parts[i].ctype --;
+						parts[r>>8].tmp++;
+						parts[i].tmp--;
 						break;
 					}
 					if (tmp>0)
 					{
-						parts[r>>8].ctype += tmp/2;
-						parts[i].ctype -= tmp/2;
+						parts[r>>8].tmp += tmp/2;
+						parts[i].tmp -= tmp/2;
 						break;
 					}
 				}
@@ -138,7 +150,7 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 int Element_QRTZ::graphics(GRAPHICS_FUNC_ARGS)
  //QRTZ and PQRT
 {
-	int t = cpart->type, z = cpart->tmp - 5;//speckles!
+	int t = cpart->type, z = cpart->tmp2 - 5;//speckles!
 	/*if (cpart->temp>(ptransitions[t].thv-800.0f))//hotglow for quartz
 	{
 		float frequency = 3.1415/(2*ptransitions[t].thv-(ptransitions[t].thv-800.0f));

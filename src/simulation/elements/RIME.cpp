@@ -6,7 +6,7 @@ Element_RIME::Element_RIME()
 	Name = "RIME";
 	Colour = PIXPACK(0xCCCCCC);
 	MenuVisible = 1;
-	MenuSection = SC_CRACKER2;
+	MenuSection = SC_SOLIDS;
 	Enabled = 1;
 	
 	Advection = 0.00f;
@@ -28,7 +28,7 @@ Element_RIME::Element_RIME()
 	
 	Temperature = 243.15f;
 	HeatConduct = 100;
-	Description = "Not quite Ice";
+	Description = "Solid, created when steam cools rapidly and goes through sublimation.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID;

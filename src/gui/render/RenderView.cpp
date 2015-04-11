@@ -77,9 +77,10 @@ public:
 };
 
 RenderView::RenderView():
-	ui::Window(ui::Point(0, 0), ui::Point(XRES, YRES+MENUSIZE)),
+	ui::Window(ui::Point(0, 0), ui::Point(XRES, WINDOWH)),
 	toolTip(""),
 	toolTipPresence(0),
+	isToolTipFadingIn(false),
 	ren(NULL)
 {
 	ui::Button * presetButton;
@@ -185,6 +186,14 @@ RenderView::RenderView():
 	tCheckbox->SetActionCallback(new RenderModeAction(this, RENDER_BASC));
 	AddComponent(tCheckbox);
 
+	checkboxOffset += cSpace;
+
+	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Spark", "Glow effect on sparks");
+	renderModes.push_back(tCheckbox);
+	tCheckbox->SetIcon(IconEffect);
+	tCheckbox->SetActionCallback(new RenderModeAction(this, RENDER_SPRK));
+	AddComponent(tCheckbox);
+
 	checkboxOffset += sSpace;
 	line1 = checkboxOffset-5;
 
@@ -230,9 +239,9 @@ RenderView::RenderView():
 	AddComponent(tCheckbox);
 
 #ifdef OGLR
-	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Effect", "I don't know what this does..."); //I would remove the whole checkbox, but then there's a large empty space
+	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Effect", "Some type of OpenGL effect ... maybe"); //I would remove the whole checkbox, but then there's a large empty space
 #else
-	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Effect", "Does nothing");
+	tCheckbox = new ui::Checkbox(ui::Point(checkboxOffset, YRES+4), ui::Point(30, 16), "Effect", "Enables moving solids, stickmen guns, and premium(tm) graphics");
 #endif
 	displayModes.push_back(tCheckbox);
 	tCheckbox->SetIcon(IconEffect);
@@ -352,7 +361,7 @@ void RenderView::NotifyColourChanged(RenderModel * sender)
 void RenderView::OnDraw()
 {
 	Graphics * g = ui::Engine::Ref().g;
-	g->clearrect(-1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1);
+	g->clearrect(-1, -1, WINDOWW+1, WINDOWH+1);
 	if(ren)
 	{
 		ren->clearScreen(1.0f);
@@ -360,11 +369,11 @@ void RenderView::OnDraw()
 		ren->RenderEnd();
 	}
 	g->draw_line(0, YRES, XRES-1, YRES, 200, 200, 200, 255);
-	g->draw_line(line1, YRES, line1, YRES+MENUSIZE, 200, 200, 200, 255);
-	g->draw_line(line2, YRES, line2, YRES+MENUSIZE, 200, 200, 200, 255);
-	g->draw_line(line3, YRES, line3, YRES+MENUSIZE, 200, 200, 200, 255);
-	g->draw_line(line4, YRES, line4, YRES+MENUSIZE, 200, 200, 200, 255);
-	g->draw_line(XRES, 0, XRES, YRES+MENUSIZE, 255, 255, 255, 255);
+	g->draw_line(line1, YRES, line1, WINDOWH, 200, 200, 200, 255);
+	g->draw_line(line2, YRES, line2, WINDOWH, 200, 200, 200, 255);
+	g->draw_line(line3, YRES, line3, WINDOWH, 200, 200, 200, 255);
+	g->draw_line(line4, YRES, line4, WINDOWH, 200, 200, 200, 255);
+	g->draw_line(XRES, 0, XRES, WINDOWH, 255, 255, 255, 255);
 	if(toolTipPresence && toolTip.length())
 	{
 		g->drawtext(6, Size.Y-MENUSIZE-12, (char*)toolTip.c_str(), 255, 255, 255, toolTipPresence>51?255:toolTipPresence*5);
@@ -373,6 +382,16 @@ void RenderView::OnDraw()
 
 void RenderView::OnTick(float dt)
 {
+	if (isToolTipFadingIn)
+	{
+		isToolTipFadingIn = false;
+		if(toolTipPresence < 120)
+		{
+			toolTipPresence += int(dt*2)>1?int(dt*2):2;
+			if(toolTipPresence > 120)
+				toolTipPresence = 120;
+		}
+	}
 	if(toolTipPresence>0)
 	{
 		toolTipPresence -= int(dt)>0?int(dt):1;
@@ -394,7 +413,7 @@ void RenderView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bo
 void RenderView::ToolTip(ui::Component * sender, ui::Point mousePosition, std::string toolTip)
 {
 	this->toolTip = toolTip;
-	toolTipPresence = 500;
+	this->isToolTipFadingIn = true;
 }
 
 RenderView::~RenderView() {

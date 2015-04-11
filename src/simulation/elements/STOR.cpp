@@ -28,10 +28,10 @@ Element_STOR::Element_STOR()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 0;
-	Description = "Solid. Stores a single particle, releases when charged with PSCN, also passes to PIPE";
+	Description = "Captures and stores a single particle. releases when charged with PSCN, also passes to PIPE.";
 	
 	State = ST_NONE;
-	Properties = TYPE_SOLID;
+	Properties = TYPE_SOLID|PROP_NOCTYPEDRAW;
 	
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -61,7 +61,8 @@ int Element_STOR::update(UPDATE_FUNC_ARGS)
 					continue;
 				if (!parts[i].tmp && !parts[i].life && (r&0xFF)!=PT_STOR && !(sim->elements[(r&0xFF)].Properties&TYPE_SOLID) && (!parts[i].ctype || (r&0xFF)==parts[i].ctype))
 				{
-					if ((r&0xFF) == PT_SOAP) sim->detach(r>>8);
+					if ((r&0xFF) == PT_SOAP)
+						Element_SOAP::detach(sim, r>>8);
 					parts[i].tmp = parts[r>>8].type;
 					parts[i].temp = parts[r>>8].temp;
 					parts[i].tmp2 = parts[r>>8].life;

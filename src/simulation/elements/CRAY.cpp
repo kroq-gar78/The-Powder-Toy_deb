@@ -28,7 +28,7 @@ Element_CRAY::Element_CRAY()
 	
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 0;
-	Description = "Particle Ray Emitter. Creates a beam of particles set by ctype, range is set by tmp";
+	Description = "Particle Ray Emitter. Creates a beam of particles set by its ctype, with a range set by tmp.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_LIFE_DEC;
@@ -78,6 +78,7 @@ int Element_CRAY::update(UPDATE_FUNC_ARGS)
 						continue;
 					if ((r&0xFF)==PT_SPRK && parts[r>>8].life==3) { //spark found, start creating
 						unsigned int colored = 0;
+						bool isBlackDeco = false;
 						bool destroy = parts[r>>8].ctype==PT_PSCN;
 						bool nostop = parts[r>>8].ctype==PT_INST;
 						bool createSpark = (parts[r>>8].ctype==PT_INWR);
@@ -96,13 +97,22 @@ int Element_CRAY::update(UPDATE_FUNC_ARGS)
 								else
 									nr = sim->create_part(-1, x+nxi+nxx, y+nyi+nyy, parts[i].ctype);
 								if (nr!=-1) {
-									parts[nr].dcolour = colored;
+									if (colored)
+										parts[nr].dcolour = colored;
 									parts[nr].temp = parts[i].temp;
 									if(!--partsRemaining)
 										docontinue = 0;
 								}
 							} else if ((r&0xFF)==PT_FILT) { // get color if passed through FILT
-								colored = wavelengthToDecoColour(parts[r>>8].ctype);
+								if (parts[r>>8].dcolour == 0xFF000000)
+									colored = 0xFF000000;
+								else if (parts[r>>8].tmp==0)
+								{
+									colored = wavelengthToDecoColour(Element_FILT::getWavelengths(&parts[r>>8]));
+								}
+								else if (colored==0xFF000000)
+									colored = 0;
+								parts[r>>8].life = 4;
 							} else if ((r&0xFF) == PT_CRAY || nostop) {
 								docontinue = 1;
 							} else if(destroy && r && ((r&0xFF) != PT_DMND)) {
