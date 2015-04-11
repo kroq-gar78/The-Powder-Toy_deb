@@ -6,7 +6,7 @@ Element_PIPE::Element_PIPE()
 	Name = "PIPE";
 	Colour = PIXPACK(0x444444);
 	MenuVisible = 1;
-	MenuSection = SC_SOLIDS;
+	MenuSection = SC_FORCE;
 	Enabled = 1;
 	
 	Advection = 0.0f;
@@ -28,7 +28,7 @@ Element_PIPE::Element_PIPE()
 	
 	Temperature = 273.15f;
 	HeatConduct = 0;
-	Description = "Moves elements around, read FAQ on website for help.";
+	Description = "PIPE, moves particles around. Once the BRCK generates, erase some for the exit. Then the PIPE generates and is useable.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_LIFE_DEC;
@@ -71,6 +71,8 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
  {
 	int r, rx, ry, np;
 	int rnd, rndstore;
+	if ((parts[i].tmp&0xFF)>=PT_NUM || !sim->elements[parts[i].tmp&0xFF].Enabled)
+		parts[i].tmp &= ~0xFF;
 	if (parts[i].tmp & PPIP_TMPFLAG_TRIGGERS)
 	{
 		int pause_changed = 0;
@@ -92,7 +94,7 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 			for (rx=-2; rx<3; rx++)
 				for (ry=-2; ry<3; ry++)
 				{
-					if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+					if (BOUNDS_CHECK && (rx || ry))
 					{
 						r = pmap[y+ry][x+rx];
 						if ((r&0xFF) == PT_BRCK)
@@ -135,7 +137,7 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 			// make automatic pipe pattern
 			for (rx=-1; rx<2; rx++)
 				for (ry=-1; ry<2; ry++)
-					if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+					if (BOUNDS_CHECK && (rx || ry))
 					{
 						r = pmap[y+ry][x+rx];
 						if (!r)
@@ -182,7 +184,7 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 				rndstore = rndstore>>3;
 				rx = pos_1_rx[rnd];
 				ry = pos_1_ry[rnd];
-				if (x+rx>=0 && y+ry>=0 && x+rx<XRES && y+ry<YRES)
+				if (BOUNDS_CHECK)
 				{
 					r = pmap[y+ry][x+rx];
 					if(!r)
@@ -192,14 +194,14 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 						np = sim->create_part(-1,x+rx,y+ry,parts[i].tmp&0xFF);
 						if (np!=-1)
 						{
-							transfer_pipe_to_part(parts+i, parts+np);
+							transfer_pipe_to_part(sim, parts+i, parts+np);
 						}
 					}
 					//try eating particle at entrance
 					else if ((parts[i].tmp&0xFF) == 0 && (sim->elements[r&0xFF].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
 					{
 						if ((r&0xFF)==PT_SOAP)
-							sim->detach(r>>8);
+							Element_SOAP::detach(sim, r>>8);
 						transfer_part_to_pipe(parts+(r>>8), parts+i);
 						sim->kill_part(r>>8);
 					}
@@ -216,21 +218,13 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 	{
 		if (parts[i].temp<272.15)//manual pipe colors
 		{
-			if (parts[i].temp>173.25&&parts[i].temp<273.15)
-			{
+			if (parts[i].temp>173.25)
 				parts[i].ctype = 2;
-				parts[i].life = 0;
-			}
-			if (parts[i].temp>73.25&&parts[i].temp<=173.15)
-			{
+			else if (parts[i].temp>73.25)
 				parts[i].ctype = 3;
-				parts[i].life = 0;
-			}
-			if (parts[i].temp>=0&&parts[i].temp<=73.15)
-			{
+			else if (parts[i].temp>=0)
 				parts[i].ctype = 4;
-				parts[i].life = 0;
-			}
+			parts[i].life = 0;
 		}
 		else
 		{
@@ -238,7 +232,7 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 			for (rx=-2; rx<3; rx++)
 				for (ry=-2; ry<3; ry++)
 				{
-					if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+					if (BOUNDS_CHECK && (rx || ry))
 					{
 						r = pmap[y+ry][x+rx];
 						if (!r)
@@ -259,7 +253,7 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 		{
 			for (rx=-1; rx<2; rx++)
 				for (ry=-1; ry<2; ry++)
-					if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+					if (BOUNDS_CHECK && (rx || ry))
 					{
 						if (!pmap[y+ry][x+rx] && sim->bmap[(y+ry)/CELL][(x+rx)/CELL]!=WL_ALLOWAIR && sim->bmap[(y+ry)/CELL][(x+rx)/CELL]!=WL_WALL && sim->bmap[(y+ry)/CELL][(x+rx)/CELL]!=WL_WALLELEC && (sim->bmap[(y+ry)/CELL][(x+rx)/CELL]!=WL_EWALL || sim->emap[(y+ry)/CELL][(x+rx)/CELL]))
 							parts[i].life=50;
@@ -270,7 +264,7 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 			int issingle = 1;
 			for (rx=-1; rx<2; rx++)
 				for (ry=-1; ry<2; ry++)
-					if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+					if (BOUNDS_CHECK && (rx || ry))
 					{
 						r = pmap[y+ry][x+rx];
 						if (((r&0xFF)==PT_PIPE || (r&0xFF) == PT_PPIP) && parts[i].ctype==1 && parts[i].life )
@@ -292,10 +286,8 @@ int Element_PIPE::update(UPDATE_FUNC_ARGS)
 
 //#TPT-Directive ElementHeader Element_PIPE static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_PIPE::graphics(GRAPHICS_FUNC_ARGS)
-
 {
-
-	if ((cpart->tmp&0xFF)>0 && (cpart->tmp&0xFF)<PT_NUM)
+	if ((cpart->tmp&0xFF)>0 && (cpart->tmp&0xFF)<PT_NUM && ren->sim->elements[(cpart->tmp&0xFF)].Enabled)
 	{
 		//Create a temp. particle and do a subcall.
 		Particle tpart;
@@ -384,8 +376,8 @@ int Element_PIPE::graphics(GRAPHICS_FUNC_ARGS)
 	return 0;
 }
 
-//#TPT-Directive ElementHeader Element_PIPE static void transfer_pipe_to_part(Particle *pipe, Particle *part)
-void Element_PIPE::transfer_pipe_to_part(Particle *pipe, Particle *part)
+//#TPT-Directive ElementHeader Element_PIPE static void transfer_pipe_to_part(Simulation * sim, Particle *pipe, Particle *part)
+void Element_PIPE::transfer_pipe_to_part(Simulation * sim, Particle *pipe, Particle *part)
 {
 	part->type = (pipe->tmp & 0xFF);
 	part->temp = pipe->temp;
@@ -394,7 +386,7 @@ void Element_PIPE::transfer_pipe_to_part(Particle *pipe, Particle *part)
 	part->ctype = pipe->pavg[1];
 	pipe->tmp &= ~0xFF;
 
-	if (part->type != PT_PHOT && part->type != PT_ELEC && part->type != PT_NEUT)
+	if (!(sim->elements[part->type].Properties & TYPE_ENERGY))
 	{
 		part->vx = 0.0f;
 		part->vy = 0.0f;
@@ -461,16 +453,16 @@ void Element_PIPE::pushParticle(Simulation * sim, int i, int count, int original
 					pushParticle(sim, r>>8,count,original);
 				}
 				else if ((r&0xFF) == PT_PRTI) //Pass particles into PRTI for a pipe speed increase
-		        {
+				{
 					int nnx;
 					for (nnx=0; nnx<80; nnx++)
 						if (!sim->portalp[sim->parts[r>>8].tmp][count][nnx].type)
 						{
-							transfer_pipe_to_part(sim->parts+i, &(sim->portalp[sim->parts[r>>8].tmp][count][nnx]));
+							transfer_pipe_to_part(sim, sim->parts+i, &(sim->portalp[sim->parts[r>>8].tmp][count][nnx]));
 							count++;
 							break;
 						}
-		        }
+				}
 			}
 		}
 	}
@@ -487,26 +479,26 @@ void Element_PIPE::pushParticle(Simulation * sim, int i, int count, int original
 			pushParticle(sim, r>>8,count,original);
 		}
 		else if ((r&0xFF) == PT_PRTI) //Pass particles into PRTI for a pipe speed increase
-	    {
+		{
 			int nnx;
 			for (nnx=0; nnx<80; nnx++)
 				if (!sim->portalp[sim->parts[r>>8].tmp][count][nnx].type)
 				{
-					transfer_pipe_to_part(sim->parts+i, &(sim->portalp[sim->parts[r>>8].tmp][count][nnx]));
+					transfer_pipe_to_part(sim, sim->parts+i, &(sim->portalp[sim->parts[r>>8].tmp][count][nnx]));
 					count++;
 					break;
 				}
-	    }
-	    else if ((r&0xFF) == PT_NONE) //Move particles out of pipe automatically, much faster at ends
-	    {
+		}
+		else if ((r&0xFF) == PT_NONE) //Move particles out of pipe automatically, much faster at ends
+		{
 			rx = pos_1_rx[coords];
 			ry = pos_1_ry[coords];
 			np = sim->create_part(-1,x+rx,y+ry,sim->parts[i].tmp&0xFF);
 			if (np!=-1)
 			{
-				transfer_pipe_to_part(sim->parts+i, sim->parts+np);
+				transfer_pipe_to_part(sim, sim->parts+i, sim->parts+np);
 			}
-	    }
+		}
 		
 	}
 	return;

@@ -35,11 +35,43 @@ VideoBuffer::VideoBuffer(VideoBuffer * old):
 	std::copy(old->Buffer, old->Buffer+(old->Width*old->Height), Buffer);
 };
 
+VideoBuffer::VideoBuffer(pixel * buffer, int width, int height):
+	Width(width),
+	Height(height)
+{
+	Buffer = new pixel[width*height];
+	std::copy(buffer, buffer+(width*height), Buffer);
+}
+
 void VideoBuffer::Resize(float factor, bool resample)
 {
 	int newWidth = ((float)Width)*factor;
 	int newHeight = ((float)Height)*factor;
+	Resize(newWidth, newHeight, resample);
+}
+
+void VideoBuffer::Resize(int width, int height, bool resample, bool fixedRatio)
+{
+	int newWidth = width;
+	int newHeight = height;
 	pixel * newBuffer;
+	if(newHeight == -1 && newWidth == -1)
+		return;
+	if(newHeight == -1 || newWidth == -1)
+	{
+		if(newHeight == -1)
+			newHeight = ((float)Height)*((float)newWidth/(float)Width);
+		if(newWidth == -1)
+			newWidth = ((float)Width)*((float)newHeight/(float)Height);
+	}
+	else if(fixedRatio)
+	{
+		//Force proportions
+		if(newWidth*Height > newHeight*Width) // same as nW/W > nH/H
+			newWidth = (int)(Width * (newHeight/(float)Height));
+		else
+			newHeight = (int)(Height * (newWidth/(float)Width));
+	}
 	if(resample)
 		newBuffer = Graphics::resample_img(Buffer, Width, Height, newWidth, newHeight);
 	else
@@ -117,7 +149,7 @@ int VideoBuffer::AddCharacter(int x, int y, int c, int r, int g, int b, int a)
 VideoBuffer::~VideoBuffer()
 {
 	delete[] Buffer;
-};
+}
 
 /**
  * Common graphics functions, mostly static methods that provide
@@ -309,6 +341,8 @@ pixel *Graphics::resample_img(pixel *src, int sw, int sh, int rw, int rh)
 	float * samples[PIXELCHANNELS];
 
 	//Resampler for each colour channel
+	if (sourceWidth <= 0 || sourceHeight <= 0 || resultWidth <= 0 || resultHeight <= 0)
+		return NULL;
 	resamplers[0] = new Resampler(sourceWidth, sourceHeight, resultWidth, resultHeight, Resampler::BOUNDARY_CLAMP, 0.0f, 1.0f, pFilter, NULL, NULL, filter_scale, filter_scale);
 	samples[0] = new float[sourceWidth];
 	for (int i = 1; i < PIXELCHANNELS; i++)
@@ -413,13 +447,13 @@ pixel *Graphics::resample_img(pixel *src, int sw, int sh, int rw, int rh)
 	pixel *q = NULL;
 	if(rw == sw && rh == sh){
 		//Don't resample
-		q = (pixel *)malloc(rw*rh*PIXELSIZE);
-		memcpy(q, src, rw*rh*PIXELSIZE);
+		q = new pixel[rw*rh];
+		std::copy(src, src+(rw*rh), q);
 	} else if(!stairstep) {
 		float fx, fy, fyc, fxc;
 		double intp;
 		pixel tr, tl, br, bl;
-		q = (pixel *)malloc(rw*rh*PIXELSIZE);
+		q = new pixel[rw*rh];
 		//Bilinear interpolation for upscaling
 		for (y=0; y<rh; y++)
 			for (x=0; x<rw; x++)
@@ -449,8 +483,8 @@ pixel *Graphics::resample_img(pixel *src, int sw, int sh, int rw, int rh)
 		pixel tr, tl, br, bl;
 		int rrw = rw, rrh = rh;
 		pixel * oq;
-		oq = (pixel *)malloc(sw*sh*PIXELSIZE);
-		memcpy(oq, src, sw*sh*PIXELSIZE);
+		oq = new pixel[sw*sh];
+		std::copy(src, src+(sw*sh), oq);
 		rw = sw;
 		rh = sh;
 		while(rrw != rw && rrh != rh){
@@ -462,7 +496,7 @@ pixel *Graphics::resample_img(pixel *src, int sw, int sh, int rw, int rh)
 				rw = rrw;
 			if(rh <= rrh)
 				rh = rrh;
-			q = (pixel *)malloc(rw*rh*PIXELSIZE);
+			q = new pixel[rw*rh];
 			//Bilinear interpolation
 			for (y=0; y<rh; y++)
 				for (x=0; x<rw; x++)
@@ -485,7 +519,7 @@ pixel *Graphics::resample_img(pixel *src, int sw, int sh, int rw, int rh)
 						(int)(((((float)PIXB(tl))*(1.0f-fxc))+(((float)PIXB(tr))*(fxc)))*(1.0f-fyc) + ((((float)PIXB(bl))*(1.0f-fxc))+(((float)PIXB(br))*(fxc)))*(fyc))
 						);
 				}
-			free(oq);
+			delete[] oq;
 			oq = q;
 			sw = rw;
 			sh = rh;
@@ -536,11 +570,23 @@ int Graphics::textwidth(const char *s)
 {
 	int x = 0;
 	for (; *s; s++)
+	{
+		if(((char)*s)=='\b')
+		{
+			if(!s[1]) break;
+			s++;
+			continue;
+		} else if(*s == '\x0F') {
+			if(!s[1] || !s[2] || !s[3]) break;
+			s+=3;
+			continue;
+		}
 		x += font_data[font_ptrs[(int)(*(unsigned char *)s)]];
+	}
 	return x-1;
 }
 
-int Graphics::CharWidth(char c)
+int Graphics::CharWidth(unsigned char c)
 {
 	return font_data[font_ptrs[(int)c]];
 }
@@ -824,9 +870,15 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 		break;
 	case IconVoteUp:
 		if(invert)
-			drawchar(x, y+1, 0xCB, 0, 100, 0, alpha);
+		{
+			drawchar(x-11, y+1, 0xCB, 0, 100, 0, alpha);
+			drawtext(x+2, y+1, "Vote", 0, 100, 0, alpha);
+		}
 		else
-			drawchar(x, y+1, 0xCB, 0, 187, 18, alpha);
+		{
+			drawchar(x-11, y+1, 0xCB, 0, 187, 18, alpha);
+			drawtext(x+2, y+1, "Vote", 0, 187, 18, alpha);
+		}
 		break;
 	case IconVoteDown:
 		if(invert)
@@ -1067,6 +1119,27 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 	}
 }
 
+void Graphics::draw_rgba_image(unsigned char *data, int x, int y, float alpha)
+{
+	unsigned char w, h;
+	int i, j;
+	unsigned char r, g, b, a;
+	if (!data) return;
+	w = *(data++)&0xFF;
+	h = *(data++)&0xFF;
+	for (j=0; j<h; j++)
+	{
+		for (i=0; i<w; i++)
+		{
+			r = *(data++)&0xFF;
+			g = *(data++)&0xFF;
+			b = *(data++)&0xFF;
+			a = *(data++)&0xFF;
+			addpixel(x+i, y+j, r, g, b, (int)(a*alpha));
+		}
+	}
+}
+
 pixel *Graphics::render_packed_rgb(void *image, int width, int height, int cmp_size)
 {
 	unsigned char *tmp;
@@ -1098,22 +1171,12 @@ pixel *Graphics::render_packed_rgb(void *image, int width, int height, int cmp_s
 	return res;
 }
 
-void Graphics::draw_image(const VideoBuffer & vidBuf, int x, int y, int a)
-{
-	draw_image(vidBuf.Buffer, x, y, vidBuf.Width, vidBuf.Height, a);
-}
-
-void Graphics::draw_image(VideoBuffer * vidBuf, int x, int y, int a)
-{
-	draw_image(vidBuf->Buffer, x, y, vidBuf->Width, vidBuf->Height, a);
-}
-
 VideoBuffer Graphics::DumpFrame()
 {
 #ifdef OGLI
 #else
-	VideoBuffer newBuffer(XRES+BARSIZE, YRES+MENUSIZE);
-	std::copy(vid, vid+((XRES+BARSIZE)*(YRES+MENUSIZE)), newBuffer.Buffer);
+	VideoBuffer newBuffer(WINDOWW, WINDOWH);
+	std::copy(vid, vid+(WINDOWW*WINDOWH), newBuffer.Buffer);
 	return newBuffer;
 #endif
 }

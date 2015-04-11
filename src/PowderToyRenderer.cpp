@@ -9,7 +9,7 @@
 
 #include "Config.h"
 #include "Format.h"
-#include "interface/Engine.h"
+#include "gui/interface/Engine.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 
@@ -18,8 +18,8 @@
 
 
 void EngineProcess() {}
-void ClipboardPush(char * text) {}
-char * ClipboardPull() {}
+void ClipboardPush(std::string) {}
+std::string ClipboardPull() { return ""; }
 int GetModifiers() { return 0; }
 
 void readFile(std::string filename, std::vector<char> & storage)
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 	ui::Engine::Ref().g = new Graphics();
 	
 	engine = &ui::Engine::Ref();
-	engine->Begin(XRES+BARSIZE, YRES+MENUSIZE);
+	engine->Begin(WINDOWW, WINDOWH);
 
 	GameSave * gameSave = new GameSave(inputFile);
 

@@ -1,14 +1,7 @@
-/*
- * SaveFile.cpp
- *
- *  Created on: Jun 6, 2012
- *      Author: Simon
- */
-
 #include "SaveFile.h"
 #include "GameSave.h"
 #include "Client.h"
-#include "search/Thumbnail.h"
+#include "gui/search/Thumbnail.h"
 
 SaveFile::SaveFile(SaveFile & save):
 	gameSave(NULL),

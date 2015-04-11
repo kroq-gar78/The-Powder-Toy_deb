@@ -2,55 +2,54 @@
 //#TPT-Directive ElementClass Element_QRTZ PT_QRTZ 132
 Element_QRTZ::Element_QRTZ()
 {
-    Identifier = "DEFAULT_PT_QRTZ";
-    Name = "QRTZ";
-    Colour = PIXPACK(0xAADDDD);
-    MenuVisible = 1;
-    MenuSection = SC_SOLIDS;
-    Enabled = 1;
-    
-    Advection = 0.0f;
-    AirDrag = 0.00f * CFDS;
-    AirLoss = 0.90f;
-    Loss = 0.00f;
-    Collision = 0.0f;
-    Gravity = 0.0f;
-    Diffusion = 0.00f;
-    HotAir = 0.000f	* CFDS;
-    Falldown = 0;
-    
-    Flammable = 0;
-    Explosive = 0;
-    Meltable = 0;
-    Hardness = 0;
-    
-    Weight = 100;
-    
-    Temperature = R_TEMP+0.0f	+273.15f;
-    HeatConduct = 3;
-    Description = "Quartz, breakable mineral. Conducts but becomes brittle at lower temperatures.";
-    
-    State = ST_SOLID;
-    Properties = TYPE_SOLID|PROP_HOT_GLOW|PROP_LIFE_DEC;
-    
-    LowPressure = IPL;
-    LowPressureTransition = NT;
-    HighPressure = IPH;
-    HighPressureTransition = NT;
-    LowTemperature = ITL;
-    LowTemperatureTransition = NT;
-    HighTemperature = 2573.15f;
-    HighTemperatureTransition = PT_LAVA;
-    
-    Update = &Element_QRTZ::update;
-    Graphics = &Element_QRTZ::graphics;
+	Identifier = "DEFAULT_PT_QRTZ";
+	Name = "QRTZ";
+	Colour = PIXPACK(0xAADDDD);
+	MenuVisible = 1;
+	MenuSection = SC_SOLIDS;
+	Enabled = 1;
+	
+	Advection = 0.0f;
+	AirDrag = 0.00f * CFDS;
+	AirLoss = 0.90f;
+	Loss = 0.00f;
+	Collision = 0.0f;
+	Gravity = 0.0f;
+	Diffusion = 0.00f;
+	HotAir = 0.000f	* CFDS;
+	Falldown = 0;
+	
+	Flammable = 0;
+	Explosive = 0;
+	Meltable = 0;
+	Hardness = 0;
+	
+	Weight = 100;
+	
+	Temperature = R_TEMP+273.15f;
+	HeatConduct = 3;
+	Description = "Quartz, breakable mineral. Conducts but becomes brittle at lower temperatures.";
+	
+	State = ST_SOLID;
+	Properties = TYPE_SOLID|PROP_HOT_GLOW|PROP_LIFE_DEC;
+	
+	LowPressure = IPL;
+	LowPressureTransition = NT;
+	HighPressure = IPH;
+	HighPressureTransition = NT;
+	LowTemperature = ITL;
+	LowTemperatureTransition = NT;
+	HighTemperature = 2573.15f;
+	HighTemperatureTransition = PT_LAVA;
+	
+	Update = &Element_QRTZ::update;
+	Graphics = &Element_QRTZ::graphics;
 }
 
 //#TPT-Directive ElementHeader Element_QRTZ static int update(UPDATE_FUNC_ARGS)
 int Element_QRTZ::update(UPDATE_FUNC_ARGS)
- {
-	int r, tmp, trade, rx, ry, np, t;
-	t = parts[i].type;
+{
+	int r, tmp, trade, rx, ry, np, t = parts[i].type;
 	if (t == PT_QRTZ)
 	{
 		parts[i].pavg[0] = parts[i].pavg[1];
@@ -58,80 +57,85 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 		if (parts[i].pavg[1]-parts[i].pavg[0] > 0.05*(parts[i].temp/3) || parts[i].pavg[1]-parts[i].pavg[0] < -0.05*(parts[i].temp/3))
 		{
 			sim->part_change_type(i,x,y,PT_PQRT);
+			parts[i].life = 5; //timer before it can grow or diffuse again
 		}
 	}
+	if (parts[i].life>5)
+		parts[i].life = 5;
 	// absorb SLTW
-	if (parts[i].ctype!=-1)
-		for (rx=-2; rx<3; rx++)
-			for (ry=-2; ry<3; ry++)
-				if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+	if (parts[i].tmp != -1)
+		for (rx=-1; rx<2; rx++)
+			for (ry=-1; ry<2; ry++)
+				if (BOUNDS_CHECK && (rx || ry))
 				{
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					else if ((r&0xFF)==PT_SLTW && (1>rand()%2500))
+					else if ((r&0xFF)==PT_SLTW && !(rand()%500))
 					{
 						sim->kill_part(r>>8);
-						parts[i].ctype ++;
+						parts[i].tmp++;
 					}
 				}
-	// grow if absorbed SLTW
-	if (parts[i].ctype>0)
+	// grow and diffuse
+	if (parts[i].tmp > 0 && (parts[i].vx*parts[i].vx + parts[i].vy*parts[i].vy)<0.2f && parts[i].life<=0)
 	{
-		for ( trade = 0; trade<5; trade ++)
+		bool stopgrow = false;
+		int rnd, sry, srx;
+		for (trade = 0; trade < 9; trade++)
 		{
-			rx = rand()%3-1;
-			ry = rand()%3-1;
-			if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+			rnd = rand()%0x3FF;
+			rx = (rnd%5)-2;
+			srx = (rnd%3)-1;
+			rnd >>= 3;
+			ry = (rnd%5)-2;
+			sry = (rnd%3)-1;
+			if (BOUNDS_CHECK && (rx || ry))
 			{
-				r = pmap[y+ry][x+rx];
-				if (!r && parts[i].ctype!=0)
+				if (!stopgrow)//try to grow
 				{
-					np = sim->create_part(-1,x+rx,y+ry,PT_QRTZ);
-					if (np>-1)
+					if (!pmap[y+sry][x+srx] && parts[i].tmp!=0)
 					{
-						parts[np].tmp = parts[i].tmp;
-						parts[i].ctype--;
-						if (5>rand()%10)
+						np = sim->create_part(-1,x+srx,y+sry,PT_QRTZ);
+						if (np>-1)
 						{
-							parts[np].ctype=-1;//dead qrtz
+							parts[np].temp = parts[i].temp;
+							parts[np].tmp2 = parts[i].tmp2;
+							parts[i].tmp--;
+							if (t == PT_PQRT)
+							{
+								// If PQRT is stationary and has started growing particles of QRTZ, the PQRT is basically part of a new QRTZ crystal. So turn it back into QRTZ so that it behaves more like part of the crystal.
+								sim->part_change_type(i,x,y,PT_QRTZ);
+							}
+							if (rand()%2)
+							{
+								parts[np].tmp=-1;//dead qrtz
+							}
+							else if (!parts[i].tmp && !(rand()%15))
+							{
+								parts[i].tmp=-1;
+							}
+							stopgrow=true;
 						}
-						else if (!parts[i].ctype && 1>rand()%15)
-						{
-							parts[i].ctype=-1;
-						}
-
-						break;
 					}
 				}
-			}
-		}
-	}
-	// diffuse absorbed SLTW
-	if (parts[i].ctype>0)
-	{
-		for ( trade = 0; trade<9; trade ++)
-		{
-			rx = rand()%5-2;
-			ry = rand()%5-2;
-			if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
-			{
+				//diffusion
 				r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((r&0xFF)==t && (parts[i].ctype>parts[r>>8].ctype) && parts[r>>8].ctype>=0 )//diffusion
+				else if ((r&0xFF)==PT_QRTZ && (parts[i].tmp>parts[r>>8].tmp) && parts[r>>8].tmp>=0)
 				{
-					tmp = parts[i].ctype - parts[r>>8].ctype;
+					tmp = parts[i].tmp - parts[r>>8].tmp;
 					if (tmp ==1)
 					{
-						parts[r>>8].ctype ++;
-						parts[i].ctype --;
+						parts[r>>8].tmp++;
+						parts[i].tmp--;
 						break;
 					}
 					if (tmp>0)
 					{
-						parts[r>>8].ctype += tmp/2;
-						parts[i].ctype -= tmp/2;
+						parts[r>>8].tmp += tmp/2;
+						parts[i].tmp -= tmp/2;
 						break;
 					}
 				}
@@ -146,7 +150,7 @@ int Element_QRTZ::update(UPDATE_FUNC_ARGS)
 int Element_QRTZ::graphics(GRAPHICS_FUNC_ARGS)
  //QRTZ and PQRT
 {
-	int t = cpart->type, z = cpart->tmp - 5;//speckles!
+	int t = cpart->type, z = cpart->tmp2 - 5;//speckles!
 	/*if (cpart->temp>(ptransitions[t].thv-800.0f))//hotglow for quartz
 	{
 		float frequency = 3.1415/(2*ptransitions[t].thv-(ptransitions[t].thv-800.0f));

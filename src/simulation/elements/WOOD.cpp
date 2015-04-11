@@ -28,7 +28,7 @@ Element_WOOD::Element_WOOD()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 164;
-	Description = "Solid. Flammable.";
+	Description = "Wood, flammable.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
@@ -42,10 +42,17 @@ Element_WOOD::Element_WOOD()
 	HighTemperature = 873.0f;
 	HighTemperatureTransition = PT_FIRE;
 	
-	Update = NULL;
+	Update = &Element_WOOD::update;
 	Graphics = &Element_WOOD::graphics;
 }
 
+//#TPT-Directive ElementHeader Element_WOOD static int update(UPDATE_FUNC_ARGS)
+int Element_WOOD::update(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].temp > 450 && parts[i].temp > parts[i].tmp)
+		parts[i].tmp = (int)parts[i].temp;
+	return 0;
+}
 //#TPT-Directive ElementHeader Element_WOOD static int graphics(GRAPHICS_FUNC_ARGS)
 int Element_WOOD::graphics(GRAPHICS_FUNC_ARGS)
 {
@@ -55,8 +62,6 @@ int Element_WOOD::graphics(GRAPHICS_FUNC_ARGS)
 		*colr -= (int)restrict_flt((maxtemp-400)/3,0,172);
 		*colg -= (int)restrict_flt((maxtemp-400)/4,0,140);
 		*colb -= (int)restrict_flt((maxtemp-400)/20,0,44);
-		if (maxtemp > 450)
-			cpart->tmp = (int)maxtemp;
 	}
 	if (maxtemp < 273)
 	{

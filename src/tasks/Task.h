@@ -1,10 +1,3 @@
-/*
- * Task.h
- *
- *  Created on: Apr 6, 2012
- *      Author: Simon
- */
-
 #ifndef TASK_H_
 #define TASK_H_
 
@@ -48,7 +41,7 @@ protected:
 	virtual void before();
 	virtual void after();
 	virtual bool doWork();
-	static void * doWork_helper(void * ref);
+	TH_ENTRY_POINT static void * doWork_helper(void * ref);
 
 	virtual void notifyProgress(int progress);
 	virtual void notifyError(std::string error);

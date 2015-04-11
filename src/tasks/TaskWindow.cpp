@@ -1,15 +1,8 @@
-/*
- * TaskWindow.cpp
- *
- *  Created on: Apr 6, 2012
- *      Author: Simon
- */
-
 #include <sstream>
-#include "interface/Label.h"
+#include "gui/interface/Label.h"
 #include "TaskWindow.h"
-#include "dialogues/ErrorMessage.h"
-#include "Style.h"
+#include "gui/dialogues/ErrorMessage.h"
+#include "gui/Style.h"
 #include "Task.h"
 
 TaskWindow::TaskWindow(std::string title_, Task * task_, bool closeOnDone):
@@ -47,12 +40,14 @@ void TaskWindow::NotifyStatus(Task * task)
 void TaskWindow::NotifyError(Task * task)
 {
 	new ErrorMessage("Error", task->GetError());
+	done = true;
 }
 
 void TaskWindow::NotifyDone(Task * task)
 {
 	if(closeOnDone)
 		Exit();
+	done = true;
 }
 
 void TaskWindow::Exit()
@@ -85,6 +80,8 @@ void TaskWindow::OnTick(float dt)
 	if(intermediatePos>100.0f)
 		intermediatePos = 0.0f;
 	task->Poll();
+	if (done)
+		Exit();
 }
 
 void TaskWindow::OnDraw()

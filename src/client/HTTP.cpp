@@ -49,8 +49,10 @@
 #endif
 
 #include "Config.h"
+#include "Misc.h"
 #include "HTTP.h"
 #include "MD5.h"
+#include "Misc.h"
 
 #ifdef WIN
 #define PERROR SOCKET_ERROR
@@ -87,34 +89,25 @@ static char * eatwhitespace(char * s)
 	return s;
 }
 
-static char *mystrdup(char *s)
+static int splituri(const char *uri, char **host, char **path)
 {
-	char *x;
-	if (s)
-	{
-		x = (char *)malloc(strlen(s)+1);
-		strcpy(x, s);
-		return x;
-	}
-	return s;
-}
-
-static int splituri(char *uri, char **host, char **path)
-{
-	char *p=uri,*q,*x,*y;
-	if (!strncmp(p, "http://", 7))
-		p += 7;
-	q = strchr(p, '/');
+	const char *q;
+	char *x,*y;
+	if (!strncmp(uri, "http://", 7))
+		uri += 7;
+	q = strchr(uri, '/');
 	if (!q)
-		q = p + strlen(p);
-	x = (char *)malloc(q-p+1);
+		q = uri + strlen(uri);
+	x = (char *)malloc(q-uri+1);
 	if (*q)
 		y = mystrdup(q);
 	else
+	{
 		y = mystrdup("/");
-	strncpy(x, p, q-p);
-	x[q-p] = 0;
-	if (q==p || x[q-p-1]==':')
+	}
+	strncpy(x, uri, q-uri);
+	x[q-uri] = 0;
+	if (q==uri || x[q-uri-1]==':')
 	{
 		free(x);
 		free(y);
@@ -244,7 +237,7 @@ struct http_ctx
 	int fd;
 	char *fdhost;
 };
-void *http_async_req_start(void *ctx, char *uri, char *data, int dlen, int keep)
+void *http_async_req_start(void *ctx, const char *uri, const char *data, int dlen, int keep)
 {
 	struct http_ctx *cx = (http_ctx *)ctx;
 	if (!ctx)
@@ -298,7 +291,7 @@ void *http_async_req_start(void *ctx, char *uri, char *data, int dlen, int keep)
 	{
 		if (!dlen)
 			dlen = strlen(data);
-		cx->txd = (char*)malloc(dlen);
+		cx->txd = (char *)malloc(dlen);
 		memcpy(cx->txd, data, dlen);
 		cx->txdl = dlen;
 	}
@@ -319,7 +312,7 @@ void *http_async_req_start(void *ctx, char *uri, char *data, int dlen, int keep)
 	return ctx;
 }
 
-void http_async_add_header(void *ctx, char *name, char *data)
+void http_async_add_header(void *ctx, const char *name, const char *data)
 {
 	struct http_ctx *cx = (http_ctx *)ctx;
 	cx->thdr = (char *)realloc(cx->thdr, cx->thlen + strlen(name) + strlen(data) + 5);
@@ -607,7 +600,8 @@ char *http_async_req_stop(void *ctx, int *ret, int *len)
 	char *rxd;
 
 	if (cx->state != HTS_DONE)
-		while (!http_async_req_status(ctx)) ;
+		while (!http_async_req_status(ctx))
+			millisleep(1);
 
 	if (cx->host)
 	{
@@ -694,7 +688,7 @@ void http_async_req_close(void *ctx)
 	free(ctx);
 }
 
-char *http_simple_get(char *uri, int *ret, int *len)
+char *http_simple_get(const char *uri, int *ret, int *len)
 {
 	void *ctx = http_async_req_start(NULL, uri, NULL, 0, 0);
 	if (!ctx)
@@ -707,7 +701,7 @@ char *http_simple_get(char *uri, int *ret, int *len)
 	}
 	return http_async_req_stop(ctx, ret, len);
 }
-void http_auth_headers(void *ctx, char *user, char *pass, char *session_id)
+void http_auth_headers(void *ctx, const char *user, const char *pass, const char *session_id)
 {
 	char *tmp;
 	int i;
@@ -747,7 +741,7 @@ void http_auth_headers(void *ctx, char *user, char *pass, char *session_id)
 		}
 	}
 }
-char *http_auth_get(char *uri, char *user, char *pass, char *session_id, int *ret, int *len)
+char *http_auth_get(const char *uri, const char *user, const char *pass, const char *session_id, int *ret, int *len)
 {
 	void *ctx = http_async_req_start(NULL, uri, NULL, 0, 0);
 
@@ -763,7 +757,7 @@ char *http_auth_get(char *uri, char *user, char *pass, char *session_id, int *re
 	return http_async_req_stop(ctx, ret, len);
 }
 
-char *http_simple_post(char *uri, char *data, int dlen, int *ret, int *len)
+char *http_simple_post(const char *uri, const char *data, int dlen, int *ret, int *len)
 {
 	void *ctx = http_async_req_start(NULL, uri, data, dlen, 0);
 	if (!ctx)
@@ -777,7 +771,7 @@ char *http_simple_post(char *uri, char *data, int dlen, int *ret, int *len)
 	return http_async_req_stop(ctx, ret, len);
 }
 
-char *http_ret_text(int ret)
+const char *http_ret_text(int ret)
 {
 	switch (ret)
 	{
@@ -914,10 +908,10 @@ char *http_ret_text(int ret)
 		return "Unknown Status Code";
 	}
 }
-char *http_multipart_post(char *uri, char **names, char **parts, int *plens, char *user, char *pass, char *session_id, int *ret, int *len)
+char *http_multipart_post(const char *uri, const char *const *names, const char *const *parts, int *plens, const char *user, const char *pass, const char *session_id, int *ret, int *len)
 {
 	void *ctx;
-	char *data = NULL, *tmp, *p;
+	char *data = NULL, *tmp;
 	int dlen = 0, i, j;
 	unsigned char hash[16];
 	unsigned char boundary[32], ch;
@@ -987,12 +981,11 @@ retry:
 			if (strchr(names[i], ':'))
 			{
 				tmp = mystrdup(names[i]);
-				p = strchr(tmp, ':');
+				char *p = strchr(tmp, ':');
 				*p = 0;
 				dlen += sprintf(data+dlen, "content-disposition: form-data; name=\"%s\"; ", tmp);
 				free(tmp);
-				p = strchr(names[i], ':');
-				dlen += sprintf(data+dlen, "filename=\"%s\"\r\n\r\n", p+1);
+				dlen += sprintf(data+dlen, "filename=\"%s\"\r\n\r\n", strchr(names[i], ':')+1);
 			}
 			else
 				dlen += sprintf(data+dlen, "content-disposition: form-data; name=\"%s\"\r\n\r\n", names[i]);
@@ -1022,7 +1015,7 @@ retry:
 				{
 					//md5_update(&md5, (unsigned char *)parts[i], plens[i]); //WHY?
 					//md5_update(&md5, (unsigned char *)"-", 1);
-					p = strchr(names[i], ':');
+					const char *p = strchr(names[i], ':');
 					if (p)
 						m += (p - names[i]) + 1;
 					else
@@ -1033,7 +1026,7 @@ retry:
 				m = 0;
 				for (i=0; names[i]; i++)
 				{
-					p = strchr(names[i], ':');
+					const char *p = strchr(names[i], ':');
 					if (m)
 					{
 						tmp[m] = ' ';
@@ -1100,5 +1093,195 @@ fail:
 		*ret = 600;
 	if (len)
 		*len = 0;
+	return NULL;
+}
+
+
+void *http_multipart_post_async(const char *uri, const char *const *names, const char *const *parts, int *plens, const char *user, const char *pass, const char *session_id)
+{
+	void *ctx;
+	char *data = NULL, *tmp;
+	int dlen = 0, i, j;
+	unsigned char hash[16];
+	unsigned char boundary[32], ch;
+	int blen = 0;
+	unsigned int map[62], m;
+	struct md5_context md5;
+	//struct md5_context md52;
+	int own_plen = 0;
+
+	if (names)
+	{
+		if (!plens)
+		{
+			own_plen = 1;
+			for (i=0; names[i]; i++) ;
+			plens = (int *)calloc(i, sizeof(int));
+			for (i=0; names[i]; i++)
+				plens[i] = strlen(parts[i]);
+		}
+
+retry:
+		if (blen >= 31)
+			goto fail;
+		memset(map, 0, 62*sizeof(int));
+		for (i=0; names[i]; i++)
+		{
+			for (j=0; j<plens[i]-blen; j++)
+				if (!blen || !memcmp(parts[i]+j, boundary, blen))
+				{
+					ch = parts[i][j+blen];
+					if (ch>='0' && ch<='9')
+						map[ch-'0']++;
+					else if (ch>='A' && ch<='Z')
+						map[ch-'A'+10]++;
+					else if (ch>='a' && ch<='z')
+						map[ch-'a'+36]++;
+				}
+		}
+		m = ~0;
+		j = 61;
+		for (i=0; i<62; i++)
+			if (map[i]<m)
+			{
+				m = map[i];
+				j = i;
+			}
+		if (j<10)
+			boundary[blen] = '0'+j;
+		else if (j<36)
+			boundary[blen] = 'A'+(j-10);
+		else
+			boundary[blen] = 'a'+(j-36);
+		blen++;
+		if (map[j])
+			goto retry;
+		boundary[blen] = 0;
+
+		for (i=0; names[i]; i++)
+			dlen += blen+strlen(names[i])+plens[i]+128;
+		dlen += blen+8;
+		data = (char *)malloc(dlen);
+		dlen = 0;
+		for (i=0; names[i]; i++)
+		{
+			dlen += sprintf(data+dlen, "--%s\r\n", boundary);
+			dlen += sprintf(data+dlen, "Content-transfer-encoding: binary\r\n");
+			if (strchr(names[i], ':'))
+			{
+				tmp = mystrdup(names[i]);
+				char *p = strchr(tmp, ':');
+				*p = 0;
+				dlen += sprintf(data+dlen, "content-disposition: form-data; name=\"%s\"; ", tmp);
+				free(tmp);
+				dlen += sprintf(data+dlen, "filename=\"%s\"\r\n\r\n", strchr(names[i], ':')+1);
+			}
+			else
+				dlen += sprintf(data+dlen, "content-disposition: form-data; name=\"%s\"\r\n\r\n", names[i]);
+			memcpy(data+dlen, parts[i], plens[i]);
+			dlen += plens[i];
+			dlen += sprintf(data+dlen, "\r\n");
+		}
+		dlen += sprintf(data+dlen, "--%s--\r\n", boundary);
+	}
+
+	ctx = http_async_req_start(NULL, uri, data, dlen, 0);
+	if (!ctx)
+		goto fail;
+
+	if (user)
+	{
+		//http_async_add_header(ctx, "X-Auth-User", user);
+		if (pass)
+		{
+			md5_init(&md5);
+			md5_update(&md5, (unsigned char *)user, strlen(user));
+			md5_update(&md5, (unsigned char *)"-", 1);
+			m = 0;
+			if (names)
+			{
+				for (i=0; names[i]; i++)
+				{
+					//md5_update(&md5, (unsigned char *)parts[i], plens[i]); //WHY?
+					//md5_update(&md5, (unsigned char *)"-", 1);
+					const char *p = strchr(names[i], ':');
+					if (p)
+						m += (p - names[i]) + 1;
+					else
+						m += strlen(names[i])+1;
+				}
+
+				tmp = (char *)malloc(m);
+				m = 0;
+				for (i=0; names[i]; i++)
+				{
+					const char *p = strchr(names[i], ':');
+					if (m)
+					{
+						tmp[m] = ' ';
+						m ++;
+					}
+					if (p)
+					{
+						memcpy(tmp+m, names[i], p-names[i]);
+						m += p - names[i];
+					}
+					else
+					{
+						strcpy(tmp+m, names[i]);
+						m += strlen(names[i]);
+					}
+				}
+				tmp[m] = 0;
+				http_async_add_header(ctx, "X-Auth-Objects", tmp);
+				free(tmp);
+			}
+
+			md5_update(&md5, (unsigned char *)pass, strlen(pass));
+			md5_final(hash, &md5);
+			tmp = (char *)malloc(33);
+			for (i=0; i<16; i++)
+			{
+				tmp[i*2] = hexChars[hash[i]>>4];
+				tmp[i*2+1] = hexChars[hash[i]&15];
+			}
+			tmp[32] = 0;
+			http_async_add_header(ctx, "X-Auth-Hash", tmp);
+			free(tmp);
+		}
+		if (session_id)
+		{
+			http_async_add_header(ctx, "X-Auth-User-Id", user);
+			http_async_add_header(ctx, "X-Auth-Session-Key", session_id);
+		}
+		else
+		{
+			http_async_add_header(ctx, "X-Auth-User", user);
+		}
+	}
+
+	if (data)
+	{
+		tmp = (char *)malloc(32+strlen((char *)boundary));
+		sprintf(tmp, "multipart/form-data, boundary=%s", boundary);
+		http_async_add_header(ctx, "Content-type", tmp);
+		free(tmp);
+		free(data);
+	}
+
+	if (own_plen)
+		free(plens);
+
+	return ctx;
+
+fail:
+	if (data)
+		free(data);
+	if (own_plen)
+		free(plens);
+	//if (ret)
+	//	*ret = 600;
+	//if (len)
+	//	*len = 0;
 	return NULL;
 }

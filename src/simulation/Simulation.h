@@ -1,12 +1,5 @@
-/*
- * Simulation.h
- *
- *  Created on: Jan 2, 2012
- *      Author: Simon
- */
-
-#ifndef SIMULATION_H_
-#define SIMULATION_H_
+#ifndef SIMULATION_H
+#define SIMULATION_H
 #include <cstring>
 #include <cstddef>
 #include <vector>
@@ -16,7 +9,7 @@
 #include "SimulationData.h"
 #include "Sign.h"
 #include "Particle.h"
-#include "Player.h"
+#include "Stickman.h"
 #include "WallType.h"
 #include "GOLMenu.h"
 #include "MenuSection.h"
@@ -37,10 +30,8 @@ class Gravity;
 class Air;
 class GameSave;
 
-//#ifdef _cplusplus
 class Simulation
 {
-private:
 public:
 
 	Gravity * grav;
@@ -58,20 +49,11 @@ public:
 	menu_section msections[SC_TOTAL];
 
 	int currentTick;
+	int replaceModeSelected;
+	int replaceModeFlags;
 
-	playerst player;
-	playerst player2;
-	playerst fighters[256]; //255 is the maximum number of fighters
-	unsigned char fighcount; //Contains the number of fighters
-	int lighting_recreate;
-	bool gravWallChanged;
-	Particle portalp[CHANNELS][8][80];
-	Particle emptyparticle;
-	int portal_rx[8];
-	int portal_ry[8];
-	int wireless[CHANNELS][2];
 	char can_move[PT_NUM][PT_NUM];
-	int parts_lastActiveIndex;// = NPART-1;
+	int parts_lastActiveIndex;
 	int pfree;
 	int NUM_PARTS;
 	bool elementRecount;
@@ -79,12 +61,22 @@ public:
 	int ISWIRE;
 	int force_stacking_check;
 	int emp_decor;
+	//Stickman
+	playerst player;
+	playerst player2;
+	playerst fighters[256]; //255 is the maximum number of fighters
+	unsigned char fighcount; //Contains the number of fighters
+	bool gravWallChanged;
+	//Portals and Wifi
+	Particle portalp[CHANNELS][8][80];
+	int portal_rx[8];
+	int portal_ry[8];
+	int wireless[CHANNELS][2];
 	//Gol sim
 	int CGOL;
-	int ISGOL;
 	int GSPEED;
 	unsigned char gol[YRES][XRES];
-	unsigned char gol2[YRES][XRES][NGOL+1];
+	unsigned short gol2[YRES][XRES][9];
 	//Air sim
 	float (*vx)[XRES/CELL];
 	float (*vy)[XRES/CELL];
@@ -105,57 +97,57 @@ public:
 	int pmap[YRES][XRES];
 	int photons[YRES][XRES];
 	int pmap_count[YRES][XRES];
-	//
+	//Simulation Settings
 	int edgeMode;
 	int gravityMode;
-	//int airMode;
 	int legacy_enable;
 	int aheat_enable;
-	int VINE_MODE;
 	int water_equal_test;
 	int sys_pause;
 	int framerender;
 	int pretty_powder;
 	int sandcolour;
 	int sandcolour_frame;
+	int DEFAULT_PT_NUM;
 
 	int Load(GameSave * save);
 	int Load(int x, int y, GameSave * save);
 	GameSave * Save();
 	GameSave * Save(int x1, int y1, int x2, int y2);
-	SimulationSample Get(int x, int y);
+	SimulationSample GetSample(int x, int y);
 
 	Snapshot * CreateSnapshot();
 	void Restore(const Snapshot & snap);
 
-	TPT_NO_INLINE int is_blocking(int t, int x, int y);
-	TPT_NO_INLINE int is_boundary(int pt, int x, int y);
-	TPT_NO_INLINE int find_next_boundary(int pt, int *x, int *y, int dm, int *em);
-	TPT_NO_INLINE int pn_junction_sprk(int x, int y, int pt);
-	TPT_NO_INLINE void photoelectric_effect(int nx, int ny);
-	TPT_NO_INLINE unsigned direction_to_map(float dx, float dy, int t);
-	TPT_NO_INLINE int do_move(int i, int x, int y, float nxf, float nyf);
-	TPT_NO_INLINE int try_move(int i, int x, int y, int nx, int ny);
-	TPT_NO_INLINE int eval_move(int pt, int nx, int ny, unsigned *rr);
+	int is_blocking(int t, int x, int y);
+	int is_boundary(int pt, int x, int y);
+	int find_next_boundary(int pt, int *x, int *y, int dm, int *em);
+	int pn_junction_sprk(int x, int y, int pt);
+	void photoelectric_effect(int nx, int ny);
+	unsigned direction_to_map(float dx, float dy, int t);
+	int do_move(int i, int x, int y, float nxf, float nyf);
+	int try_move(int i, int x, int y, int nx, int ny);
+	int eval_move(int pt, int nx, int ny, unsigned *rr);
 	void init_can_move();
+	bool IsWallBlocking(int x, int y, int type);
 	void create_cherenkov_photon(int pp);
 	void create_gain_photon(int pp);
-	TPT_NO_INLINE void kill_part(int i);
-	int flood_prop(int x, int y, size_t propoffset, void * propvalue, StructProperty::PropertyType proptype);
-	int flood_prop_2(int x, int y, size_t propoffset, void * propvalue, StructProperty::PropertyType proptype, int parttype, char * bitmap);
+	void kill_part(int i);
+	bool FloodFillPmapCheck(int x, int y, int type);
+	int flood_prop(int x, int y, size_t propoffset, PropertyValue propvalue, StructProperty::PropertyType proptype);
 	int flood_water(int x, int y, int i, int originaly, int check);
-	TPT_NO_INLINE void detach(int i);
-	TPT_NO_INLINE void part_change_type(int i, int x, int y, int t);
-	TPT_NO_INLINE int create_part_add_props(int p, int x, int y, int tv, int rx, int ry);
+	int FloodINST(int x, int y, int fullc, int cm);
+	void detach(int i);
+	void part_change_type(int i, int x, int y, int t);
 	//int InCurrentBrush(int i, int j, int rx, int ry);
 	//int get_brush_flags();
-	TPT_NO_INLINE int create_part(int p, int x, int y, int t);
-	TPT_NO_INLINE void delete_part(int x, int y, int flags);
+	int create_part(int p, int x, int y, int t);
+	void delete_part(int x, int y);
 	void get_sign_pos(int i, int *x0, int *y0, int *w, int *h);
-	TPT_NO_INLINE int is_wire(int x, int y);
-	TPT_NO_INLINE int is_wire_off(int x, int y);
-	TPT_NO_INLINE void set_emap(int x, int y);
-	TPT_NO_INLINE int parts_avg(int ci, int ni, int t);
+	int is_wire(int x, int y);
+	int is_wire_off(int x, int y);
+	void set_emap(int x, int y);
+	int parts_avg(int ci, int ni, int t);
 	void create_arc(int sx, int sy, int dx, int dy, int midpoints, int variance, int type, int flags);
 	int nearest_part(int ci, int t, int max_d);
 	void update_particles_i(int start, int inc);
@@ -165,47 +157,48 @@ public:
 
 	void SetEdgeMode(int newEdgeMode);
 
-	int Tool(int x, int y, int tool, float strength = 1.0f);
-	int ToolBrush(int x, int y, int tool, Brush * cBrush, float strength = 1.0f);
-	void ToolLine(int x1, int y1, int x2, int y2, int tool, Brush * cBrush, float strength = 1.0f);
-	void ToolBox(int x1, int y1, int x2, int y2, int tool, Brush * cBrush, float strength = 1.0f);
-	
-	void CreateBox(int x1, int y1, int x2, int y2, int c, int flags);
-	int FloodINST(int x, int y, int fullc, int cm);
-	int FloodParts(int x, int y, int c, int cm, int bm, int flags);
-	//Create particles from brush/mask
-	int CreateParts(int positionX, int positionY, int c, Brush * cBrush);
-	//Old particle creation, will create a crappy square, do not use
-	int CreateParts(int x, int y, int rx, int ry, int c, int flags);
-	void CreateLine(int x1, int y1, int x2, int y2, int c, Brush * cBrush);
-	void CreateLine(int x1, int y1, int x2, int y2, int rx, int ry, int c, int flags);
-	
-	void CreateWallBox(int x1, int y1, int x2, int y2, int c, int flags);
-	int FloodWalls(int x, int y, int c, int cm, int bm, int flags);
-	int CreateWalls(int x, int y, int rx, int ry, int c, int flags, Brush * cBrush = NULL);
-	void CreateWallLine(int x1, int y1, int x2, int y2, int rx, int ry, int c, int flags, Brush * cBrush = NULL);
-	
+	//Drawing Deco
 	void ApplyDecoration(int x, int y, int colR, int colG, int colB, int colA, int mode);
 	void ApplyDecorationPoint(int x, int y, int colR, int colG, int colB, int colA, int mode, Brush * cBrush = NULL);
 	void ApplyDecorationLine(int x1, int y1, int x2, int y2, int colR, int colG, int colB, int colA, int mode, Brush * cBrush = NULL);
 	void ApplyDecorationBox(int x1, int y1, int x2, int y2, int colR, int colG, int colB, int colA, int mode);
+
+	//Drawing Tools like HEAT, AIR, and GRAV
+	int Tool(int x, int y, int tool, float strength = 1.0f);
+	int ToolBrush(int x, int y, int tool, Brush * cBrush, float strength = 1.0f);
+	void ToolLine(int x1, int y1, int x2, int y2, int tool, Brush * cBrush, float strength = 1.0f);
+	void ToolBox(int x1, int y1, int x2, int y2, int tool, float strength = 1.0f);
+	
+	//Drawing Walls
+	int CreateWalls(int x, int y, int rx, int ry, int wall, Brush * cBrush = NULL);
+	void CreateWallLine(int x1, int y1, int x2, int y2, int rx, int ry, int wall, Brush * cBrush = NULL);
+	void CreateWallBox(int x1, int y1, int x2, int y2, int wall);
+	int FloodWalls(int x, int y, int wall, int bm);
+
+	//Drawing Particles
+	int CreateParts(int positionX, int positionY, int c, Brush * cBrush, int flags = -1);
+	int CreateParts(int x, int y, int rx, int ry, int c, int flags = -1);
+	int CreatePartFlags(int x, int y, int c, int flags);
+	void CreateLine(int x1, int y1, int x2, int y2, int c, Brush * cBrush, int flags = -1);
+	void CreateLine(int x1, int y1, int x2, int y2, int c);
+	void CreateBox(int x1, int y1, int x2, int y2, int c, int flags = -1);
+	int FloodParts(int x, int y, int c, int cm, int flags = -1);
+
 	
 	void GetGravityField(int x, int y, float particleGrav, float newtonGrav, float & pGravX, float & pGravY);
 
 	int GetParticleType(std::string type);
 
 	void *transform_save(void *odata, int *size, matrix2d transform, vector2d translate);
-	TPT_NO_INLINE void orbitalparts_get(int block1, int block2, int resblock1[], int resblock2[]);
-	TPT_NO_INLINE void orbitalparts_set(int *block1, int *block2, int resblock1[], int resblock2[]);
-	TPT_NO_INLINE int get_wavelength_bin(int *wm);
-	TPT_NO_INLINE int get_normal(int pt, int x, int y, float dx, float dy, float *nx, float *ny);
-	TPT_NO_INLINE int get_normal_interp(int pt, float x0, float y0, float dx, float dy, float *nx, float *ny);
+	void orbitalparts_get(int block1, int block2, int resblock1[], int resblock2[]);
+	void orbitalparts_set(int *block1, int *block2, int resblock1[], int resblock2[]);
+	int get_wavelength_bin(int *wm);
+	int get_normal(int pt, int x, int y, float dx, float dy, float *nx, float *ny);
+	int get_normal_interp(int pt, float x0, float y0, float dx, float dy, float *nx, float *ny);
 	void clear_sim();
 	void UpdateParticles();
 	Simulation();
 	~Simulation();
 };
 
-//#endif
-
-#endif /* SIMULATION_H_ */
+#endif /* SIMULATION_H */
