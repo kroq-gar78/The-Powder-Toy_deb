@@ -1,8 +1,11 @@
-powdertoy (90.2.322-0~ppa1) UNRELEASED; urgency=medium
+powdertoy (90.2.322-0~ppa1~1.gbp100297) UNRELEASED; urgency=medium
+
+  ** SNAPSHOT build @10029740ff560f0384f6c8c9a68173c30e87f3da **
 
   * New upstream release
+  * Now using gbp-pq to manage quilt patches in git
 
- -- Aditya Vaidya <kroq-gar78@av4-ubu64>  Sat, 11 Apr 2015 01:41:16 -0500
+ -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 11 Apr 2015 02:31:25 -0500
 
 powdertoy (87.0-0~ppa1) precise; urgency=low
 
