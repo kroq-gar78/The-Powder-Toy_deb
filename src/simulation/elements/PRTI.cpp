@@ -28,7 +28,7 @@ Element_PRTI::Element_PRTI()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 0;
-	Description = "Portal IN.  Things go in here, now with channels (same as WIFI)";
+	Description = "Portal IN. Particles go in here. Also has temperature dependent channels. (same as WIFI)";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID;
@@ -82,7 +82,7 @@ int Element_PRTI::update(UPDATE_FUNC_ARGS)
 				continue;// Handling these is a bit more complicated, and is done in STKM_interact()
 
 			if ((r&0xFF) == PT_SOAP)
-				sim->detach(r>>8);
+				Element_SOAP::detach(sim, r>>8);
 
 			for ( nnx=0; nnx<80; nnx++)
 				if (!sim->portalp[parts[i].tmp][count][nnx].type)

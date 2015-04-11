@@ -50,19 +50,23 @@ private:
 	bool showHud;
 	bool showDebug;
 	bool wallBrush;
+	bool toolBrush;
+	bool windTool;
 	int introText;
-	int buttonTipShow;
-	std::string buttonTip;
 	std::string introTextMessage;
 	int toolIndex;
 	int currentSaveType;
-	Menu * lastMenu;
+	int lastMenu;
 
-	int infoTipPresence;
-	std::string toolTip;
-	ui::Point toolTipPosition;
-	std::string infoTip;
 	int toolTipPresence;
+	std::string toolTip;
+	bool isToolTipFadingIn;
+	ui::Point toolTipPosition;
+	int infoTipPresence;
+	std::string infoTip;
+	int buttonTipShow;
+	std::string buttonTip;
+	bool isButtonTipFadingIn;
 
 	queue<ui::Point> pointQueue;
 	GameController * c;
@@ -77,15 +81,16 @@ private:
 	float lastLogEntry;
 	ui::Button * scrollBar;
 	ui::Button * searchButton;
-    ui::Button * reloadButton;
-    ui::Button * saveSimulationButton;
-    ui::Button * downVoteButton;
-    ui::Button * upVoteButton;
-    ui::Button * tagSimulationButton;
-    ui::Button * clearSimButton;
-    ui::Button * loginButton;
-    ui::Button * simulationOptionButton;
-    ui::Button * displayModeButton;
+	ui::Button * reloadButton;
+	ui::Button * saveSimulationButton;
+	bool saveSimulationButtonEnabled;
+	ui::Button * downVoteButton;
+	ui::Button * upVoteButton;
+	ui::Button * tagSimulationButton;
+	ui::Button * clearSimButton;
+	ui::Button * loginButton;
+	ui::Button * simulationOptionButton;
+	ui::Button * displayModeButton;
 	ui::Button * pauseButton;
 	ui::Point currentMouse;
 
@@ -121,17 +126,22 @@ private:
 	void enableAltBehaviour();
 	void disableAltBehaviour();
 public:
-    GameView();
-    virtual ~GameView();
+	GameView();
+	virtual ~GameView();
 
-    //Breaks MVC, but any other way is going to be more of a mess.
-    ui::Point GetMousePosition();
-    void SetSample(SimulationSample sample);
+	//Breaks MVC, but any other way is going to be more of a mess.
+	ui::Point GetMousePosition();
+	void SetSample(SimulationSample sample);
 	void SetHudEnable(bool hudState);
-    bool CtrlBehaviour(){ return ctrlBehaviour; }
-    bool ShiftBehaviour(){ return shiftBehaviour; }
+	bool GetHudEnable();
+	void SetDebugHUD(bool mode);
+	bool GetDebugHUD();
+	bool GetPlacingSave();
+	bool GetPlacingZoom();
+	bool CtrlBehaviour(){ return ctrlBehaviour; }
+	bool ShiftBehaviour(){ return shiftBehaviour; }
+	bool AltBehaviour(){ return altBehaviour; }
 	void ExitPrompt();
-	void ToggleDebug();
 	SelectMode GetSelectMode() { return selectMode; }
 	void BeginStampSelection();
 

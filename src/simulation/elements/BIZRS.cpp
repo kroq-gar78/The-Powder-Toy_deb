@@ -21,14 +21,14 @@ Element_BIZRS::Element_BIZRS()
 	
 	Flammable = 0;
 	Explosive = 0;
-	Meltable = 1;
+	Meltable = 0;
 	Hardness = 1;
 	
 	Weight = 100;
 	
 	Temperature = R_TEMP+300.0f+273.15f;
 	HeatConduct = 251;
-	Description = "Bizarre solid";
+	Description = "Bizarre solid.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID;

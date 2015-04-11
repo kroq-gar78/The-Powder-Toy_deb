@@ -47,7 +47,7 @@ void VideoBuffer::Resize(float factor, bool resample)
 {
 	int newWidth = ((float)Width)*factor;
 	int newHeight = ((float)Height)*factor;
-	Resize(newWidth, newHeight);
+	Resize(newWidth, newHeight, resample);
 }
 
 void VideoBuffer::Resize(int width, int height, bool resample, bool fixedRatio)
@@ -67,13 +67,10 @@ void VideoBuffer::Resize(int width, int height, bool resample, bool fixedRatio)
 	else if(fixedRatio)
 	{
 		//Force proportions
-		float scaleFactor = 1.0f;
-		if(Height >  newHeight)
-			scaleFactor = ((float)newHeight)/((float)Height);
-		if(Width > newWidth)
-			scaleFactor = ((float)newWidth)/((float)Width);
-		newWidth = ((float)Width)*scaleFactor;
-		newHeight = ((float)Height)*scaleFactor;
+		if(newWidth*Height > newHeight*Width) // same as nW/W > nH/H
+			newWidth = (int)(Width * (newHeight/(float)Height));
+		else
+			newHeight = (int)(Height * (newWidth/(float)Width));
 	}
 	if(resample)
 		newBuffer = Graphics::resample_img(Buffer, Width, Height, newWidth, newHeight);
@@ -152,7 +149,7 @@ int VideoBuffer::AddCharacter(int x, int y, int c, int r, int g, int b, int a)
 VideoBuffer::~VideoBuffer()
 {
 	delete[] Buffer;
-};
+}
 
 /**
  * Common graphics functions, mostly static methods that provide
@@ -573,11 +570,23 @@ int Graphics::textwidth(const char *s)
 {
 	int x = 0;
 	for (; *s; s++)
+	{
+		if(((char)*s)=='\b')
+		{
+			if(!s[1]) break;
+			s++;
+			continue;
+		} else if(*s == '\x0F') {
+			if(!s[1] || !s[2] || !s[3]) break;
+			s+=3;
+			continue;
+		}
 		x += font_data[font_ptrs[(int)(*(unsigned char *)s)]];
+	}
 	return x-1;
 }
 
-int Graphics::CharWidth(char c)
+int Graphics::CharWidth(unsigned char c)
 {
 	return font_data[font_ptrs[(int)c]];
 }
@@ -861,9 +870,15 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 		break;
 	case IconVoteUp:
 		if(invert)
-			drawchar(x, y+1, 0xCB, 0, 100, 0, alpha);
+		{
+			drawchar(x-11, y+1, 0xCB, 0, 100, 0, alpha);
+			drawtext(x+2, y+1, "Vote", 0, 100, 0, alpha);
+		}
 		else
-			drawchar(x, y+1, 0xCB, 0, 187, 18, alpha);
+		{
+			drawchar(x-11, y+1, 0xCB, 0, 187, 18, alpha);
+			drawtext(x+2, y+1, "Vote", 0, 187, 18, alpha);
+		}
 		break;
 	case IconVoteDown:
 		if(invert)
@@ -1104,6 +1119,27 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 	}
 }
 
+void Graphics::draw_rgba_image(unsigned char *data, int x, int y, float alpha)
+{
+	unsigned char w, h;
+	int i, j;
+	unsigned char r, g, b, a;
+	if (!data) return;
+	w = *(data++)&0xFF;
+	h = *(data++)&0xFF;
+	for (j=0; j<h; j++)
+	{
+		for (i=0; i<w; i++)
+		{
+			r = *(data++)&0xFF;
+			g = *(data++)&0xFF;
+			b = *(data++)&0xFF;
+			a = *(data++)&0xFF;
+			addpixel(x+i, y+j, r, g, b, (int)(a*alpha));
+		}
+	}
+}
+
 pixel *Graphics::render_packed_rgb(void *image, int width, int height, int cmp_size)
 {
 	unsigned char *tmp;
@@ -1139,8 +1175,8 @@ VideoBuffer Graphics::DumpFrame()
 {
 #ifdef OGLI
 #else
-	VideoBuffer newBuffer(XRES+BARSIZE, YRES+MENUSIZE);
-	std::copy(vid, vid+((XRES+BARSIZE)*(YRES+MENUSIZE)), newBuffer.Buffer);
+	VideoBuffer newBuffer(WINDOWW, WINDOWH);
+	std::copy(vid, vid+(WINDOWW*WINDOWH), newBuffer.Buffer);
 	return newBuffer;
 #endif
 }

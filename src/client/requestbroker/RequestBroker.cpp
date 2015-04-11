@@ -7,6 +7,7 @@
 #include "RequestListener.h"
 #include "ThumbRenderRequest.h"
 #include "ImageRequest.h"
+#include "Misc.h"
 #include "client/Client.h"
 #include "client/GameSave.h"
 #include "graphics/Graphics.h"
@@ -114,10 +115,11 @@ void RequestBroker::RetrieveAvatar(std::string username, int width, int height, 
 	RetrieveImage(urlStream.str(), width, height, tListener);
 }
 
-void RequestBroker::Start(Request * request, RequestListener * tListener)
+void RequestBroker::Start(Request * request, RequestListener * tListener, int identifier)
 {
 	ListenerHandle handle = AttachRequestListener(tListener);
 
+	request->Identifier = identifier;
 	request->Listener = handle;
 	pthread_mutex_lock(&requestQueueMutex);
 	requestQueue.push_back(request);
@@ -139,7 +141,7 @@ void RequestBroker::RetrieveImage(std::string imageUrl, int width, int height, R
 	assureRunning();
 }
 
-void * RequestBroker::thumbnailQueueProcessHelper(void * ref)
+TH_ENTRY_POINT void * RequestBroker::thumbnailQueueProcessHelper(void * ref)
 {
 	((RequestBroker*)ref)->thumbnailQueueProcessTH();
 	return NULL;
@@ -152,7 +154,7 @@ void RequestBroker::FlushThumbQueue()
 	{
 		if(CheckRequestListener(completeQueue.front()->Listener))
 		{
-			completeQueue.front()->Listener.second->OnResponseReady(completeQueue.front()->ResultObject);
+			completeQueue.front()->Listener.second->OnResponseReady(completeQueue.front()->ResultObject, completeQueue.front()->Identifier);
 		}
 		else
 		{
@@ -232,6 +234,7 @@ void RequestBroker::thumbnailQueueProcessTH()
 			}
 		}
 		pthread_mutex_unlock(&requestQueueMutex);
+		millisleep(1);
 	}
 	pthread_mutex_lock(&runningMutex);
 	thumbnailQueueRunning = false;
@@ -271,6 +274,9 @@ ListenerHandle RequestBroker::AttachRequestListener(RequestListener * tListener)
 
 void RequestBroker::DetachRequestListener(RequestListener * tListener)
 {
+	if (!validListeners.size())
+		return;
+
 	pthread_mutex_lock(&listenersMutex);
 
 	std::vector<ListenerHandle>::iterator iter = validListeners.begin();
@@ -285,11 +291,12 @@ void RequestBroker::DetachRequestListener(RequestListener * tListener)
 	pthread_mutex_unlock(&listenersMutex);
 }
 
-RequestBroker::Request::Request(RequestType type, ListenerHandle listener)
+RequestBroker::Request::Request(RequestType type, ListenerHandle listener, int identifier)
 {
 	Type = type;
 	Listener = listener;
 	ResultObject = NULL;
+	Identifier = identifier;
 }
 RequestBroker::Request::~Request()
 {

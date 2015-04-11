@@ -7,6 +7,7 @@
 #include "gui/preview/PreviewController.h"
 #include "gui/preview/PreviewModel.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/CopyTextButton.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 
@@ -38,7 +39,9 @@ class PreviewView: public ui::Window {
 	ui::Label * pageInfo;
 	ui::Label * saveDescriptionLabel;
 	ui::Label * viewsLabel;
-	ui::Textbox * saveIDTextbox;
+	ui::Label * saveIDLabel;
+	ui::Label * saveIDLabel2;
+	ui::CopyTextButton * saveIDButton;
 	ui::ScrollPanel * commentsPanel;
 	std::vector<ui::Component*> commentComponents;
 	std::vector<ui::Component*> commentTextComponents;
@@ -46,6 +49,7 @@ class PreviewView: public ui::Window {
 	int votesDown;
 	bool doOpen;
 	bool showAvatars;
+	bool prevPage;
 
 	int commentBoxHeight;
 	float commentBoxPositionX;
@@ -68,6 +72,7 @@ public:
 	virtual void OnTick(float dt);
 	virtual void OnTryExit(ExitMethod method);
 	virtual void OnMouseWheel(int x, int y, int d);
+	virtual void OnMouseUp(int x, int y, unsigned int button);
 	virtual void OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
 	virtual ~PreviewView();
 };

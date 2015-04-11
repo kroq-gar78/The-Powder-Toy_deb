@@ -28,7 +28,7 @@ Element_GEL::Element_GEL()
 	
 	Temperature = R_TEMP-2.0f  +273.15f;
 	HeatConduct = 29;
-	Description = "Gel. A liquid with variable viscosity and heat conductivity";
+	Description = "Gel. A liquid with variable viscosity and heat conductivity.";
 	
 	State = ST_LIQUID;
 	Properties = TYPE_LIQUID|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
@@ -158,6 +158,7 @@ int Element_GEL::graphics(GRAPHICS_FUNC_ARGS)
 	*colr = q*(32-255)/120+255;
 	*colg = q*(48-186)/120+186;
 	*colb = q*208/120;
+	*pixel_mode |= PMODE_BLUR;
 	return 0;
 }
 

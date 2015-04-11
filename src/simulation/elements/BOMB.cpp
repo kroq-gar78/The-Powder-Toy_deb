@@ -28,7 +28,7 @@ Element_BOMB::Element_BOMB()
 	
 	Temperature = R_TEMP-2.0f	+273.15f;
 	HeatConduct = 29;
-	Description = "Bomb.";
+	Description = "Bomb. Explodes and destroys all surrounding particles when it touches something.";
 	
 	State = ST_NONE;
 	Properties = TYPE_PART|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC|PROP_SPARKSETTLE;
@@ -69,7 +69,7 @@ int Element_BOMB::update(UPDATE_FUNC_ARGS)
 							if ((pow((float)nxi,2))/(pow((float)rad,2))+(pow((float)nxj,2))/(pow((float)rad,2))<=1)
 								if ((pmap[y+nxj][x+nxi]&0xFF)!=PT_DMND && (pmap[y+nxj][x+nxi]&0xFF)!=PT_CLNE && (pmap[y+nxj][x+nxi]&0xFF)!=PT_PCLN && (pmap[y+nxj][x+nxi]&0xFF)!=PT_BCLN && (pmap[y+nxj][x+nxi]&0xFF)!=PT_VIBR)
 								{
-									sim->delete_part(x+nxi, y+nxj, 0);
+									sim->delete_part(x+nxi, y+nxj);
 									sim->pv[(y+nxj)/CELL][(x+nxi)/CELL] += 0.1f;
 									nb = sim->create_part(-3, x+nxi, y+nxj, PT_EMBR);
 									if (nb!=-1)

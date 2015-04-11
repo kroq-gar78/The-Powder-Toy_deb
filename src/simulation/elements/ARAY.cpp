@@ -28,7 +28,7 @@ Element_ARAY::Element_ARAY()
 	
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 0;
-	Description = "Ray Emitter. Rays create points when they collide";
+	Description = "Ray Emitter. Rays create points when they collide.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_LIFE_DEC;
@@ -59,6 +59,7 @@ int Element_ARAY::update(UPDATE_FUNC_ARGS)
 					if (!r)
 						continue;
 					if ((r&0xFF)==PT_SPRK && parts[r>>8].life==3) {
+						bool isBlackDeco = false;
 						int destroy = (parts[r>>8].ctype==PT_PSCN)?1:0;
 						int nostop = (parts[r>>8].ctype==PT_INST)?1:0;
 						int colored = 0;
@@ -76,30 +77,46 @@ int Element_ARAY::update(UPDATE_FUNC_ARGS)
 									} else
 										parts[nr].ctype = colored;
 									parts[nr].temp = parts[i].temp;
+									if (isBlackDeco)
+										parts[nr].dcolour = 0xFF000000;
 								}
 							} else if (!destroy) {
 								if ((r&0xFF)==PT_BRAY) {
-									if (parts[r>>8].tmp==0){//if it hits another BRAY that isn't red
+									//cases for hitting different BRAY modes
+									switch(parts[r>>8].tmp) {
+									case 0://normal white
 										if (nyy!=0 || nxx!=0) {
 											parts[r>>8].life = 1020;//makes it last a while
 											parts[r>>8].tmp = 1;
 											if (!parts[r>>8].ctype)//and colors it if it isn't already
 												parts[r>>8].ctype = colored;
 										}
+									case 2://red bray, stop
+									default://stop any other random tmp mode
 										docontinue = 0;//then stop it
-									}
-									else if (parts[r>>8].tmp==1) {//if it hits one that already was a long life, reset it
+										break;
+									case 1://long life, reset it
 										parts[r>>8].life = 1020;
 										//docontinue = 1;
+										break;
 									}
+									if (isBlackDeco)
+										parts[r>>8].dcolour = 0xFF000000;
 								} else if ((r&0xFF)==PT_FILT) {//get color if passed through FILT
-									colored = parts[r>>8].ctype;
-									//this if prevents BRAY from stopping on certain materials
+									if (parts[r>>8].tmp != 6)
+									{
+										colored = Element_FILT::interactWavelengths(&parts[r>>8], colored);
+										if (!colored)
+											break;
+									}
+									isBlackDeco = (parts[r>>8].dcolour==0xFF000000);
+									parts[r>>8].life = 4;
+								//this if prevents BRAY from stopping on certain materials
 								} else if ((r&0xFF)!=PT_STOR && (r&0xFF)!=PT_INWR && ((r&0xFF)!=PT_SPRK || parts[r>>8].ctype!=PT_INWR) && (r&0xFF)!=PT_ARAY && (r&0xFF)!=PT_WIFI && !((r&0xFF)==PT_SWCH && parts[r>>8].life>=10)) {
 									if (nyy!=0 || nxx!=0) {
 										sim->create_part(-1, x+nxi+nxx, y+nyi+nyy, PT_SPRK);
 									}
-									 if (!(nostop && parts[r>>8].type==PT_SPRK && parts[r>>8].ctype >= 0 && parts[r>>8].ctype < PT_NUM && (sim->elements[parts[r>>8].ctype].Properties&PROP_CONDUCTS))) {
+									if (!(nostop && parts[r>>8].type==PT_SPRK && parts[r>>8].ctype >= 0 && parts[r>>8].ctype < PT_NUM && (sim->elements[parts[r>>8].ctype].Properties&PROP_CONDUCTS))) {
 										docontinue = 0;
 									} else {
 										docontinue = 1;
@@ -131,14 +148,22 @@ int Element_ARAY::update(UPDATE_FUNC_ARGS)
 								}
 							} else if (destroy) {
 								if ((r&0xFF)==PT_BRAY) {
+									parts[r>>8].tmp = 2;
 									parts[r>>8].life = 1;
 									docontinue = 1;
-									//this if prevents red BRAY from stopping on certain materials
+									if (isBlackDeco)
+										parts[r>>8].dcolour = 0xFF000000;
+								//this if prevents red BRAY from stopping on certain materials
 								} else if ((r&0xFF)==PT_STOR || (r&0xFF)==PT_INWR || ((r&0xFF)==PT_SPRK && parts[r>>8].ctype==PT_INWR) || (r&0xFF)==PT_ARAY || (r&0xFF)==PT_WIFI || (r&0xFF)==PT_FILT || ((r&0xFF)==PT_SWCH && parts[r>>8].life>=10)) {
 									if((r&0xFF)==PT_STOR)
 									{
 										parts[r>>8].tmp = 0;
 										parts[r>>8].life = 0;
+									}
+									else if ((r&0xFF)==PT_FILT)
+									{
+										isBlackDeco = (parts[r>>8].dcolour==0xFF000000);
+										parts[r>>8].life = 2;
 									}
 									docontinue = 1;
 								} else {

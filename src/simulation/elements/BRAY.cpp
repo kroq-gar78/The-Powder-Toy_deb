@@ -28,7 +28,7 @@ Element_BRAY::Element_BRAY()
 	
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 251;
-	Description = "Ray Point. Rays create points when they collide";
+	Description = "Ray Point. Rays create points when they collide.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_LIFE_KILL;
@@ -55,7 +55,7 @@ int Element_BRAY::graphics(GRAPHICS_FUNC_ARGS)
 	{
 		trans = cpart->life * 7;
 		if (trans>255) trans = 255;
-		if (cpart->ctype) {
+		if (cpart->ctype&0x3FFFFFFF) {
 			*colg = 0;
 			*colb = 0;
 			*colr = 0;
@@ -75,7 +75,7 @@ int Element_BRAY::graphics(GRAPHICS_FUNC_ARGS)
 	{
 		trans = cpart->life/4;
 		if (trans>255) trans = 255;
-		if (cpart->ctype) {
+		if (cpart->ctype&0x3FFFFFFF) {
 			*colg = 0;
 			*colb = 0;
 			*colr = 0;

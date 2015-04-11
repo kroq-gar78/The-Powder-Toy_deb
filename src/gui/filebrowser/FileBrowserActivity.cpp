@@ -134,6 +134,7 @@ FileBrowserActivity::FileBrowserActivity(std::string directory, FileSelectedCall
 	textField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	textField->SetActionCallback(new SearchAction(this));
 	AddComponent(textField);
+	FocusComponent(textField);
 
 	itemList = new ui::ScrollPanel(ui::Point(4, 45), ui::Point(Size.X-8, Size.Y-53));
 	AddComponent(itemList);
@@ -314,7 +315,7 @@ void FileBrowserActivity::OnTick(float dt)
 			itemList->AddChild(*iter);
 		}
 		componentsQueue.clear();
-		itemList->InnerSize.Y = (buttonHeight+(buttonPadding*2))*fileY;
+		itemList->InnerSize.Y = (buttonHeight+(buttonPadding*2))*(fileY+1);
 		if(!componentsQueue.size())
 			progressBar->Visible = false;
 	}

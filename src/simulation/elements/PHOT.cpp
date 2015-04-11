@@ -28,7 +28,7 @@ Element_PHOT::Element_PHOT()
 	
 	Temperature = R_TEMP+900.0f+273.15f;
 	HeatConduct = 251;
-	Description = "Photons. Travel in straight lines.";
+	Description = "Photons. Refracts through glass, scattered by quartz, and color-changed by different elements. Ignites flammable materials.";
 	
 	State = ST_GAS;
 	Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
@@ -49,10 +49,8 @@ Element_PHOT::Element_PHOT()
 //#TPT-Directive ElementHeader Element_PHOT static int update(UPDATE_FUNC_ARGS)
 int Element_PHOT::update(UPDATE_FUNC_ARGS)
  {
-	int r, rt, rx, ry;
+	int r, rx, ry;
 	float rr, rrr;
-	parts[i].pavg[0] = x;
-	parts[i].pavg[1] = y;
 	if (!(parts[i].ctype&0x3FFFFFFF)) {
 		sim->kill_part(i);
 		return 1;
@@ -88,6 +86,11 @@ int Element_PHOT::update(UPDATE_FUNC_ARGS)
 						parts[i].ctype = 0x1F<<(rand()%26);
 					parts[i].life++; //Delay death
 				}
+				else if ((r&0xFF) == PT_FILT && parts[r>>8].tmp==9)
+				{
+					parts[i].vx += ((float)(rand()%1000-500))/1000.0f;
+					parts[i].vy += ((float)(rand()%1000-500))/1000.0f;
+				}
 			}
 	return 0;
 }
@@ -117,7 +120,11 @@ int Element_PHOT::graphics(GRAPHICS_FUNC_ARGS)
 	*fireb = *colb;
 
 	*pixel_mode &= ~PMODE_FLAT;
-	*pixel_mode |= FIRE_ADD | PMODE_ADD;
+	*pixel_mode |= FIRE_ADD | PMODE_ADD | NO_DECO;
+	if (cpart->flags & FLAG_PHOTDECO)
+	{
+		*pixel_mode &= ~NO_DECO;
+	}
 	return 0;
 }
 

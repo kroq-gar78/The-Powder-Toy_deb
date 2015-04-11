@@ -74,6 +74,7 @@ public:
 	float *gravy;
 	float *gravx;
 	unsigned char (*bmap)[XRES/CELL];
+	unsigned char (*obmap)[XRES/CELL];
 	int ngrav_enable;
 	void grav_mask_r(int x, int y, char checkmap[YRES/CELL][XRES/CELL], char shape[YRES/CELL][XRES/CELL], char *shapeout);
 	void mask_free(mask_el *c_mask_el);
@@ -84,7 +85,7 @@ public:
 	void gravity_cleanup();
 	void gravity_update_async();
 
-	static void *update_grav_async_helper(void * context);
+	TH_ENTRY_POINT static void *update_grav_async_helper(void * context);
 	void update_grav_async();
 
 	void start_grav_async();

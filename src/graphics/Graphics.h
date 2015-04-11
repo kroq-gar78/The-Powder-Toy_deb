@@ -33,7 +33,7 @@
 #define PIXRGB(r,g,b) (((b)<<24)|((g)<<16)|((r)<<8))
 #define PIXR(x) (((x)>>8)&0xFF)
 #define PIXG(x) (((x)>>16)&0xFF)
-#define PIXB(x) (((x)>>24))
+#define PIXB(x) (((x)>>24)&0xFF)
 #elif defined(PIX32OGL)
 #define PIXELCHANNELS 4
 #define PIXPACK(x) (0xFF000000|((x)&0xFFFFFF))												//32bit ARGB in 32bit int: AARRGGBB
@@ -46,7 +46,7 @@
 #else
 #define PIXPACK(x) (x)																		//24bit RGB in 32bit int: 00RRGGBB.
 #define PIXRGB(r,g,b) (((r)<<16)|((g)<<8)|(b))
-#define PIXR(x) ((x)>>16)
+#define PIXR(x) (((x)>>16)&0xFF)
 #define PIXG(x) (((x)>>8)&0xFF)
 #define PIXB(x) ((x)&0xFF)
 #endif
@@ -203,7 +203,7 @@ public:
 	//Font/text metrics
 	static int CharIndexAtPosition(char *s, int positionX, int positionY);
 	static int PositionAtCharIndex(char *s, int charIndex, int & positionX, int & positionY);
-	static int CharWidth(char c);
+	static int CharWidth(unsigned char c);
 	static int textnwidth(char *s, int n);
 	static void textnpos(char *s, int n, int w, int *cx, int *cy);
 	static int textwidthx(char *s, int w);
@@ -225,6 +225,7 @@ public:
 	void Clear();
 	void Finalise();
 	//
+	int drawtext_outline(int x, int y, const char *s, int r, int g, int b, int a);
 	int drawtext(int x, int y, const char *s, int r, int g, int b, int a);
 	int drawtext(int x, int y, std::string s, int r, int g, int b, int a);
 	int drawchar(int x, int y, int c, int r, int g, int b, int a);
@@ -238,12 +239,15 @@ public:
 	void draw_line(int x, int y, int x2, int y2, int r, int g, int b, int a);
 	void drawrect(int x, int y, int width, int height, int r, int g, int b, int a);
 	void fillrect(int x, int y, int width, int height, int r, int g, int b, int a);
+	void drawcircle(int x, int y, int rx, int ry, int r, int g, int b, int a);
+	void fillcircle(int x, int y, int rx, int ry, int r, int g, int b, int a);
 	void clearrect(int x, int y, int width, int height);
 	void gradientrect(int x, int y, int width, int height, int r, int g, int b, int a, int r2, int g2, int b2, int a2);
 
 	void draw_image(pixel *img, int x, int y, int w, int h, int a);
 	void draw_image(const VideoBuffer & vidBuf, int w, int h, int a);
 	void draw_image(VideoBuffer * vidBuf, int w, int h, int a);
+	void draw_rgba_image(unsigned char *data, int x, int y, float alpha);
 
 	Graphics();
 	~Graphics();

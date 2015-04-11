@@ -28,7 +28,7 @@ Element_BANG::Element_BANG()
 	
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 88;
-	Description = "Explosive.";
+	Description = "TNT, explodes all at once.";
 	
 	State = ST_SOLID;
 	Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
@@ -73,8 +73,9 @@ int Element_BANG::update(UPDATE_FUNC_ARGS)
 	{
 		if ((pmap[y][x]>>8 == i))
 		{
-			int tempvalue = 2;
-			sim->flood_prop(x, y, offsetof(Particle, tmp), &tempvalue, StructProperty::Integer);
+			PropertyValue value;
+			value.Integer = 2;
+			sim->flood_prop(x, y, offsetof(Particle, tmp), value, StructProperty::Integer);
 		}
 		parts[i].tmp = 2;
 	}

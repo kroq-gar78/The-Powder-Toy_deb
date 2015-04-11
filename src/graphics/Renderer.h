@@ -66,7 +66,7 @@ public:
 	pixel sampleColor;
 
 	//Mouse position for debug information
-	int mousePosX, mousePosY;
+	ui::Point mousePos;
 
 	//Zoom window
 	ui::Point zoomWindowPosition;
@@ -112,6 +112,7 @@ public:
 
 	void draw_icon(int x, int y, Icon icon);
 
+	int drawtext_outline(int x, int y, const char *s, int r, int g, int b, int a);
 	int drawtext(int x, int y, const char *s, int r, int g, int b, int a);
 	int drawtext(int x, int y, std::string s, int r, int g, int b, int a);
 	int drawchar(int x, int y, int c, int r, int g, int b, int a);
@@ -125,6 +126,8 @@ public:
 	void draw_line(int x, int y, int x2, int y2, int r, int g, int b, int a);
 	void drawrect(int x, int y, int width, int height, int r, int g, int b, int a);
 	void fillrect(int x, int y, int width, int height, int r, int g, int b, int a);
+	void drawcircle(int x, int y, int rx, int ry, int r, int g, int b, int a);
+	void fillcircle(int x, int y, int rx, int ry, int r, int g, int b, int a);
 	void clearrect(int x, int y, int width, int height);
 	void gradientrect(int x, int y, int width, int height, int r, int g, int b, int a, int r2, int g2, int b2, int a2);
 

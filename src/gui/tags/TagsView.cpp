@@ -30,6 +30,7 @@ TagsView::TagsView():
 	closeButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	closeButton->SetActionCallback(new CloseAction(this));
 	AddComponent(closeButton);
+	SetCancelButton(closeButton);
 
 
 	tagInput = new ui::Textbox(ui::Point(8, Size.Y-40), ui::Point(Size.X-60, 16), "", "[new tag]");
@@ -55,9 +56,13 @@ TagsView::TagsView():
 	addButton->SetActionCallback(new AddTagAction(this));
 	AddComponent(addButton);
 
-	title = new ui::Label(ui::Point(5, 5), ui::Point(185, 16), "Manage tags:");
+	if (!Client::Ref().GetAuthUser().ID)
+		addButton->Enabled = false;
+
+	title = new ui::Label(ui::Point(5, 5), ui::Point(185, 28), "Manage tags:    \bgTags are only to \nbe used to improve search results");
 	title->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	title->Appearance.VerticalAlign = ui::Appearance::AlignTop;
+	title->SetMultiline(true);
 	AddComponent(title);
 }
 
@@ -99,9 +104,11 @@ void TagsView::NotifyTagsChanged(TagsModel * sender)
 
 	if(sender->GetSave())
 	{
-		for(int i = 0; i < sender->GetSave()->GetTags().size(); i++)
+		std::list<std::string> Tags = sender->GetSave()->GetTags();
+		int i = 0;
+		for(std::list<std::string>::const_iterator iter = Tags.begin(), end = Tags.end(); iter != end; iter++)
 		{
-			ui::Label * tempLabel = new ui::Label(ui::Point(35, 35+(16*i)), ui::Point(120, 16), sender->GetSave()->GetTags()[i]);
+			ui::Label * tempLabel = new ui::Label(ui::Point(35, 35+(16*i)), ui::Point(120, 16), *iter);
 			tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;			tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 			tags.push_back(tempLabel);
 			AddComponent(tempLabel);
@@ -114,10 +121,11 @@ void TagsView::NotifyTagsChanged(TagsModel * sender)
 				tempButton->Appearance.Margin.Top += 2;
 				tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;	
 				tempButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-				tempButton->SetActionCallback(new DeleteTagAction(this, sender->GetSave()->GetTags()[i]));
+				tempButton->SetActionCallback(new DeleteTagAction(this, *iter));
 				tags.push_back(tempButton);
 				AddComponent(tempButton);
 			}
+			i++;
 		}
 	}
 }

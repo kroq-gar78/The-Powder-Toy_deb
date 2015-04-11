@@ -1,11 +1,20 @@
+#include <stdio.h>
+#ifdef WIN
+	#include <direct.h>
+	#define getcwd _getcwd
+#else
+	#include <unistd.h>
+#endif
+
 #include "OptionsView.h"
 #include "gui/Style.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/DropDown.h"
+#include "gui/dialogues/ErrorMessage.h"
 
 OptionsView::OptionsView():
-	ui::Window(ui::Point(-1, -1), ui::Point(300, 310)){
+	ui::Window(ui::Point(-1, -1), ui::Point(300, 330)){
 
 	ui::Label * tempLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 14), "Simulation Options");
 	tempLabel->SetTextColour(style::Colour::InformationTitle);
@@ -23,7 +32,7 @@ OptionsView::OptionsView():
 	heatSimulation = new ui::Checkbox(ui::Point(8, 23), ui::Point(Size.X-6, 16), "Heat simulation \bgIntroduced in version 34", "");
 	heatSimulation->SetActionCallback(new HeatSimulationAction(this));
 	AddComponent(heatSimulation);
-	tempLabel = new ui::Label(ui::Point(24, heatSimulation->Position.Y+14), ui::Point(Size.X-28, 16), "\bgCan cause odd behaviour with very old saves");
+	tempLabel = new ui::Label(ui::Point(24, heatSimulation->Position.Y+14), ui::Point(Size.X-28, 16), "\bgCan cause odd behaviour when disabled");
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
 
@@ -38,7 +47,7 @@ OptionsView::OptionsView():
 	ambientHeatSimulation = new ui::Checkbox(ui::Point(8, 53), ui::Point(Size.X-6, 16), "Ambient heat simulation \bgIntroduced in version 50", "");
 	ambientHeatSimulation->SetActionCallback(new AmbientHeatSimulationAction(this));
 	AddComponent(ambientHeatSimulation);
-	tempLabel = new ui::Label(ui::Point(24, ambientHeatSimulation->Position.Y+14), ui::Point(Size.X-28, 16), "\bgCan cause odd behaviour with old saves");
+	tempLabel = new ui::Label(ui::Point(24, ambientHeatSimulation->Position.Y+14), ui::Point(Size.X-28, 16), "\bgCan cause odd / broken behaviour with many saves");
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
 
@@ -139,7 +148,7 @@ OptionsView::OptionsView():
 
 	scale = new ui::Checkbox(ui::Point(8, 210), ui::Point(Size.X-6, 16), "Large screen", "");
 	scale->SetActionCallback(new ScaleAction(this));
-	tempLabel = new ui::Label(ui::Point(scale->Position.X+Graphics::textwidth(scale->GetText().c_str())+20, scale->Position.Y), ui::Point(Size.X-28, 16), "\bg- Double window size for smaller screen");
+	tempLabel = new ui::Label(ui::Point(scale->Position.X+Graphics::textwidth(scale->GetText().c_str())+20, scale->Position.Y), ui::Point(Size.X-28, 16), "\bg- Double window size for smaller screens");
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
 	AddComponent(scale);
@@ -150,12 +159,19 @@ OptionsView::OptionsView():
 		OptionsView * v;
 	public:
 		FullscreenAction(OptionsView * v_){	v = v_;	}
-		virtual void ActionCallback(ui::Checkbox * sender){	v->c->SetFullscreen(sender->GetChecked()); }
+		virtual void ActionCallback(ui::Checkbox * sender)
+		{
+#ifdef MACOSX
+			ErrorMessage::Blocking("Error", "fullscreen doesn't work on OS X");
+#else
+			v->c->SetFullscreen(sender->GetChecked());
+#endif
+		}
 	};
 
 	fullscreen = new ui::Checkbox(ui::Point(8, 230), ui::Point(Size.X-6, 16), "Fullscreen", "");
 	fullscreen->SetActionCallback(new FullscreenAction(this));
-	tempLabel = new ui::Label(ui::Point(fullscreen->Position.X+Graphics::textwidth(fullscreen->GetText().c_str())+20, fullscreen->Position.Y), ui::Point(Size.X-28, 16), "\bg- Use the entire screen");
+	tempLabel = new ui::Label(ui::Point(fullscreen->Position.X+Graphics::textwidth(fullscreen->GetText().c_str())+20, fullscreen->Position.Y), ui::Point(Size.X-28, 16), "\bg- Fill the entire screen");
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
 	AddComponent(fullscreen);
@@ -190,6 +206,35 @@ OptionsView::OptionsView():
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
 	AddComponent(showAvatars);
+
+	class DataFolderAction: public ui::ButtonAction
+	{
+	public:
+		DataFolderAction() { }
+		void ActionCallback(ui::Button * sender)
+		{
+//one of these should always be defined
+#ifdef WIN
+			const char* openCommand = "start ";
+#elif MACOSX
+			const char* openCommand = "open ";
+//#elif LIN
+#else
+			const char* openCommand = "xdg-open ";
+#endif
+			char* workingDirectory = new char[FILENAME_MAX+strlen(openCommand)];
+			sprintf(workingDirectory, "%s\"%s\"", openCommand, getcwd(NULL, 0));
+			system(workingDirectory);
+			delete workingDirectory;
+		}
+	};
+	ui::Button * dataFolderButton = new ui::Button(ui::Point(8, Size.Y-38), ui::Point(90, 16), "Open Data Folder");
+	dataFolderButton->SetActionCallback(new DataFolderAction());
+	AddComponent(dataFolderButton);
+
+	tempLabel = new ui::Label(ui::Point(dataFolderButton->Position.X+dataFolderButton->Size.X+3, dataFolderButton->Position.Y), ui::Point(Size.X-28, 16), "\bg- Open the data and preferences folder");
+	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	AddComponent(tempLabel);
 
 	class CloseAction: public ui::ButtonAction
 	{

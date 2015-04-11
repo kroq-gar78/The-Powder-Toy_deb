@@ -28,7 +28,7 @@ Element_H2::Element_H2()
 	
 	Temperature = R_TEMP+0.0f +273.15f;
 	HeatConduct = 251;
-	Description = "Combines with O2 to make WATR";
+	Description = "Hydrogen. Combusts with OXYG to make WATR. Undergoes fusion at high temperature and pressure.";
 	
 	State = ST_GAS;
 	Properties = TYPE_GAS;
@@ -96,6 +96,7 @@ int Element_H2::update(UPDATE_FUNC_ARGS)
 			int j;
 			float temp = parts[i].temp;
 			sim->create_part(i,x,y,PT_NBLE);
+			parts[i].tmp = 0x1;
 
 			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_NEUT);
 			if (j>-1)
@@ -111,6 +112,7 @@ int Element_H2::update(UPDATE_FUNC_ARGS)
 			{
 				parts[j].ctype = 0x7C0000;
 				parts[j].temp = temp;
+				parts[j].tmp = 0x1;
 			}
 			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_PLSM);
 			if (j>-1)

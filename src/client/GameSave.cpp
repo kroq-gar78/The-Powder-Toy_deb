@@ -20,6 +20,7 @@ legacyEnable(save.legacyEnable),
 gravityEnable(save.gravityEnable),
 paused(save.paused),
 gravityMode(save.gravityMode),
+aheatEnable(save.aheatEnable),
 airMode(save.airMode),
 signs(save.signs),
 expanded(save.expanded),
@@ -171,10 +172,11 @@ void GameSave::Expand()
 {
 	if(hasOriginalData && !expanded)
 	{
-		waterEEnabled = 0;
-		legacyEnable = 0;
-		gravityEnable = 0;
-		paused = 0;
+		waterEEnabled = false;
+		legacyEnable = false;
+		gravityEnable = false;
+		aheatEnable = false;
+		paused = false;
 		gravityMode = 0;
 		airMode = 0;
 		expanded = true;
@@ -222,6 +224,7 @@ void GameSave::Collapse()
 			delete[] fanVelYPtr;
 			fanVelYPtr = NULL;
 		}
+		signs.clear();
 	}
 }
 
@@ -286,7 +289,7 @@ std::vector<char> GameSave::Serialise()
 	int dataSize;
 	char * data = Serialise(dataSize);
 	std::vector<char> dataVect(data, data+dataSize);
-	delete data;
+	delete[] data;
 	return dataVect;
 }
 
@@ -432,7 +435,7 @@ void GameSave::readOPS(char * data, int dataLength)
 	unsigned char * inputData = (unsigned char*)data, *bsonData = NULL, *partsData = NULL, *partsPosData = NULL, *fanData = NULL, *wallData = NULL, *soapLinkData = NULL;
 	unsigned int inputDataLen = dataLength, bsonDataLen = 0, partsDataLen, partsPosDataLen, fanDataLen, wallDataLen, soapLinkDataLen;
 	unsigned partsCount = 0, *partsSimIndex = NULL;
-	int i, freeIndicesCount, x, y, j;
+	int i, x, y, j;
 	int *freeIndices = NULL;
 	int blockX, blockY, blockW, blockH, fullX, fullY, fullW, fullH;
 	int savedVersion = inputData[4];
@@ -469,8 +472,13 @@ void GameSave::readOPS(char * data, int dataLength)
 	bsonDataLen |= ((unsigned)inputData[9]) << 8;
 	bsonDataLen |= ((unsigned)inputData[10]) << 16;
 	bsonDataLen |= ((unsigned)inputData[11]) << 24;
-
-	bsonData = (unsigned char*)malloc(bsonDataLen+1);
+	
+	//Check for overflows, don't load saves larger than 200MB
+	unsigned int toAlloc = bsonDataLen+1;
+	if(toAlloc > 209715200 || !toAlloc)
+		throw ParseException(ParseException::InvalidDimensions, "Save data too large, refusing");
+		
+	bsonData = (unsigned char*)malloc(toAlloc);
 	if(!bsonData)
 		throw ParseException(ParseException::InternalError, "Unable to allocate memory");
 
@@ -612,6 +620,17 @@ void GameSave::readOPS(char * data, int dataLength)
 			if(bson_iterator_type(&iter)==BSON_BOOL)
 			{
 				gravityEnable = bson_iterator_bool(&iter);
+			}
+			else
+			{
+				fprintf(stderr, "Wrong type for %s\n", bson_iterator_key(&iter));
+			}
+		}
+		else if(!strcmp(bson_iterator_key(&iter), "aheat_enable"))
+		{
+			if(bson_iterator_type(&iter)==BSON_BOOL)
+			{
+				aheatEnable = bson_iterator_bool(&iter);
 			}
 			else
 			{
@@ -911,6 +930,19 @@ void GameSave::readOPS(char * data, int dataLength)
 						}
 					}
 
+					//Read pavg
+					if(fieldDescriptor & 0x2000)
+					{
+						if(i+3 >= partsDataLen) goto fail;
+						int pavg;
+						pavg = partsData[i++];
+						pavg |= (((unsigned)partsData[i++]) << 8);
+						particles[newIndex].pavg[0] = (float)pavg;
+						pavg = partsData[i++];
+						pavg |= (((unsigned)partsData[i++]) << 8);
+						particles[newIndex].pavg[1] = (float)pavg;
+					}
+
 					//Particle specific parsing:
 					switch(particles[newIndex].type)
 					{
@@ -947,7 +979,37 @@ void GameSave::readOPS(char * data, int dataLength)
 					case PT_PSTN:
 						if (savedVersion < 87 && particles[newIndex].ctype)
 							particles[newIndex].life = 1;
+						break;
+					case PT_STKM:
+					case PT_STKM2:
+					case PT_FIGH:
+						if (savedVersion < 88 && particles[newIndex].ctype == OLD_SPC_AIR)
+							particles[newIndex].ctype = SPC_AIR;
+						break;
+					case PT_FILT:
+						if (savedVersion < 89)
+						{
+							if (particles[newIndex].tmp<0 || particles[newIndex].tmp>3)
+								particles[newIndex].tmp = 6;
+							particles[newIndex].ctype = 0;
+						}
+						break;
+					case PT_QRTZ:
+					case PT_PQRT:
+						if (savedVersion < 89)
+						{
+							particles[newIndex].tmp2 = particles[newIndex].tmp;
+							particles[newIndex].tmp = particles[newIndex].ctype;
+							particles[newIndex].ctype = 0;
+						}
+						break;
+					case PT_PHOT:
+						if (savedVersion < 90)
+						{
+							particles[newIndex].flags |= FLAG_PHOTDECO;
+						}
 					}
+					//note: PSv was used in version 77.0 and every version before, add something in PSv too if the element is that old
 					newIndex++;
 				}
 			}
@@ -1094,6 +1156,10 @@ void GameSave::readPSv(char * data, int dataLength)
 	i |= ((unsigned)c[9])<<8;
 	i |= ((unsigned)c[10])<<16;
 	i |= ((unsigned)c[11])<<24;
+	
+	if(i > 209715200 || !i)
+		throw ParseException(ParseException::InvalidDimensions, "Save data too large");
+	
 	d = (unsigned char *)malloc(i);
 	if (!d)
 		throw ParseException(ParseException::Corrupt, "Cannot allocate memory");
@@ -1136,7 +1202,7 @@ void GameSave::readPSv(char * data, int dataLength)
 			{
 				//In old saves, ignore walls created by sign tool bug
 				//Not ignoring other invalid walls or invalid walls in new saves, so that any other bugs causing them are easier to notice, find and fix
-				if (ver<71 && d[p]==O_WL_SIGN)
+				if (ver>=44 && ver<71 && d[p]==O_WL_SIGN)
 				{
 					p++;
 					continue;
@@ -1169,38 +1235,44 @@ void GameSave::readPSv(char * data, int dataLength)
 				else if (blockMap[y][x]==13)
 					blockMap[y][x]=WL_ALLOWGAS;
 
-				if (blockMap[y][x]==O_WL_WALLELEC)
-					blockMap[y][x]=WL_WALLELEC;
-				else if (blockMap[y][x]==O_WL_EWALL)
-					blockMap[y][x]=WL_EWALL;
-				else if (blockMap[y][x]==O_WL_DETECT)
-					blockMap[y][x]=WL_DETECT;
-				else if (blockMap[y][x]==O_WL_STREAM)
-					blockMap[y][x]=WL_STREAM;
-				else if (blockMap[y][x]==O_WL_FAN||blockMap[y][x]==O_WL_FANHELPER)
-					blockMap[y][x]=WL_FAN;
-				else if (blockMap[y][x]==O_WL_ALLOWLIQUID)
-					blockMap[y][x]=WL_ALLOWLIQUID;
-				else if (blockMap[y][x]==O_WL_DESTROYALL)
-					blockMap[y][x]=WL_DESTROYALL;
-				else if (blockMap[y][x]==O_WL_ERASE)
-					blockMap[y][x]=WL_ERASE;
-				else if (blockMap[y][x]==O_WL_WALL)
-					blockMap[y][x]=WL_WALL;
-				else if (blockMap[y][x]==O_WL_ALLOWAIR)
-					blockMap[y][x]=WL_ALLOWAIR;
-				else if (blockMap[y][x]==O_WL_ALLOWSOLID)
-					blockMap[y][x]=WL_ALLOWSOLID;
-				else if (blockMap[y][x]==O_WL_ALLOWALLELEC)
-					blockMap[y][x]=WL_ALLOWALLELEC;
-				else if (blockMap[y][x]==O_WL_EHOLE)
-					blockMap[y][x]=WL_EHOLE;
-				else if (blockMap[y][x]==O_WL_ALLOWGAS)
-					blockMap[y][x]=WL_ALLOWGAS;
-				else if (blockMap[y][x]==O_WL_GRAV)
-					blockMap[y][x]=WL_GRAV;
-				else if (blockMap[y][x]==O_WL_ALLOWENERGY)
-					blockMap[y][x]=WL_ALLOWENERGY;
+				if (ver>=44)
+				{
+					/* The numbers used to save walls were changed, starting in v44.
+					 * The new numbers are ignored for older versions due to some corruption of bmap in saves from older versions. 
+					 */
+					if (blockMap[y][x]==O_WL_WALLELEC)
+						blockMap[y][x]=WL_WALLELEC;
+					else if (blockMap[y][x]==O_WL_EWALL)
+						blockMap[y][x]=WL_EWALL;
+					else if (blockMap[y][x]==O_WL_DETECT)
+						blockMap[y][x]=WL_DETECT;
+					else if (blockMap[y][x]==O_WL_STREAM)
+						blockMap[y][x]=WL_STREAM;
+					else if (blockMap[y][x]==O_WL_FAN||blockMap[y][x]==O_WL_FANHELPER)
+						blockMap[y][x]=WL_FAN;
+					else if (blockMap[y][x]==O_WL_ALLOWLIQUID)
+						blockMap[y][x]=WL_ALLOWLIQUID;
+					else if (blockMap[y][x]==O_WL_DESTROYALL)
+						blockMap[y][x]=WL_DESTROYALL;
+					else if (blockMap[y][x]==O_WL_ERASE)
+						blockMap[y][x]=WL_ERASE;
+					else if (blockMap[y][x]==O_WL_WALL)
+						blockMap[y][x]=WL_WALL;
+					else if (blockMap[y][x]==O_WL_ALLOWAIR)
+						blockMap[y][x]=WL_ALLOWAIR;
+					else if (blockMap[y][x]==O_WL_ALLOWSOLID)
+						blockMap[y][x]=WL_ALLOWSOLID;
+					else if (blockMap[y][x]==O_WL_ALLOWALLELEC)
+						blockMap[y][x]=WL_ALLOWALLELEC;
+					else if (blockMap[y][x]==O_WL_EHOLE)
+						blockMap[y][x]=WL_EHOLE;
+					else if (blockMap[y][x]==O_WL_ALLOWGAS)
+						blockMap[y][x]=WL_ALLOWGAS;
+					else if (blockMap[y][x]==O_WL_GRAV)
+						blockMap[y][x]=WL_GRAV;
+					else if (blockMap[y][x]==O_WL_ALLOWENERGY)
+						blockMap[y][x]=WL_ALLOWENERGY;
+				}
 
 				if (blockMap[y][x] < 0 || blockMap[y][x] >= UI_WALLCOUNT)
 					blockMap[y][x] = 0;
@@ -1210,7 +1282,7 @@ void GameSave::readPSv(char * data, int dataLength)
 		}
 	for (y=by0; y<by0+bh; y++)
 		for (x=bx0; x<bx0+bw; x++)
-			if (d[(y-by0)*bw+(x-bx0)]==4||d[(y-by0)*bw+(x-bx0)]==O_WL_FAN)
+			if (d[(y-by0)*bw+(x-bx0)]==4||(ver>=44 && d[(y-by0)*bw+(x-bx0)]==O_WL_FAN))
 			{
 				if (p >= dataLength)
 					throw ParseException(ParseException::Corrupt, "Not enough data at line " MTOS(__LINE__) " in " MTOS(__FILE__));
@@ -1218,7 +1290,7 @@ void GameSave::readPSv(char * data, int dataLength)
 			}
 	for (y=by0; y<by0+bh; y++)
 		for (x=bx0; x<bx0+bw; x++)
-			if (d[(y-by0)*bw+(x-bx0)]==4||d[(y-by0)*bw+(x-bx0)]==O_WL_FAN)
+			if (d[(y-by0)*bw+(x-bx0)]==4||(ver>=44 && d[(y-by0)*bw+(x-bx0)]==O_WL_FAN))
 			{
 				if (p >= dataLength)
 					throw ParseException(ParseException::Corrupt, "Not enough data at line " MTOS(__LINE__) " in " MTOS(__FILE__));
@@ -1483,6 +1555,10 @@ void GameSave::readPSv(char * data, int dataLength)
 		// no more particle properties to load, so we can change type here without messing up loading
 		if (i && i<=NPART)
 		{
+			if (ver<90 && particles[i-1].type == PT_PHOT)
+			{
+				particles[i-1].flags |= FLAG_PHOTDECO;
+			}
 			if (ver<79 && particles[i-1].type == PT_SPNG)
 			{
 				if (fabs(particles[i-1].vx)>0.0f || fabs(particles[i-1].vy)>0.0f)
@@ -1564,6 +1640,24 @@ void GameSave::readPSv(char * data, int dataLength)
 					particles[i-1].type = PT_EMBR;
 					particles[i-1].tmp = 1;
 					particles[i-1].ctype = (((unsigned char)(firw_data[caddress]))<<16) | (((unsigned char)(firw_data[caddress+1]))<<8) | ((unsigned char)(firw_data[caddress+2]));
+				}
+			}
+			if (ver < 88) //fix air blowing stickmen
+				if ((particles[i-1].type == PT_STKM || particles[i-1].type == PT_STKM2 || particles[i-1].type == PT_FIGH) && particles[i-1].ctype == OLD_SPC_AIR)
+					particles[i-1].ctype == SPC_AIR;
+			if (ver < 89)
+			{
+				if (particles[i-1].type == PT_FILT)
+				{
+					if (particles[i-1].tmp<0 || particles[i-1].tmp>3)
+						particles[i-1].tmp = 6;
+					particles[i-1].ctype = 0;
+				}
+				else if (particles[i-1].type == PT_QRTZ || particles[i-1].type == PT_PQRT)
+				{
+					particles[i-1].tmp2 = particles[i-1].tmp;
+					particles[i-1].tmp = particles[i-1].ctype;
+					particles[i-1].ctype = 0;
 				}
 			}
 		}
@@ -1758,7 +1852,7 @@ char * GameSave::serialiseOPS(int & dataLength)
 	//Copy parts data
 	/* Field descriptor format:
 	 |		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|		0		|
-	 																|	tmp2[2]		|		tmp2	|	ctype[2]	|		vy		|		vx		|	dcololour	|	ctype[1]	|		tmp[2]	|		tmp[1]	|		life[2]	|		life[1]	|	temp dbl len|
+									|	   pavg		|	 tmp[3+4]	|	tmp2[2]		|		tmp2	|	ctype[2]	|		vy		|		vx		|	dcololour	|	ctype[1]	|		tmp[2]	|		tmp[1]	|		life[2]	|		life[1]	|	temp dbl len|
 	 life[2] means a second byte (for a 16 bit field) if life[1] is present
 	 */
 	partsData = (unsigned char *)malloc(NPART * (sizeof(Particle)+1));
@@ -1810,25 +1904,30 @@ char * GameSave::serialiseOPS(int & dataLength)
 				//Life (optional), 1 to 2 bytes
 				if(particles[i].life)
 				{
+					int life = particles[i].life;
+					if (life > 0xFFFF)
+						life = 0xFFFF;
+					else if (life < 0)
+						life = 0;
 					fieldDesc |= 1 << 1;
-					partsData[partsDataLen++] = particles[i].life;
-					if(particles[i].life > 255)
+					partsData[partsDataLen++] = life;
+					if(particles[i].life & 0xFF00)
 					{
 						fieldDesc |= 1 << 2;
-						partsData[partsDataLen++] = particles[i].life >> 8;
+						partsData[partsDataLen++] = life >> 8;
 					}
 				}
 
-				//Tmp (optional), 1 to 2 bytes
+				//Tmp (optional), 1, 2, or 4 bytes
 				if(particles[i].tmp)
 				{
 					fieldDesc |= 1 << 3;
 					partsData[partsDataLen++] = particles[i].tmp;
-					if(particles[i].tmp > 255)
+					if(particles[i].tmp & 0xFFFFFF00)
 					{
 						fieldDesc |= 1 << 4;
 						partsData[partsDataLen++] = particles[i].tmp >> 8;
-						if(particles[i].tmp > 65535)
+						if(particles[i].tmp & 0xFFFF0000)
 						{
 							fieldDesc |= 1 << 12;
 							partsData[partsDataLen++] = (particles[i].tmp&0xFF000000)>>24;
@@ -1842,7 +1941,7 @@ char * GameSave::serialiseOPS(int & dataLength)
 				{
 					fieldDesc |= 1 << 5;
 					partsData[partsDataLen++] = particles[i].ctype;
-					if(particles[i].ctype > 255)
+					if(particles[i].ctype & 0xFFFFFF00)
 					{
 						fieldDesc |= 1 << 9;
 						partsData[partsDataLen++] = (particles[i].ctype&0xFF000000)>>24;
@@ -1886,14 +1985,25 @@ char * GameSave::serialiseOPS(int & dataLength)
 				{
 					fieldDesc |= 1 << 10;
 					partsData[partsDataLen++] = particles[i].tmp2;
-					if(particles[i].tmp2 > 255)
+					if(particles[i].tmp2 & 0xFF00)
 					{
 						fieldDesc |= 1 << 11;
 						partsData[partsDataLen++] = particles[i].tmp2 >> 8;
 					}
 				}
 
-				//Write the field descriptor;
+				//Pavg, 4 bytes
+				//Don't save pavg for things that break under pressure, because then they will break when the save is loaded, since pressure isn't also loaded
+				if ((particles[i].pavg[0] || particles[i].pavg[1]) && !(particles[i].type == PT_QRTZ || particles[i].type == PT_GLAS || particles[i].type == PT_TUNG))
+				{
+					fieldDesc |= 1 << 13;
+					partsData[partsDataLen++] = (int)particles[i].pavg[0];
+					partsData[partsDataLen++] = ((int)particles[i].pavg[0])>>8;
+					partsData[partsDataLen++] = (int)particles[i].pavg[1];
+					partsData[partsDataLen++] = ((int)particles[i].pavg[1])>>8;
+				}
+
+				//Write the field descriptor
 				partsData[fieldDescLoc] = fieldDesc;
 				partsData[fieldDescLoc+1] = fieldDesc>>8;
 
@@ -1954,8 +2064,8 @@ char * GameSave::serialiseOPS(int & dataLength)
 	bson_append_start_object(&b, "origin");
 	bson_append_int(&b, "majorVersion", SAVE_VERSION);
 	bson_append_int(&b, "minorVersion", MINOR_VERSION);
-	bson_append_int(&b, "buildNum", MINOR_VERSION);
-	bson_append_int(&b, "snapshotId", MINOR_VERSION);
+	bson_append_int(&b, "buildNum", BUILD_NUM);
+	bson_append_int(&b, "snapshotId", SNAPSHOT_ID);
 	bson_append_string(&b, "releaseType", IDENT_RELTYPE);
 	bson_append_string(&b, "platform", IDENT_PLATFORM);
 	bson_append_string(&b, "builtType", IDENT_BUILD);
@@ -1965,6 +2075,7 @@ char * GameSave::serialiseOPS(int & dataLength)
 	bson_append_bool(&b, "waterEEnabled", waterEEnabled);
 	bson_append_bool(&b, "legacyEnable", legacyEnable);
 	bson_append_bool(&b, "gravityEnable", gravityEnable);
+	bson_append_bool(&b, "aheat_enable", aheatEnable);
 	bson_append_bool(&b, "paused", paused);
 	bson_append_int(&b, "gravityMode", gravityMode);
 	bson_append_int(&b, "airMode", airMode);

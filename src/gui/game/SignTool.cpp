@@ -7,6 +7,7 @@
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/DropDown.h"
+#include "gui/game/GameModel.h"
 
 class SignWindow: public ui::Window
 {
@@ -26,8 +27,8 @@ public:
 	virtual void DoMouseDown(int x, int y, unsigned button);
 	virtual void DoMouseUp(int x, int y, unsigned button) { if(!signMoving) ui::Window::DoMouseUp(x, y, button); }
 	virtual void DoMouseWheel(int x, int y, int d) { if(!signMoving) ui::Window::DoMouseWheel(x, y, d); }
-	virtual void DoKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt) { if(!signMoving) ui::Window::DoKeyPress(key, character, shift, ctrl, alt); };
-	virtual void DoKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt) { if(!signMoving) ui::Window::DoKeyRelease(key, character, shift, ctrl, alt); };
+	virtual void DoKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt) { if(!signMoving) ui::Window::DoKeyPress(key, character, shift, ctrl, alt); }
+	virtual void DoKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt) { if(!signMoving) ui::Window::DoKeyRelease(key, character, shift, ctrl, alt); }
 	virtual ~SignWindow() {}
 	virtual void OnTryExit(ui::Window::ExitMethod method);
 	class OkayAction: public ui::ButtonAction
@@ -178,13 +179,17 @@ void SignWindow::DoDraw()
 	{
 		sign & currentSign = *iter;
 		int x, y, w, h, dx, dy;
+		char type = 0;
 		Graphics * g = ui::Engine::Ref().g;
 		std::string text = currentSign.getText(sim);
+		splitsign(currentSign.text.c_str(), &type);
 		currentSign.pos(text, x, y, w, h);
 		g->clearrect(x, y, w+1, h);
 		g->drawrect(x, y, w+1, h, 192, 192, 192, 255);
-		if (sregexp(currentSign.text.c_str(), "^{[c|t]:[0-9]*|.*}$"))
+		if (!type)
 			g->drawtext(x+3, y+3, text, 255, 255, 255, 255);
+		else if(type == 'b')
+			g->drawtext(x+3, y+3, text, 211, 211, 40, 255);
 		else
 			g->drawtext(x+3, y+3, text, 0, 191, 255, 255);
 
@@ -218,12 +223,13 @@ void SignWindow::DoMouseMove(int x, int y, int dx, int dy) {
 		ui::Window::DoMouseMove(x, y, dx, dy);
 	else
 	{
-		if(x < XRES && y < YRES)
+		ui::Point pos = tool->gameModel->AdjustZoomCoords(ui::Point(x, y));
+		if(pos.X < XRES && pos.Y < YRES)
 		{
-			movingSign->x = x;
-			movingSign->y = y;
-			signPosition.X = x;
-			signPosition.Y = y;
+			movingSign->x = pos.X;
+			movingSign->y = pos.Y;
+			signPosition.X = pos.X;
+			signPosition.Y = pos.Y;
 		}
 	}
 }
