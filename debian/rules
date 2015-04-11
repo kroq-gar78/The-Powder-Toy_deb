@@ -4,7 +4,7 @@
 
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
-SCONS_OPTS := --lin --sse2 --release --python-ver=python
+SCONS_OPTS := --lin --sse2 --release #--python-ver=python
 
 # use the flag "--64bit" if we're targetting "amd64"
 ifeq ($(DEB_HOST_ARCH),amd64)
