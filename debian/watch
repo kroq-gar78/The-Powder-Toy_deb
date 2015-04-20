@@ -1,0 +1,3 @@
+version=3
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/powdertoy-$1\.tar\.gz/ \
+https://github.com/simtr/The-Powder-Toy/tags .*/v?(\d\S*)\.tar\.gz

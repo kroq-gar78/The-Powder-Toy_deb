@@ -4,6 +4,7 @@ powdertoy (90.2.322-0~ppa1~1.gbp100297) UNRELEASED; urgency=medium
 
   * New upstream release
   * Now using gbp-pq to manage quilt patches in git
+  * Added debian/watch
 
  -- Aditya Vaidya <kroq.gar78@gmail.com>  Sat, 11 Apr 2015 02:31:25 -0500
 
