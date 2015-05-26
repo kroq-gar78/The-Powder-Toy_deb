@@ -1,7 +1,10 @@
 #!/bin/sh
 
-if [ ! -d $HOME/.config/powdertoy ] ; then
-	mkdir -p $HOME/.config/powdertoy
+# NOTE: save file are placed into .config, which violates XDG
+# will be fixed upstream
+config_dir=${XDG_CACHE_HOME:-$HOME/.cache}/powdertoy 
+if [ ! -d "$config_dir" ] ; then
+    mkdir -p "$config_dir"
 fi
 
-/usr/lib/games/powdertoy/powdertoy ddir $HOME/.config/powdertoy $@
+/usr/lib/games/powdertoy/powdertoy ddir "$config_dir" $@
